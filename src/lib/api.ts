@@ -482,11 +482,11 @@ export class ApiClient {
     if (params.search) query.append("search", params.search);
     if (params.role && params.role !== 'all') query.append("role", params.role);
 
-    return this.request<any>(`/users?${query.toString()}`, { cache: 'no-store' });
+    return this.request<any>(`/users?${query.toString()}`);
   }
 
   static async getUserById(id: string) {
-    return this.request<User>(`/users/${id}`, { cache: 'no-store' });
+    return this.request<User>(`/users/${id}`);
   }
 
   static async updateUser(id: string, data: Partial<User>) {
