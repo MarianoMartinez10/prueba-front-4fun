@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * Capa de Administración: Gestión de Usuarios y Permisos (Admin Users)
+ * --------------------------------------------------------------------------
+ * Orquesta la administración de cuentas y el control de acceso (RBAC). 
+ * Provee herramientas para la moderación de roles, auditoría de perfiles y 
+ * exportación de registros registrales para fines contables y de seguridad.
+ * (MVC / Page)
+ */
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiClient } from "@/lib/api";
@@ -41,15 +50,20 @@ import {
     Trash2,
     Filter,
     Download,
-    FileText,
+    FileSpreadsheet,
+    FilePieChart,
+    Users,
+    ShieldAlert,
+    RefreshCw
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { cn } from "@/lib/utils";
 
-// Tipos locales
+// RN - Tipografía de Dominio: Definición local para la auditoría de usuarios.
 interface User {
     id?: string;
     _id: string;
@@ -68,17 +82,17 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Filtros
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-
-    // Acciones en progreso
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const debouncedSearch = useDebounce(searchTerm);
 
+    /**
+     * RN - Auditoría de Identidad: Recupera el listado de usuarios con filtros aplicados.
+     */
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -94,298 +108,270 @@ export default function UsersPage() {
                 setTotalPages(res.totalPages || 1);
             }
         } catch (error) {
-            console.error(error);
-            toast({
-                title: "Error",
-                description: "No se pudieron cargar los usuarios.",
-                variant: "destructive"
-            });
+            console.error("[UsersAdmin] Error synchronization:", error);
+            toast({ title: "Fallo de Carga", description: "No se pudo recuperar la nómina de usuarios.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
     };
 
-    // Recargar cuando cambian filtros
     useEffect(() => {
         fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, debouncedSearch, roleFilter]);
 
-    // Manejo de roles
+    /**
+     * RN - Moderación RBAC: Gestiona la escalación de privilegios (Admin vs User).
+     */
     const handleRoleUpdate = async (userId: string, currentRole: string) => {
         const newRole = currentRole === 'admin' ? 'user' : 'admin';
         setActionLoading(userId);
         try {
             await ApiClient.updateUser(userId, { role: newRole });
-            toast({ title: "Rol actualizado", description: `Usuario ahora es ${newRole}` });
-            fetchUsers(); // Refrescar
+            toast({ title: "Jerarquía Actualizada", description: `El usuario ha sido transicionado al rol: ${newRole.toUpperCase()}` });
+            fetchUsers();
         } catch (err: any) {
-            toast({ title: "Error", description: err.message, variant: "destructive" });
+            toast({ title: "Fallo en Moderación", description: err.message, variant: "destructive" });
         } finally {
             setActionLoading(null);
         }
     };
 
-    const handleDelete = async (userId: string) => {
-        if (!confirm("¿Seguro que deseas eliminar este usuario? Esta acción es irreversible.")) return;
+    /**
+     * RN - Baja de Entidades: Implementa la eliminación irreversible de perfiles.
+     */
+    const handleDelete = async (userId: string, name: string) => {
+        if (!confirm(`¿Confirma la eliminación irreversible del perfil: ${name}?`)) return;
 
         setActionLoading(userId);
         try {
             await ApiClient.deleteUser(userId);
-            toast({ title: "Usuario eliminado" });
+            toast({ title: "Baja Ejecutada", description: "El registro ha sido eliminado del sistema." });
             fetchUsers();
         } catch (err: any) {
-            toast({ title: "Error", description: err.message, variant: "destructive" });
+            toast({ title: "Error en Operación", description: err.message, variant: "destructive" });
         } finally {
             setActionLoading(null);
         }
     };
 
+    // ─── SUBSISTEMA DE AUDITORÍA REGISTRAL ───
+
     const handleExportCSV = () => {
-        if (!users.length) {
-            toast({ title: "Atención", description: "No hay usuarios para exportar.", variant: "destructive" });
-            return;
-        }
+        if (!users.length) return;
         const headers = ["Nombre", "Email", "Rol", "Verificado", "Registrado"];
         const rows = users.map(u => [
-            `"${u.name}"`,
-            `"${u.email}"`,
-            u.role,
-            u.isVerified ? "Sí" : "No",
-            new Date(u.createdAt).toLocaleDateString("es-AR"),
+            u.name, u.email, u.role, u.isVerified ? "Sí" : "No", new Date(u.createdAt).toLocaleDateString("es-AR")
         ]);
-        const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+        const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = Object.assign(document.createElement("a"), {
             href: url,
-            download: `reporte_usuarios_4fun_${new Date().toISOString().split("T")[0]}.csv`,
+            download: `auditoria_usuarios_${new Date().getTime()}.csv`,
         });
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
     };
 
     const handleExportPDF = () => {
-        if (!users.length) {
-            toast({ title: "Atención", description: "No hay usuarios para exportar.", variant: "destructive" });
-            return;
-        }
+        if (!users.length) return;
         const doc = new jsPDF();
-        doc.setFontSize(18);
-        doc.text("Reporte de Usuarios — 4Fun", 14, 20);
+        doc.setFontSize(22);
+        doc.text("Reporte de Auditoría: Nómina de Usuarios", 14, 22);
         doc.setFontSize(10);
-        doc.setTextColor(120);
-        doc.text(`Generado: ${new Date().toLocaleDateString("es-AR")} | Total: ${users.length} usuarios`, 14, 27);
+        doc.setTextColor(100);
+        doc.text(`Fecha: ${new Date().toLocaleString("es-AR")} | 4Fun Marketplace`, 14, 30);
         doc.setTextColor(0);
+
         autoTable(doc, {
-            startY: 32,
-            head: [["Nombre", "Email", "Rol", "Verificado", "Registrado"]],
+            startY: 40,
+            head: [["IDENTIDAD", "E-MAIL CORPORATIVO", "JERARQUÍA", "VERIFICACIÓN", "ALTA SISTEMA"]],
             body: users.map(u => [
                 u.name,
                 u.email,
-                u.role === "admin" ? "Administrador" : "Usuario",
-                u.isVerified ? "Sí" : "No",
+                u.role === "admin" ? "ADMINISTRADOR" : "USUARIO FINAL",
+                u.isVerified ? "VERIFICADO" : "PENDIENTE",
                 new Date(u.createdAt).toLocaleDateString("es-AR"),
             ]),
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [30, 30, 40] },
-            columnStyles: { 2: { halign: "center" }, 3: { halign: "center" } },
+            styles: { fontSize: 8, cellPadding: 4 },
+            headStyles: { fillColor: [45, 45, 55], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [245, 245, 250] }
         });
-        doc.save(`reporte_usuarios_4fun_${new Date().toISOString().split("T")[0]}.pdf`);
+        doc.save(`auditoria_usuarios_${new Date().getTime()}.pdf`);
     };
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold font-headline">Gestión de Usuarios</h1>
-                <p className="text-muted-foreground">Administra los accesos y perfiles de la plataforma.</p>
-            </div>
-
-            {/* Filtros */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <div className="relative w-full sm:w-96">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar por nombre o email..."
-                        className="pl-8"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <Select value={roleFilter} onValueChange={setRoleFilter}>
-                        <SelectTrigger className="w-[180px]">
-                            <div className="flex items-center gap-2">
-                                <Filter className="h-4 w-4" />
-                                <SelectValue placeholder="Filtrar por Rol" />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los Roles</SelectItem>
-                            <SelectItem value="admin">Administradores</SelectItem>
-                            <SelectItem value="user">Usuarios</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="flex items-center gap-2"
-                                disabled={loading || users.length === 0}
-                            >
-                                <Download className="h-4 w-4" /> Descargar datos
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-sm">
-                            <DialogHeader>
-                                <DialogTitle>Descargar en</DialogTitle>
-                                <DialogDescription>
-                                    Seleccione el formato preferido para exportar los usuarios.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex flex-col gap-3 py-4">
-                                <Button variant="outline" className="flex items-center gap-2 justify-center w-full" onClick={handleExportCSV}>
-                                    <Download className="h-4 w-4" /> Formato CSV (Excel)
+        <div className="space-y-6 animate-in fade-in duration-700">
+            <Card className="border-none bg-card/40 backdrop-blur-md shadow-2xl">
+                <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-white/5 pb-8">
+                    <div className="space-y-1">
+                        <CardTitle className="text-3xl font-headline font-bold text-white flex items-center gap-3">
+                            <Users className="h-8 w-8 text-primary" />
+                            Gestión de Cuentas y Accesos
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground uppercase tracking-widest text-[10px] font-bold">
+                            Control RBAC, Moderación de Perfiles y Auditoría de Identidad
+                        </CardDescription>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="border-white/10 hover:bg-white/5 font-bold" disabled={loading || users.length === 0}>
+                                    <Download className="mr-2 h-4 w-4" /> EXPORTAR PADRÓN
                                 </Button>
-                                <Button variant="outline" className="flex items-center gap-2 justify-center w-full" onClick={handleExportPDF}>
-                                    <FileText className="h-4 w-4" /> Formato PDF Documento
-                                </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </div>
+                            </DialogTrigger>
+                            <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10 sm:max-w-[400px]">
+                                <DialogHeader>
+                                    <DialogTitle className="text-xl font-headline text-white">Exportación Registral</DialogTitle>
+                                    <DialogDescription className="text-xs uppercase font-bold tracking-widest text-muted-foreground mt-1">Formato de Auditoría de Identidad</DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-3 py-6">
+                                    <Button variant="outline" className="h-16 justify-between px-6 border-white/10 hover:border-primary/50" onClick={handleExportCSV}>
+                                        <div className="flex items-center gap-4">
+                                            <FileSpreadsheet className="h-6 w-6 text-green-500" />
+                                            <p className="font-bold text-white uppercase text-xs">Planilla Excel (CSV)</p>
+                                        </div>
+                                    </Button>
+                                    <Button variant="outline" className="h-16 justify-between px-6 border-white/10 hover:border-primary/50" onClick={handleExportPDF}>
+                                        <div className="flex items-center gap-4">
+                                            <FilePieChart className="h-6 w-6 text-destructive" />
+                                            <p className="font-bold text-white uppercase text-xs">PDF Documento Auditor</p>
+                                        </div>
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </CardHeader>
+                
+                <CardContent className="pt-8">
+                    {/* Barra de Búsqueda y Filtrado */}
+                    <div className="flex flex-col md:flex-row items-center gap-4 mb-8">
+                        <div className="relative flex-1 w-full">
+                            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground opacity-50" />
+                            <input
+                                className="w-full bg-muted/20 border border-white/10 rounded-xl h-12 pl-12 pr-4 text-sm text-white placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                placeholder="Localizar por ID, Nombre o E-mail..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
 
-            <Card>
-                <CardHeader className="p-0" />
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[80px]">Avatar</TableHead>
-                                <TableHead>Usuario</TableHead>
-                                <TableHead>Rol</TableHead>
-                                <TableHead>Estado</TableHead>
-                                <TableHead>Registrado</TableHead>
-                                <TableHead className="text-right">Acciones</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                Array.from({ length: 5 }).map((_, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell><div className="h-10 w-10 rounded-full bg-muted animate-pulse" /></TableCell>
-                                        <TableCell><div className="space-y-1"><div className="h-4 w-32 bg-muted rounded animate-pulse" /><div className="h-3 w-44 bg-muted rounded animate-pulse" /></div></TableCell>
-                                        <TableCell><div className="h-5 w-16 bg-muted rounded animate-pulse" /></TableCell>
-                                        <TableCell><div className="h-5 w-20 bg-muted rounded animate-pulse" /></TableCell>
-                                        <TableCell><div className="h-4 w-24 bg-muted rounded animate-pulse" /></TableCell>
-                                        <TableCell className="text-right"><div className="h-8 w-8 bg-muted rounded ml-auto animate-pulse" /></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : users.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                        No se encontraron usuarios.
-                                    </TableCell>
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                <SelectTrigger className="w-full md:w-[220px] h-12 bg-muted/20 border-white/10 rounded-xl text-white font-bold text-xs uppercase tracking-widest">
+                                    <div className="flex items-center gap-2">
+                                        <Filter className="h-4 w-4" />
+                                        <SelectValue placeholder="FILTRAR ROL" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent className="bg-card/95 backdrop-blur-xl border-white/10 text-white">
+                                    <SelectItem value="all">TODOS LOS PERFILES</SelectItem>
+                                    <SelectItem value="admin">ADMINISTRADORES</SelectItem>
+                                    <SelectItem value="user">SOLO USUARIOS</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/5 overflow-hidden">
+                        <Table>
+                            <TableHeader className="bg-muted/30">
+                                <TableRow className="hover:bg-transparent border-white/5">
+                                    <TableHead className="w-[80px] font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Activo</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Identidad de Usuario</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground text-center">Jerarquía</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground text-center">Estado</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground text-center">Alta</TableHead>
+                                    <TableHead className="text-right font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Acciones</TableHead>
                                 </TableRow>
-                            ) : (
-                                users.map((user) => (
-                                    <TableRow key={user.id || user._id}>
-                                        <TableCell>
-                                            <Avatar>
-                                                {user.avatar ? (
-                                                    <AvatarImage src={user.avatar} alt={user.name} />
-                                                ) : null}
-                                                <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                                                    {(user.name || 'U').substring(0, 2).toUpperCase()}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="font-medium">{user.name}</span>
-                                                <span className="text-xs text-muted-foreground">{user.email}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.role === 'admin' ? (
-                                                <Badge variant="default" className="bg-red-500 hover:bg-red-600 gap-1">
-                                                    <Shield className="h-3 w-3" /> Admin
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="secondary" className="gap-1">
-                                                    <UserIcon className="h-3 w-3" /> Usuario
-                                                </Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.isVerified ? (
-                                                <Badge variant="outline" className="border-green-500 text-green-500">Verificado</Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="border-yellow-500 text-yellow-500">Pendiente</Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(user.createdAt).toLocaleDateString('es-AR')}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" disabled={actionLoading === (user.id || user._id)}>
-                                                        {actionLoading === (user.id || user._id) ? (
-                                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                                        ) : (
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        )}
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                                    <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id || user._id}`)}>
-                                                        Ver Perfil
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => handleRoleUpdate(user.id || user._id, user.role)}>
-                                                        {user.role === 'admin' ? 'Degradar a Usuario' : 'Promover a Admin'}
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(user.id || user._id)}>
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <TableRow key={i} className="border-white/5"><TableCell colSpan={6}><div className="h-14 bg-muted/10 animate-pulse rounded-lg" /></TableCell></TableRow>
+                                    ))
+                                ) : users.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">No se hallaron registros en el padrón.</TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : (
+                                    users.map((user) => (
+                                        <TableRow key={user.id || user._id} className="border-white/5 hover:bg-white/5 transition-colors group">
+                                            <TableCell>
+                                                <Avatar className="h-10 w-10 ring-2 ring-white/5">
+                                                    {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                                                    <AvatarFallback className="bg-primary/10 text-primary font-black text-xs">{(user.name || 'U').substring(0, 2).toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-white text-sm group-hover:text-primary transition-colors">{user.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground opacity-70 italic truncate max-w-[200px]">{user.email}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                {user.role === 'admin' ? (
+                                                    <Badge variant="default" className="bg-destructive text-white border-none gap-1 py-0 font-black text-[9px] uppercase tracking-tighter">
+                                                        <ShieldAlert className="h-3 w-3" /> Admin
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="secondary" className="gap-1 py-0 font-bold text-[9px] uppercase tracking-tighter bg-muted/30">
+                                                        <UserIcon className="h-3 w-3" /> Usuario
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                {user.isVerified ? (
+                                                    <Badge variant="outline" className="border-green-500/30 text-green-500 font-bold text-[9px] py-0 bg-green-500/5 uppercase">Verificado</Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="border-yellow-500/30 text-yellow-500 font-bold text-[9px] py-0 bg-yellow-500/5 uppercase">Pendiente</Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-center text-xs font-mono text-muted-foreground opacity-60 italic">
+                                                {new Date(user.createdAt).toLocaleDateString('es-AR')}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="hover:bg-white/5" disabled={actionLoading === (user.id || user._id)}>
+                                                            {actionLoading === (user.id || user._id) ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <MoreVertical className="h-4 w-4 text-muted-foreground" />}
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-white/10 text-white">
+                                                        <DropdownMenuLabel className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Moderación de Perfil</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator className="bg-white/5" />
+                                                        <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id || user._id}`)} className="text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer">
+                                                            Visualizar Auditoría
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleRoleUpdate(user.id || user._id, user.role)} className={cn("text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer", user.role === 'admin' ? "text-destructive" : "text-green-400")}>
+                                                            <RefreshCw className="mr-2 h-4 w-4" /> {user.role === 'admin' ? 'Degradar a Cliente' : 'Elevar a Administrador'}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator className="bg-white/5" />
+                                                        <DropdownMenuItem className="text-red-500 font-black text-xs hover:bg-red-500/10 cursor-pointer" onClick={() => handleDelete(user.id || user._id, user.name)}>
+                                                            <Trash2 className="mr-2 h-4 w-4" /> ELIMINAR CUENTA
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Barra de Navegación de Nómina */}
+                    <div className="flex items-center justify-between mt-8 text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">
+                         <p>Página {page} de {totalPages}</p>
+                         <div className="flex gap-2">
+                             <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || loading} className="border-white/10">Anterior</Button>
+                             <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="border-white/10">Siguiente</Button>
+                         </div>
+                    </div>
                 </CardContent>
             </Card>
-
-            {/* Paginación simple (Mejorable) */}
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1 || loading}
-                >
-                    Anterior
-                </Button>
-                <span className="text-sm text-muted-foreground">Página {page} de {totalPages}</span>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages || loading}
-                >
-                    Siguiente
-                </Button>
-            </div>
         </div>
     );
 }
+

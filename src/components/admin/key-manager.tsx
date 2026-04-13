@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * Capa de Administración: Gestor de Licencias de Inventario (Key Manager)
+ * --------------------------------------------------------------------------
+ * Orquesta la administración de licencias digitales para productos de tipo 'Digital'.
+ * Implementa flujos de carga masiva, auditoría de estados (Disponible/Vendido)
+ * y políticas de prevención de duplicidad en el inventario. (MVC / View-Admin)
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { ApiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -22,6 +30,9 @@ export function KeyManager({ productId, productName }: KeyManagerProps) {
     const [inputKeys, setInputKeys] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
+    /**
+     * RN - Auditoría de Stock: Recupera el listado completo de licencias vinculadas al producto.
+     */
     const loadKeys = useCallback(async () => {
         setLoading(true);
         try {
@@ -30,8 +41,8 @@ export function KeyManager({ productId, productName }: KeyManagerProps) {
                 setKeys(res.data);
             }
         } catch (error) {
-            console.error(error);
-            toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las keys" });
+            console.error("[KeyManager] Error de sincronización:", error);
+            toast({ variant: "destructive", title: "Error de Carga", description: "No se pudo recuperar el inventario de keys." });
         } finally {
             setLoading(false);
         }
@@ -43,10 +54,14 @@ export function KeyManager({ productId, productName }: KeyManagerProps) {
         }
     }, [productId, loadKeys]);
 
+    /**
+     * RN - Ingesta de Datos: Procesa la carga masiva de licencias.
+     * Implementa limpieza de caracteres y filtrado de redundancias. (Batch Processing)
+     */
     const handleSave = async () => {
         if (!inputKeys.trim()) return;
 
-        // Split por nuevas líneas o comas y limpiar espacios
+        // RN - Normalización: Segmenta por saltos de línea o comas y elimina espacios superfluos.
         const keysArray = inputKeys.split(/[\n,]+/).map(k => k.trim()).filter(Boolean);
 
         if (keysArray.length === 0) return;
@@ -56,94 +71,111 @@ export function KeyManager({ productId, productName }: KeyManagerProps) {
             const res = await ApiClient.addKeys(productId, keysArray);
             if (res.success) {
                 toast({
-                    title: "Keys Agregadas",
-                    description: `Se agregaron ${res.addedCount} keys nuevas. (${res.ignoredCount} duplicadas)`
+                    title: "Inventario Sincronizado",
+                    description: `Integradas: ${res.addedCount} | Ignoradas (Duplicadas): ${res.ignoredCount}`
                 });
                 setInputKeys("");
-                loadKeys(); // Recargar tabla
+                loadKeys();
             }
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Error", description: error.message || "Falló la carga de keys" });
+            toast({ variant: "destructive", title: "Fallo en Persistencia", description: error.message || "No se pudo guardar el lote de keys." });
         } finally {
             setIsSaving(false);
         }
     };
 
+    /**
+     * RN - Moderación: Eliminación unitaria de licencias no vendidas.
+     */
     const handleDelete = async (id: string, keyVal: string) => {
-        if (!confirm(`¿Seguro que querés borrar la key: ${keyVal}?`)) return;
+        if (!confirm(`¿Confirma la eliminación de la licencia técnica: ${keyVal}?`)) return;
 
         try {
             await ApiClient.deleteKey(id);
-            toast({ title: "Key eliminada" });
+            toast({ title: "Licencia Eliminada" });
             setKeys(keys.filter(k => k._id !== id));
         } catch (error) {
-            toast({ variant: "destructive", title: "Error al borrar" });
+            toast({ variant: "destructive", title: "Fallo en Operación", description: "No se pudo procesar la baja." });
         }
     };
 
     return (
-        <Card className="mt-8 border-primary/20">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+        <Card className="mt-8 border-none bg-card/40 backdrop-blur-md shadow-2xl">
+            <CardHeader className="border-b border-white/5">
+                <CardTitle className="flex items-center gap-2 text-white font-headline">
                     <Key className="h-5 w-5 text-primary" />
-                    Gestión de Licencias Digitales (Keys)
+                    Gestión de Licencias Digitales (E-Keys)
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
 
-                {/* Input Area */}
-                <div className="space-y-4 rounded-lg bg-muted/50 p-4 border">
-                    <h4 className="text-sm font-medium">Agregar Keys (Una por línea)</h4>
+                {/* Área de Ingesta Masiva */}
+                <div className="space-y-4 rounded-xl bg-muted/20 p-5 border border-white/5 shadow-inner">
+                    <h4 className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Carga por Lote (Batch Input)</h4>
+                    <p className="text-[10px] text-muted-foreground italic">Ingrese una licencia por línea para su procesamiento asíncrono.</p>
                     <Textarea
-                        placeholder="AAAA-BBBB-CCCC-DDDD&#10;EEEE-FFFF-GGGG-HHHH"
-                        className="font-mono text-sm min-h-[120px]"
+                        placeholder="AAAA-BBBB-CCCC-DDDD\nEEEE-FFFF-GGGG-HHHH"
+                        className="font-mono text-xs min-h-[140px] bg-background/50 border-white/10 text-primary"
                         value={inputKeys}
                         onChange={(e) => setInputKeys(e.target.value)}
                     />
                     <div className="flex justify-end">
-                        <Button onClick={handleSave} disabled={isSaving || !inputKeys.trim()}>
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            <Save className="mr-2 h-4 w-4" />
-                            Cargar al Inventario
+                        <Button onClick={handleSave} disabled={isSaving || !inputKeys.trim()} className="font-bold shadow-md">
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            SINCRONIZAR A INVENTARIO
                         </Button>
                     </div>
                 </div>
 
-                {/* List Area */}
-                <div className="rounded-md border">
+                {/* Visor de Existencias (Stock Auditor) */}
+                <div className="rounded-xl border border-white/5 overflow-hidden">
                     <Table>
-                        <TableHeader>
+                        <TableHeader className="bg-muted/30">
                             <TableRow>
-                                <TableHead>Clave</TableHead>
-                                <TableHead>Estado</TableHead>
-                                <TableHead className="text-right">Acciones</TableHead>
+                                <TableHead className="font-bold text-xs uppercase tracking-widest">Licencia Técnica</TableHead>
+                                <TableHead className="font-bold text-xs uppercase tracking-widest text-center">Estado</TableHead>
+                                <TableHead className="text-right font-bold text-xs uppercase tracking-widest">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading ? (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center h-24">
-                                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                                     </TableCell>
                                 </TableRow>
                             ) : keys.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                                        No hay keys cargadas para este producto
+                                    <TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic">
+                                        Sin licencias digitales registradas para este producto.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 keys.map((k) => (
-                                    <TableRow key={k._id}>
-                                        <TableCell className="font-mono text-xs md:text-sm">{k.clave}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={k.estado === 'DISPONIBLE' ? 'default' : k.estado === 'VENDIDA' ? 'destructive' : 'secondary'}>
+                                    <TableRow key={k._id} className="border-white/5 hover:bg-white/5 transition-colors">
+                                        <TableCell className="font-mono text-xs md:text-sm text-white">{k.clave}</TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge 
+                                                variant="outline"
+                                                className={cn(
+                                                    "text-[10px] font-bold uppercase py-0",
+                                                    k.estado === 'DISPONIBLE' ? "border-green-500/30 text-green-400 bg-green-500/5" : 
+                                                    k.estado === 'VENDIDA' ? "border-destructive/30 text-destructive bg-destructive/5" : 
+                                                    "border-muted-foreground/30 text-muted-foreground"
+                                                )}
+                                            >
                                                 {k.estado}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(k._id, k.clave)} disabled={k.estado === 'VENDIDA'}>
-                                                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                onClick={() => handleDelete(k._id, k.clave)} 
+                                                disabled={k.estado === 'VENDIDA'}
+                                                className="hover:bg-destructive/20 hover:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </TableCell>
                                     </TableRow>

@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+/**
+ * Capa de Interfaz: Ficha Técnica Detallada (Product Detail View)
+ * --------------------------------------------------------------------------
+ * Orquesta la visualización pormenorizada de un producto del catálogo.
+ * Gestiona la integración multimedia (Trailers de YouTube, Galerías),
+ * especificaciones de hardware y el acceso principal al flujo de compra. 
+ * Implementa una arquitectura inmersiva para maximizar la conversión. (MVC / View)
+ */
+
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
 import type { Game } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
@@ -12,7 +20,7 @@ import { formatCurrency, cn, getImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Heart, Monitor, Gamepad2, Disc, Globe, Layers, Info } from "lucide-react";
+import { ShoppingCart, Heart, Monitor, Gamepad2, Disc, Globe, Layers, Info, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProductReviews } from "@/components/game/product-reviews";
 
@@ -27,7 +35,10 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
     const { toggleWishlist, isInWishlist } = useWishlist();
     const { toast } = useToast();
 
-    // Helper para detectar y formatear URLs de YouTube
+    /**
+     * RN - Integración Multimedia: Orquesta la normalización de activos visuales.
+     * Transforma enlaces de YouTube en reproductores embebidos con parámetros optimizados.
+     */
     const getEmbedUrl = (url: string) => {
         if (!url) return null;
         const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
@@ -39,41 +50,51 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
     };
 
     const isWishlisted = isInWishlist(game.id);
-    const imageUrl = getImageUrl(game.imageId, "https://placehold.co/600x800/222/FFF?text=No+Image");
+    const imageUrl = getImageUrl(game.imageId, "https://placehold.co/600x800/222/FFF?text=Sin+Imagen");
 
     return (
-        <div className="min-h-screen bg-background text-foreground pb-20 relative">
-            {/* --- HERO BACKGROUND (Blurred) --- */}
-            <div className="absolute inset-x-0 top-0 h-[500px] overflow-hidden -z-10 opacity-30 pointer-events-none select-none">
+        <div className="min-h-screen bg-background text-foreground pb-20 relative overflow-x-hidden">
+            
+            {/* Capa Visual: Hero Background (Efecto Inmersivo) */}
+            <div className="absolute inset-x-0 top-0 h-[600px] overflow-hidden -z-10 opacity-30 pointer-events-none select-none">
                 <Image
                     src={imageUrl}
-                    alt="Background"
+                    alt="Fondo Decorativo"
                     fill
-                    className="object-cover blur-3xl scale-110"
+                    className="object-cover blur-3xl scale-125"
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/80 to-background" />
+                <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/60 to-background" />
             </div>
 
-            <main className="container mx-auto px-4 pt-24 max-w-7xl animate-in fade-in duration-500">
-                {/* --- HEADER --- */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-2 text-muted-foreground text-sm font-medium">
-                        <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => router.push('/productos')}>Juegos</span>
-                        <span>/</span>
-                        <span className="text-foreground">{game.genre?.name || "General"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-4xl md:text-5xl font-headline font-bold mb-4 tracking-tight drop-shadow-xl">{game.name}</h1>
+            <main className="container mx-auto px-4 pt-28 max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+                
+                {/* Jerarquía de Navegación (Breadcrumbs) */}
+                <nav className="mb-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                    <Link href="/productos" className="hover:text-primary transition-colors">Catálogo Maestro</Link>
+                    <span className="opacity-30">/</span>
+                    <span className="text-primary/80">{game.genre?.name || "Activo General"}</span>
+                </nav>
+
+                <div className="mb-10">
+                    <h1 className="text-5xl md:text-7xl font-headline font-bold mb-4 tracking-tighter text-white drop-shadow-2xl">
+                        {game.name}
+                    </h1>
+                    <div className="flex items-center gap-4">
+                        <Badge className="bg-primary/10 text-primary border-primary/20 font-black uppercase tracking-widest text-[10px]">OFICIAL STORE</Badge>
+                        <div className="flex items-center gap-1 text-yellow-500">
+                            {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
+                        </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 xl:gap-12">
-                    {/* --- LEFT COL: MEDIA & DESCRIPTION --- */}
-                    <div className="lg:col-span-2 space-y-10">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 xl:gap-16">
+                    
+                    {/* Columna de Contenidos: Multimedia y Auditoría Técnica */}
+                    <div className="lg:col-span-2 space-y-12">
 
-                        {/* Media Gallery / Main Image */}
-                        <div className="aspect-video w-full relative overflow-hidden rounded-xl shadow-xl bg-black ring-1 ring-white/10 group">
+                        {/* Motor Multimedia: Despliegue de Trailer / Imagen Master */}
+                        <div className="aspect-video w-full relative overflow-hidden rounded-2xl shadow-3xl bg-black/50 ring-1 ring-white/10 group">
                             {(() => {
                                 const media = getEmbedUrl(game.trailerUrl || "");
                                 if (media?.type === 'youtube') {
@@ -86,148 +107,134 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
                                         />
                                     );
                                 } else {
-                                    // If no trailer, show image
                                     return (
-                                        <Image src={imageUrl} alt={game.name} fill className="object-cover" priority />
+                                        <div className="relative w-full h-full">
+                                            <Image src={imageUrl} alt={game.name} fill className="object-cover" priority />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                        </div>
                                     );
                                 }
                             })()}
                         </div>
 
-                        {/* Description */}
+                        {/* Descripción y Reglas de Dominio */}
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-bold border-l-4 border-primary pl-4">Acerca de este juego</h2>
+                            <h2 className="text-2xl font-bold font-headline text-white flex items-center gap-3">
+                                <div className="h-8 w-1 bg-primary rounded-full shadow-glow-primary" />
+                                Sinopsis Técnica
+                            </h2>
                             <div className="prose prose-invert max-w-none text-muted-foreground leading-relaxed text-lg">
-                                <p className="whitespace-pre-line">{game.description || "Sin descripción disponible."}</p>
+                                <p className="whitespace-pre-line opacity-90">{game.description || "No se dispone de una descripción detallada para este registro del catálogo."}</p>
                             </div>
                         </div>
 
-                        {/* System Requirements (Real from Backend) */}
-                        {game.requirements ? (
-                            <div className="bg-card/30 rounded-xl p-6 border border-white/5">
-                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                    <Monitor className="h-5 w-5 text-primary" />
-                                    Requisitos del Sistema Recomendados
-                                </h3>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between py-2 border-b border-white/5">
-                                        <span className="text-muted-foreground font-medium">Sistema Operativo:</span>
-                                        <span className="text-foreground">{game.requirements.os}</span>
+                        {/* RN - Requisitos de Sistema: Parámetros de compatibilidad. */}
+                        {game.requirements && (
+                            <Card className="bg-card/30 backdrop-blur-xl border-white/5 overflow-hidden">
+                                <CardHeader className="bg-muted/20 border-b border-white/5">
+                                    <CardTitle className="text-lg font-headline font-bold flex items-center gap-3 text-white">
+                                        <Monitor className="h-5 w-5 text-primary" />
+                                        Entorno Tecnológico Recomendado
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="pt-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                        <SpecItem label="Sistema Operativo" value={game.requirements.os} />
+                                        <SpecItem label="Procesamiento Central" value={game.requirements.processor} />
+                                        <SpecItem label="Memoria Operativa" value={game.requirements.memory} />
+                                        <SpecItem label="Aceleración Gráfica" value={game.requirements.graphics} />
+                                        <SpecItem label="Almacenamiento" value={game.requirements.storage} />
+                                        <SpecItem label="Perfil de Hardware" value={game.specPreset} highlight />
                                     </div>
-                                    <div className="flex justify-between py-2 border-b border-white/5">
-                                        <span className="text-muted-foreground font-medium">Procesador:</span>
-                                        <span className="text-foreground text-right max-w-[60%]">{game.requirements.processor}</span>
-                                    </div>
-                                    <div className="flex justify-between py-2 border-b border-white/5">
-                                        <span className="text-muted-foreground font-medium">Memoria RAM:</span>
-                                        <span className="text-foreground">{game.requirements.memory}</span>
-                                    </div>
-                                    <div className="flex justify-between py-2 border-b border-white/5">
-                                        <span className="text-muted-foreground font-medium">Tarjeta Gráfica:</span>
-                                        <span className="text-foreground text-right max-w-[60%]">{game.requirements.graphics}</span>
-                                    </div>
-                                    <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground font-medium">Almacenamiento:</span>
-                                        <span className="text-foreground">{game.requirements.storage}</span>
-                                    </div>
-                                </div>
-                                {game.specPreset && (
-                                    <div className="mt-4 pt-4 border-t border-white/10">
-                                        <span className="text-xs text-muted-foreground">
-                                            Perfil de requisitos: <span className="font-bold text-primary">{game.specPreset === 'Low' ? 'Gama Baja' : game.specPreset === 'Mid' ? 'Gama Media' : 'Gama Alta'}</span>
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        ) : null}
+                                </CardContent>
+                            </Card>
+                        )}
 
-                        {/* Reviews Section */}
-                        <ProductReviews productId={game.id} productName={game.name} />
+                        {/* Capa de Auditoría: Opiniones y Feedback del Ecosistema. */}
+                        <div className="pt-8">
+                             <ProductReviews productId={game.id} productName={game.name} />
+                        </div>
                     </div>
 
-                    {/* --- RIGHT COL: SIDEBAR (Sticky) --- */}
+                    {/* Columna de Conversión: Control Transaccional y Checkout */}
                     <div className="lg:col-span-1">
-                        <div className="sticky top-24 space-y-6 bg-card/40 backdrop-blur-md p-6 rounded-xl border border-white/5 shadow-2xl">
+                        <div className="sticky top-28 space-y-8 bg-card/40 backdrop-blur-2xl p-8 rounded-3xl border border-white/10 shadow-3xl ring-1 ring-white/5">
 
-                            {/* Game Logo/Box Art Small (Optional, usually Main Image is enough, but keeping Sidebar Art is standard) */}
-                            <div className="aspect-[3/4] relative w-full rounded-lg overflow-hidden shadow-lg mb-4 ring-1 ring-white/10 hidden lg:block">
-                                <Image src={imageUrl} alt="Cover" fill className="object-cover" />
+                            <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 hidden lg:block group">
+                                <Image src={imageUrl} alt="Identificador de Portada" fill className="object-cover group-hover:scale-110 transition-transform duration-1000" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                             </div>
 
-                            {/* Price & Actions */}
-                            <div className="space-y-4">
+                            {/* Valorización y Promociones Transaccionales */}
+                            <div className="space-y-6">
                                 {game.finalPrice > 0 ? (
-                                    <div className="flex flex-col">
-                                        {(game.discountPercentage ?? 0) > 0 && game.finalPrice < game.price && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg text-muted-foreground line-through decoration-red-500/50">
+                                    <div className="space-y-1">
+                                        {(game.discountPercentage ?? 0) > 0 && (
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xl text-muted-foreground line-through opacity-50 font-bold">
                                                     {formatCurrency(game.price)}
                                                 </span>
-                                                <Badge className="bg-green-500 text-white animate-pulse">
-                                                    -{game.discountPercentage}%
+                                                <Badge className="bg-destructive text-white font-black text-[10px] px-2 py-0 border-none">
+                                                    -{game.discountPercentage}% BONIFICADO
                                                 </Badge>
                                             </div>
                                         )}
-                                        <div className={cn(
-                                            "text-3xl font-bold",
-                                            (game.discountPercentage ?? 0) > 0 ? "text-green-400" : "text-foreground"
-                                        )}>
+                                        <div className="text-5xl font-black text-white tracking-tighter drop-shadow-md">
                                             {formatCurrency(game.finalPrice)}
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-3xl font-bold text-primary">GRATIS</div>
+                                    <div className="text-5xl font-black text-primary animate-pulse tracking-tighter">FREE ACCESS</div>
                                 )}
 
-                                <div className="flex flex-col gap-3">
+                                {/* Acciones de Conversión Primaria */}
+                                <div className="flex flex-col gap-4">
                                     <Button
                                         size="lg"
-                                        className="w-full text-lg font-bold h-12 shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] transition-all"
+                                        className="w-full text-lg font-black h-16 bg-primary hover:bg-primary/90 text-black shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-1 group"
                                         onClick={() => {
                                             addToCart(game);
-                                            toast({ title: "Añadido al carrito", description: `${game.name} ya está en tu carrito.` });
+                                            toast({ title: "Cesta Actualizada", description: `${game.name} ha sido reservado.` });
                                         }}
                                         disabled={game.stock === 0}
                                     >
-                                        {game.stock !== undefined && game.stock === 0 ? "Agotado" : (
-                                            <>
-                                                <ShoppingCart className="mr-2 h-5 w-5" />
-                                                {game.price > 0 ? "Comprar Ahora" : "Obtener"}
-                                            </>
-                                        )}
+                                        <ShoppingCart className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
+                                        {game.stock === 0 ? "STOCK AGOTADO" : "AÑADIR AL CARRITO"}
                                     </Button>
 
                                     <Button
                                         variant="outline"
                                         size="lg"
-                                        className={cn("w-full h-12 border-white/10 hover:bg-white/5", isWishlisted && "border-red-500/50 text-red-400 bg-red-500/5 hover:bg-red-500/10")}
+                                        className={cn(
+                                            "w-full h-14 border-white/10 hover:bg-white/5 font-bold uppercase tracking-widest text-[10px]", 
+                                            isWishlisted && "border-destructive/30 text-destructive bg-destructive/5"
+                                        )}
                                         onClick={() => toggleWishlist(game)}
                                     >
-                                        <Heart className={cn("mr-2 h-5 w-5", isWishlisted && "fill-current")} />
-                                        {isWishlisted ? "En tu Lista de Deseos" : "Añadir a Lista de Deseos"}
+                                        <Heart className={cn("mr-2 h-4 w-4", isWishlisted && "fill-current")} />
+                                        {isWishlisted ? "Deseado" : "Añadir a Deseos"}
                                     </Button>
 
-                                    {/* Botón Admin en Sidebar */}
+                                    {/* RN - Acceso Administrativo (RBAC) */}
                                     {user?.role === 'admin' && (
-                                        <Button asChild variant="ghost" size="lg" className="w-full h-12 text-muted-foreground hover:text-foreground hover:bg-white/5 border border-transparent hover:border-white/10">
+                                        <Button asChild variant="ghost" size="lg" className="w-full h-10 text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground hover:text-white mt-4 border border-dashed border-white/5">
                                             <Link href={`/admin/products/${game.id}`}>
-                                                <Gamepad2 className="mr-2 h-4 w-4" />
-                                                Editar Producto
+                                                ADMNISTRAR REGISTRO
                                             </Link>
                                         </Button>
                                     )}
                                 </div>
                             </div>
 
-                            <Separator className="bg-white/10" />
+                            <Separator className="bg-white/5" />
 
-                            {/* Metadata */}
-                            <div className="space-y-3 text-sm">
-                                <MetaRow icon={<Globe className="w-4 h-4" />} label="Desarrollador" value={game.developer} />
-                                <MetaRow icon={<Layers className="w-4 h-4" />} label="Plataforma" value={game.platform?.name} />
-                                <MetaRow icon={<Gamepad2 className="w-4 h-4" />} label="Género" value={game.genre?.name} />
-                                <MetaRow icon={<Disc className="w-4 h-4" />} label="Tipo" value={game.type === 'Physical' ? 'Físico' : 'Digital (Key)'} />
-                                <MetaRow icon={<Info className="w-4 h-4" />} label="Lanzamiento" value={new Date(game.releaseDate).toLocaleDateString()} />
+                            {/* Tabla Registral de Metadatos Industriales */}
+                            <div className="space-y-4">
+                                <MetaRow icon={<Globe className="w-4 h-4 text-primary/60" />} label="Desarrollador" value={game.developer} />
+                                <MetaRow icon={<Layers className="w-4 h-4 text-primary/60" />} label="Plataforma" value={game.platform?.name} />
+                                <MetaRow icon={<Gamepad2 className="w-4 h-4 text-primary/60" />} label="Categoría" value={game.genre?.name} />
+                                <MetaRow icon={<Disc className="w-4 h-4 text-primary/60" />} label="Distribución" value={game.type === 'Physical' ? 'Medio Físico' : 'Licencia Digital'} />
+                                <MetaRow icon={<Info className="w-4 h-4 text-primary/60" />} label="Lanzamiento" value={new Date(game.releaseDate).toLocaleDateString("es-AR")} />
                             </div>
                         </div>
                     </div>
@@ -237,13 +244,30 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
     );
 }
 
+/**
+ * Componente Atómico: Fila de Atributo Registral.
+ */
 function MetaRow({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string }) {
     if (!value) return null;
     return (
-        <div className="flex justify-between items-center py-1">
-            <span className="text-muted-foreground flex items-center gap-2">{icon} {label}</span>
-            <span className="text-foreground font-medium text-right">{value}</span>
+        <div className="flex justify-between items-center py-2 border-b border-transparent hover:border-white/5 transition-all">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                {icon} {label}
+            </span>
+            <span className="text-white text-xs font-bold text-right">{value}</span>
         </div>
     );
 }
 
+/**
+ * Componente Atómico: Ítem de Especificación Técnica.
+ */
+function SpecItem({ label, value, highlight }: { label: string, value?: string, highlight?: boolean }) {
+    if (!value) return null;
+    return (
+        <div className="flex flex-col gap-1 pb-2 md:pb-0">
+            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">{label}</span>
+            <span className={cn("text-xs font-bold leading-tight", highlight ? "text-primary uppercase" : "text-white")}>{value}</span>
+        </div>
+    );
+}

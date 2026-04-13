@@ -1,5 +1,18 @@
 "use client";
 
+/**
+ * Capa de Interfaz: Orquestador de Finalización de Compra (Checkout Page)
+ * --------------------------------------------------------------------------
+ * Gestiona el flujo crítico de liquidación de activos mediante un sistema 
+ * de terminal por etapas (Stepper). 
+ * Responsabilidades:
+ * 1. Logística de Envío: Captura y valida datos registrales para el despacho.
+ * 2. Orquestación Financiera: Delega la ejecución del cobro a la pasarela 
+ *    externa (Mercado Pago) mediante preferencias seguras.
+ * 3. Validación de Stock: Garantiza la integridad de la oferta antes del pago.
+ * (MVC / View)
+ */
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,15 +25,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CreditCard, Banknote, ShieldCheck, MapPin, Truck, CheckCircle2 } from "lucide-react";
+import { Loader2, CreditCard, ShieldCheck, MapPin, CheckCircle2, ArrowRight, ArrowLeft, ShoppingBag } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
-// Steps Definition
+/**
+ * RN - Arquitectura de Flujo: Definición de fases del ciclo de checkout.
+ */
 const steps = [
-  { id: 1, title: 'Dirección', icon: MapPin },
-  { id: 2, title: 'Pago', icon: CreditCard },
-  { id: 3, title: 'Confirmar', icon: CheckCircle2 },
+  { id: 1, title: 'Datos de Despacho', icon: MapPin },
+  { id: 2, title: 'Configuración Instrumental', icon: CreditCard },
+  { id: 3, title: 'Auditoría Final', icon: CheckCircle2 },
 ];
 
 export default function CheckoutPage() {
@@ -36,15 +51,24 @@ export default function CheckoutPage() {
     city: "",
     state: "",
     zipCode: "",
-    country: "",
+    country: "Argentina",
     paymentMethod: "mercadopago"
   });
 
+  /**
+   * RN - Integración de Estado: Previene discrepancias si el carro se vacía en sesión.
+   */
   if (cart.length === 0) {
     return (
-      <div className="container mx-auto py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4 font-headline">Tu carrito está vacío</h1>
-        <Button onClick={() => router.push("/productos")}>Volver a la tienda</Button>
+      <div className="container mx-auto py-32 text-center animate-in fade-in zoom-in-95 duration-700 px-4">
+        <div className="h-24 w-24 rounded-full bg-white/5 mx-auto flex items-center justify-center mb-6">
+            <ShoppingBag className="h-12 w-12 text-muted-foreground opacity-20" />
+        </div>
+        <h1 className="text-4xl font-headline font-bold mb-4 text-white tracking-tight">Cesta de Activos Vacía</h1>
+        <p className="text-muted-foreground mb-10 text-sm uppercase tracking-widest font-black opacity-60">No se han detectado productos para transaccionar.</p>
+        <Button onClick={() => router.push("/productos")} className="h-12 px-8 rounded-full font-black uppercase tracking-widest text-[10px] bg-primary text-black hover:bg-primary/90 shadow-xl transition-all">
+            Regresar al Catálogo Maestro
+        </Button>
       </div>
     );
   }
@@ -53,12 +77,14 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  /**
+   * RN - Validación de Fases: Controla el avance del stepper tras auditoría de datos.
+   */
   const nextStep = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    // Validate Step 1
     if (currentStep === 1) {
       if (!formData.street || !formData.city || !formData.zipCode) {
-        toast({ variant: "destructive", title: "Campos incompletos", description: "Por favor completa la dirección de envío." });
+        toast({ variant: "destructive", title: "Error de Validación", description: "Los parámetros de localización son obligatorios para el despacho." });
         return;
       }
     }
@@ -69,9 +95,13 @@ export default function CheckoutPage() {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  /**
+   * RN - Generación de Orden y Checkout: Orquesta la persistencia y el cobro.
+   * Delega el protocolo financiero a Mercado Pago mediante un token de preferencia.
+   */
   const handleSubmit = async () => {
     if (!user) {
-      toast({ variant: "destructive", title: "Error", description: "Debes iniciar sesión para comprar." });
+      toast({ variant: "destructive", title: "Fallo de Sesión", description: "Inicie sesión para normalizar la transacción." });
       router.push("/login");
       return;
     }
@@ -93,7 +123,7 @@ export default function CheckoutPage() {
         city: formData.city,
         state: formData.state,
         zip: formData.zipCode,
-        country: formData.country || 'Argentina'
+        country: formData.country
       },
       paymentMethod: formData.paymentMethod,
       itemsPrice: cartTotal,
@@ -105,18 +135,17 @@ export default function CheckoutPage() {
       const response = await ApiClient.createOrder(orderData as any);
 
       if (response.paymentLink) {
-        toast({ title: "Procesando...", description: "Redirigiendo a Mercado Pago" });
+        toast({ title: "Orden Sincronizada", description: "Redirigiendo a pasarela certificada..." });
         window.location.href = response.paymentLink;
       } else {
-        throw new Error("El sistema de pagos no devolvió un link válido.");
+        throw new Error("No se pudo obtener el enlace de liquidación de la pasarela.");
       }
-
     } catch (error: any) {
-      console.error("Error en checkout:", error);
+      console.error("[CheckoutEngine] Error Crítico:", error);
       toast({
         variant: "destructive",
-        title: "Error al iniciar el pago",
-        description: error.message || "No se pudo conectar con Mercado Pago."
+        title: "Interrupción en Transacción",
+        description: error.message || "Fallo en la comunicación con el motor de pagos."
       });
     } finally {
       setIsSubmitting(false);
@@ -124,37 +153,41 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-screen-lg px-4 py-8 mb-12">
-      <h1 className="text-3xl font-bold mb-8 font-headline text-center">Finalizar Compra</h1>
+    <div className="container mx-auto max-w-screen-xl px-4 py-16 animate-in fade-in duration-1000">
+      <div className="flex flex-col items-center mb-16 text-center">
+        <h1 className="text-5xl font-bold font-headline text-white tracking-tighter mb-4 italic">Liquidación de Activos</h1>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-60">Terminal de Pago Certificada TFI 2026</p>
+      </div>
 
-      {/* Stepper */}
-      <div className="flex justify-center mb-12">
-        <div className="flex items-center space-x-4">
+      {/* Stepper Dinámico (UX Premium) */}
+      <div className="flex justify-center mb-16 px-4">
+        <div className="flex items-center w-full max-w-3xl">
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isActive = step.id === currentStep;
             const isCompleted = step.id < currentStep;
 
             return (
-              <div key={step.id} className="flex items-center">
-                <div className={cn(
-                  "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all",
-                  isActive ? "border-primary bg-primary text-primary-foreground" :
-                    isCompleted ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground text-muted-foreground"
-                )}>
-                  <Icon className="w-5 h-5" />
+              <div key={step.id} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center relative gap-3">
+                    <div className={cn(
+                        "flex items-center justify-center w-14 h-14 rounded-2xl border transition-all duration-500",
+                        isActive ? "border-primary bg-primary/20 text-primary shadow-lg shadow-primary/10" :
+                        isCompleted ? "border-primary bg-primary text-black" : "border-white/10 bg-white/5 text-muted-foreground"
+                    )}>
+                        <Icon className={cn("w-6 h-6", isCompleted && "animate-in zoom-in-50")} />
+                    </div>
+                    <span className={cn(
+                        "text-[9px] font-black uppercase tracking-widest absolute -bottom-8 whitespace-nowrap",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                    )}>
+                    {step.title}
+                    </span>
                 </div>
-                <span className={cn(
-                  "ml-2 font-medium hidden sm:inline-block",
-                  isActive || isCompleted ? "text-foreground" : "text-muted-foreground"
-                )}>
-                  {step.title}
-                </span>
                 {index < steps.length - 1 && (
-                  <div className={cn(
-                    "w-12 h-[2px] mx-4",
-                    isCompleted ? "bg-primary" : "bg-muted"
-                  )} />
+                  <div className="flex-1 px-4">
+                      <div className={cn("h-[2px] transition-all duration-700", isCompleted ? "bg-primary" : "bg-white/5")} />
+                  </div>
                 )}
               </div>
             );
@@ -162,117 +195,142 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mt-12">
+        <div className="lg:col-span-8 space-y-8">
           <AnimatePresence mode="wait">
-            {/* Step 1: Shipping */}
+            {/* ETAPA 1: LOCALIZACIÓN */}
             {currentStep === 1 && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Dirección de Envío</CardTitle>
-                    <CardDescription>¿A dónde enviamos tus juegos?</CardDescription>
+              <motion.div key="step1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <Card className="border-none bg-card/40 backdrop-blur-3xl shadow-3xl rounded-[2.5rem] overflow-hidden">
+                  <CardHeader className="pt-10 px-10">
+                    <CardTitle className="text-2xl font-bold font-headline text-white">Logística de Despacho</CardTitle>
+                    <CardDescription className="text-xs">Normalice los datos de destino para la facturación y entrega.</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <form id="shipping-form" onSubmit={nextStep} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label>Calle y Número</Label><Input name="street" required value={formData.street} onChange={handleChange} placeholder="Av. Siempreviva 742" /></div>
-                        <div className="space-y-2"><Label>Ciudad</Label><Input name="city" required value={formData.city} onChange={handleChange} placeholder="Springfield" /></div>
+                  <CardContent className="px-10 pb-10 space-y-6">
+                    <form id="shipping-form" onSubmit={nextStep} className="space-y-6">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dirección (Calle y Altura)</Label>
+                        <Input name="street" required value={formData.street} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" placeholder="Ej: Av. del Libertador 4500" />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2"><Label>Provincia/Estado</Label><Input name="state" required value={formData.state} onChange={handleChange} /></div>
-                        <div className="space-y-2"><Label>Código Postal</Label><Input name="zipCode" required value={formData.zipCode} onChange={handleChange} /></div>
-                        <div className="space-y-2"><Label>País</Label><Input name="country" required value={formData.country} onChange={handleChange} /></div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ciudad / Localidad</Label>
+                            <Input name="city" required value={formData.city} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" placeholder="Ej: Buenos Aires" />
+                        </div>
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Provincia / Región</Label>
+                            <Input name="state" required value={formData.state} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">C.P.</Label>
+                            <Input name="zipCode" required value={formData.zipCode} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                        </div>
+                        <div className="col-span-2 space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">País / Jurisdicción</Label>
+                            <Input name="country" required value={formData.country} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                        </div>
                       </div>
                     </form>
                   </CardContent>
-                  <CardFooter className="flex justify-end">
-                    <Button type="submit" form="shipping-form">
-                      Continuar a Pago
+                  <CardFooter className="bg-white/5 px-10 py-6 flex justify-between">
+                    <p className="text-[10px] font-bold text-muted-foreground flex items-center gap-2">
+                        <ShieldCheck className="h-3 w-3 text-primary" /> Datos protegidos vía SSL
+                    </p>
+                    <Button type="submit" form="shipping-form" className="h-12 px-8 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary/90 transition-all">
+                        Seleccionar Método <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </CardFooter>
                 </Card>
               </motion.div>
             )}
 
-            {/* Step 2: Payment */}
+            {/* ETAPA 2: INSTRUMENTOS */}
             {currentStep === 2 && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Método de Pago</CardTitle>
-                    <CardDescription>Selecciona cómo quieres abonar.</CardDescription>
+              <motion.div key="step2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <Card className="border-none bg-card/40 backdrop-blur-3xl shadow-3xl rounded-[2.5rem] overflow-hidden">
+                  <CardHeader className="pt-10 px-10">
+                    <CardTitle className="text-2xl font-bold font-headline text-white">Medios de Liquidación</CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">Seleccione el instrumento financiero para procesar el pago.</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <RadioGroup defaultValue={formData.paymentMethod} onValueChange={(val) => setFormData({ ...formData, paymentMethod: val })}>
-                      <div className={cn("flex items-center space-x-2 border p-4 rounded-md mb-2 cursor-pointer transition-colors", formData.paymentMethod === 'mercadopago' && "border-primary bg-primary/5")}>
-                        <RadioGroupItem value="mercadopago" id="mercadopago" />
-                        <Label htmlFor="mercadopago" className="flex items-center gap-2 cursor-pointer w-full font-bold">
-                          <CreditCard className="h-5 w-5 text-blue-500" />
-                          Mercado Pago
-                          <span className="ml-auto text-xs font-normal text-muted-foreground bg-background px-2 py-1 rounded-full border">Tarjetas / Efectivo / QR</span>
+                  <CardContent className="px-10 pb-10">
+                    <RadioGroup defaultValue={formData.paymentMethod} onValueChange={(val) => setFormData({ ...formData, paymentMethod: val })} className="gap-4">
+                      <div className={cn(
+                        "flex items-center space-x-4 border border-white/10 p-6 rounded-2xl cursor-pointer transition-all duration-300",
+                        formData.paymentMethod === 'mercadopago' ? "bg-primary/10 border-primary ring-1 ring-primary" : "hover:bg-white/5"
+                      )}>
+                        <RadioGroupItem value="mercadopago" id="mercadopago" className="border-primary text-primary" />
+                        <Label htmlFor="mercadopago" className="flex items-center gap-4 cursor-pointer w-full">
+                          <div className="h-12 w-12 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+                             <CreditCard className="h-6 w-6 text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-white uppercase tracking-widest text-[11px]">Mercado Pago</p>
+                            <p className="text-xs text-muted-foreground">Tarjetas de Crédito, Débito y Dinero en cuenta.</p>
+                          </div>
+                          <Badge variant="outline" className="ml-auto text-[10px] border-white/10 text-muted-foreground font-black uppercase tracking-widest">Enlace Certificado</Badge>
                         </Label>
                       </div>
                     </RadioGroup>
                   </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button variant="outline" onClick={prevStep}>Atrás</Button>
-                    <Button onClick={() => nextStep()}>Revisar Pedido</Button>
+                  <CardFooter className="bg-white/5 px-10 py-6 flex justify-between">
+                    <Button variant="ghost" onClick={prevStep} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all">
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Logística
+                    </Button>
+                    <Button onClick={() => nextStep()} className="h-12 px-8 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/10">
+                        Auditoría Final <CheckCircle2 className="ml-2 h-4 w-4" />
+                    </Button>
                   </CardFooter>
                 </Card>
               </motion.div>
             )}
 
-            {/* Step 3: Review */}
+            {/* ETAPA 3: AUDITORÍA */}
             {currentStep === 3 && (
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revisar y Confirmar</CardTitle>
-                    <CardDescription>Verifica que todo esté correcto antes de pagar.</CardDescription>
+              <motion.div key="step3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <Card className="border-none bg-card/40 backdrop-blur-3xl shadow-3xl rounded-[2.5rem] overflow-hidden">
+                  <CardHeader className="pt-10 px-10">
+                    <CardTitle className="text-2xl font-bold font-headline text-white">Revisión Técnica de Orden</CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">Consolide la información antes del despacho final al API.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        <MapPin className="h-4 w-4" /> Dirección de Envío
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {formData.street}, {formData.city}, {formData.zipCode}, {formData.country}
-                      </p>
+                  <CardContent className="px-10 pb-10 space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                       <div className="space-y-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                              <MapPin className="h-3 w-3" /> Confirmación de Destino
+                          </h4>
+                          <div className="bg-white/5 p-5 rounded-2xl border border-white/10">
+                             <p className="text-sm text-white font-medium">{formData.street}</p>
+                             <p className="text-xs text-muted-foreground mt-1">{formData.city}, {formData.zipCode}</p>
+                             <p className="text-xs text-muted-foreground">{formData.state}, {formData.country}</p>
+                          </div>
+                       </div>
+                       <div className="space-y-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                              <CreditCard className="h-3 w-3" /> Protocolo de Liquidación
+                          </h4>
+                          <div className="bg-white/5 p-5 rounded-2xl border border-white/10 flex items-center justify-between">
+                             <span className="text-xs font-black uppercase tracking-[0.2em] text-white">Mercado Pago (ARS)</span>
+                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                          </div>
+                       </div>
                     </div>
-                    <Separator />
-                    <div>
-                      <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        <CreditCard className="h-4 w-4" /> Método de Pago
-                      </h4>
-                      <p className="text-sm text-muted-foreground uppercase">
-                        {formData.paymentMethod}
-                      </p>
+                    
+                    <div className="bg-destructive/5 border border-destructive/20 p-6 rounded-2xl text-center">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-destructive mb-2">Advertencia Legal</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                            Al proceder, usted autoriza la generación de la orden técnica y su posterior liquidación vía pasarela. Se aplicarán los términos de servicio vigentes.
+                        </p>
                     </div>
                   </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button variant="outline" onClick={prevStep}>Atrás</Button>
-                    <Button className="font-bold shadow-md hover:shadow-xl transition-all glow-effect" size="lg" onClick={handleSubmit} disabled={isSubmitting}>
-                      {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
-                      Confirmar y Pagar
+                  <CardFooter className="bg-white/5 px-10 py-8 flex justify-between">
+                    <Button variant="ghost" onClick={prevStep} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all">
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Instrumentos
+                    </Button>
+                    <Button className="h-14 px-10 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-xl hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30" onClick={handleSubmit} disabled={isSubmitting}>
+                      {isSubmitting ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : <ShieldCheck className="mr-3 h-5 w-5" />}
+                      Finalizar y Ejecutar Pago
                     </Button>
                   </CardFooter>
                 </Card>
@@ -281,31 +339,48 @@ export default function CheckoutPage() {
           </AnimatePresence>
         </div>
 
-        {/* Sidebar Summary (Visible Always) */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24 border-primary/20 shadow-lg">
-            <CardHeader className="bg-muted/30 pb-4">
-              <CardTitle>Resumen del Pedido</CardTitle>
+        {/* Panel Sidebar: Ticket Maestro */}
+        <div className="lg:col-span-4">
+          <Card className="sticky top-24 border-none bg-card/60 backdrop-blur-3xl shadow-3xl rounded-[2.5rem] overflow-hidden ring-1 ring-primary/20">
+            <CardHeader className="bg-primary/10 py-8 text-center border-b border-white/5">
+              <CardTitle className="text-xl font-headline font-bold text-white tracking-widest uppercase">Ticket de Pedido</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+            <CardContent className="p-8 space-y-6">
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {cart.map(item => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span className="truncate w-2/3 text-muted-foreground font-medium">{item.quantity}x <span className="text-foreground">{item.name}</span></span>
-                    <span>{formatCurrency(item.price * item.quantity)}</span>
+                  <div key={item.id} className="flex justify-between items-start text-xs group">
+                    <div className="space-y-1">
+                        <p className="text-white font-bold transition-colors group-hover:text-primary">{item.name}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{item.quantity} Unidad(es) x {formatCurrency(item.price)}</p>
+                    </div>
+                    <span className="text-white font-black tabular-nums">{formatCurrency(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
-              <div className="border-t my-4" />
-              <div className="flex justify-between font-bold text-xl">
-                <span>Total</span>
-                <span className="text-primary">{formatCurrency(cartTotal)}</span>
+              
+              <div className="pt-6 border-t border-white/10 space-y-4">
+                 <div className="flex justify-between text-muted-foreground text-[10px] font-black uppercase tracking-widest">
+                    <span>Subtotal Operativo</span>
+                    <span>{formatCurrency(cartTotal)}</span>
+                 </div>
+                 <div className="flex justify-between text-muted-foreground text-[10px] font-black uppercase tracking-widest">
+                    <span>Logística Nacional</span>
+                    <span className="text-green-400">Bonificado (0.00)</span>
+                 </div>
+                 
+                 <div className="bg-white/5 p-6 rounded-2xl flex justify-between items-center ring-1 ring-white/10">
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Total Inversión</span>
+                    <span className="text-3xl font-black text-white tracking-tighter">{formatCurrency(cartTotal)}</span>
+                 </div>
               </div>
             </CardContent>
           </Card>
-
-          <div className="mt-4 flex items-center justify-center text-xs text-muted-foreground">
-            <ShieldCheck className="w-3 h-3 mr-1" /> Pago procesado seguro por Mercado Pago
+          
+          <div className="mt-8 flex flex-col items-center gap-4 opacity-40 grayscale group-hover:grayscale-0 transition-all">
+             <div className="flex items-center gap-4 border border-white/10 px-4 py-2 rounded-full">
+                <ShieldCheck className="h-4 w-4 text-green-400" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Integración Certificada: Mercado Pago Protocol</span>
+             </div>
           </div>
         </div>
       </div>

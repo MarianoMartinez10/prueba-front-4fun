@@ -1,26 +1,48 @@
 import type {Config} from 'tailwindcss';
 
+/**
+ * Capa de Infraestructura Visual: Configuración de Tailwind CSS
+ * --------------------------------------------------------------------------
+ * Define el sistema de diseño (Design System) de la aplicación.
+ * Centraliza la taxonomía de colores, fuentes y animaciones para asegurar
+ * la consistencia visual y la mantenibilidad del frontend.
+ */
+
 export default {
+  // RN - Mantenibilidad: Habilita el soporte para modo oscuro basado en clases.
   darkMode: ['class'],
+  
+  // RN - Optimización: Define las rutas de escaneo para el motor JIT (Just-In-Time).
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  
   theme: {
     container: {
       center: true,
       padding: "2rem",
       screens: {
-        "2xl": "1400px",
+        "2xl": "1400px", // RN - UX: Límite máximo para pantallas ultra-anchas.
       },
     },
     extend: {
+      /**
+       * RN - Identidad Visual: Definición de la jerarquía tipográfica.
+       * Se priorizan fuentes modernas (Inter/Space Grotesk) para legibilidad.
+       */
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Space Grotesk', 'sans-serif'],
         code: ['monospace'],
       },
+      
+      /**
+       * RN - Tokens de Diseño: Mapeo semántico de colores.
+       * Utiliza variables HSL para permitir cambios dinámicos de tema (Theming)
+       * sin modificar la estructura del código.
+       */
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -80,20 +102,12 @@ export default {
       },
       keyframes: {
         'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
         },
         'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
         },
       },
       animation: {

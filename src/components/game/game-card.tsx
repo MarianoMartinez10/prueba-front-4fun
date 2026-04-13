@@ -1,147 +1,129 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * Capa de Interfaz: Componente Atómico de Visualización (Game Card)
+ * --------------------------------------------------------------------------
+ * Renderiza la ficha técnica reducida de un producto para listados masivos.
+ * Implementa el patrón MVVM al delegar íntegramente la lógica de presentación
+ * (formateo monetario, visualización de stock, cálculos promocionales) a la
+ * clase especializada `ProductViewModel`. Garantiza la independencia entre el
+ * modelo de datos y la vista. (MVC / Component)
+ */
+
 import Link from "next/link";
 import Image from "next/image";
-import type { Game } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Heart, Eye } from "lucide-react";
-import { useWishlist } from "@/context/WishlistContext";
 import { Badge } from "@/components/ui/badge";
-import { QuickViewModal } from "./quick-view-modal";
-// ── POO: Importamos el ViewModel — el componente solo renderiza, no calcula ──
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { useWishlist } from "@/context/WishlistContext";
+import { Heart, ShoppingCart, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/context/CartContext";
 import { ProductViewModel } from "@/lib/viewmodels";
+import type { Game } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface GameCardProps {
   game: Game;
 }
 
 export function GameCard({ game }: GameCardProps) {
+  /**
+   * POO - Encapsulamiento: La lógica de negocio visual reside en el ViewModel.
+   * Esto asegura que el componente sea puramente declarativo y altamente mantenible.
+   */
+  const vm = new ProductViewModel(game as any);
+  
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const [showQuickView, setShowQuickView] = useState(false);
-
-  // ── POO en acción: instanciamos el ViewModel con la entidad ───────────────
-  // POLIMORFISMO: vm.toDisplayPrice() se comporta diferente a OrderViewModel
-  // ENCAPSULAMIENTO: ninguna lógica de cálculo existe en este componente
-  const vm = new ProductViewModel(game);
-  // ─────────────────────────────────────────────────────────────────────────
-
-  const isWishlisted = isInWishlist(game.id);
+  const { addToCart } = useCart();
+  const isFavorite = isInWishlist(vm.getDisplayId());
 
   return (
-    <>
-      <QuickViewModal game={game} open={showQuickView} onOpenChange={setShowQuickView} />
+    <Card className="group relative overflow-hidden border-none bg-card/40 backdrop-blur-md transition-all duration-500 hover:bg-card/60 hover:shadow-3xl hover:-translate-y-2 rounded-3xl ring-1 ring-white/5">
+      
+      {/* RN - Gestión Promocional: Badge dinámico de bonificación. */}
+      {vm.isOnSale() && (
+        <div className="absolute left-4 top-4 z-20">
+          <Badge className="bg-destructive text-white font-black px-3 py-1 text-[10px] animate-pulse shadow-xl border-none">
+            {vm.getDiscountBadge()} BONIFICADO
+          </Badge>
+        </div>
+      )}
 
-      <Link href={`/productos/${vm.getDisplayId()}`} className="block h-full cursor-pointer" prefetch={false}>
-        <Card
-          className="group relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-transparent shadow-none transition-all duration-300 hover:bg-transparent"
-          aria-labelledby={`game-title-${vm.getDisplayId()}`}
-        >
-          {/* --- COVER ART --- */}
-          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted mb-3 shadow-md group-hover:shadow-xl transition-all duration-300">
+      {/* RN - Persistencia de Intenciones: Gestión de Lista de Deseos. */}
+      <button
+        onClick={() => toggleWishlist(game)}
+        className={cn(
+          "absolute right-4 top-4 z-20 h-10 w-10 rounded-full bg-black/40 backdrop-blur-2xl transition-all flex items-center justify-center hover:scale-110 border border-white/10 group/heart",
+          isFavorite ? "text-destructive fill-current" : "text-white/70"
+        )}
+        aria-label="Alternar Favorito"
+      >
+        <Heart className={cn("h-5 w-5 transition-transform", isFavorite && "fill-current group-hover:scale-125")} />
+      </button>
+
+      <Link href={`/productos/${vm.getDisplayId()}`}>
+        <CardHeader className="p-0 overflow-hidden">
+          <div className="relative aspect-[3/4] overflow-hidden">
             <Image
-              src={vm.getImageUrl()}             // ← vm.getImageUrl() — Encapsulamiento
+              src={vm.getImageUrl()}
               alt={`Portada de ${game.name}`}
               fill
-              className={cn(
-                "object-cover transition-transform duration-500 ease-out group-hover:scale-105",
-                !vm.hasStock() && "grayscale opacity-60"  // ← vm.hasStock() — Encapsulamiento
-              )}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              loading="lazy"
+              className="object-cover transition-transform duration-1000 group-hover:scale-110 group-hover:rotate-1"
+              priority={false}
             />
+            {/* Capa de Transición de Brillo */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 transition-opacity duration-700 group-hover:opacity-40" />
+          </div>
+        </CardHeader>
 
-            {/* Actions Overlay */}
-            <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-              <Button
-                size="icon"
-                variant="secondary"
-                className={cn(
-                  "h-8 w-8 rounded-full backdrop-blur-md shadow-sm",
-                  isWishlisted ? "text-red-500 bg-white/90" : "text-foreground bg-background/80"
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleWishlist(game);
-                }}
-              >
-                <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
-              </Button>
-
-              <Button
-                size="icon"
-                variant="secondary"
-                className="h-8 w-8 rounded-full backdrop-blur-md shadow-sm text-foreground bg-background/80 hover:bg-primary hover:text-primary-foreground"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowQuickView(true);
-                }}
-                title="Vista Rápida"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Metadata Overlay (Hover) */}
-            <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col justify-end gap-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-white/90 text-black backdrop-blur-sm border-0 font-bold">
-                  {vm.getPlatformName()}              {/* ← vm.getPlatformName() — Encapsulamiento */}
-                </Badge>
-                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-black/60 text-white backdrop-blur-sm border border-white/10">
-                  {vm.getGenreName()}                 {/* ← vm.getGenreName() — Encapsulamiento */}
-                </Badge>
-                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-primary/90 text-primary-foreground backdrop-blur-sm border-0">
-                  {vm.getTypeLabel()}                 {/* ← vm.getTypeLabel() — Polimorfismo/Encapsulamiento */}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Badges Overlay (stock + descuento) */}
-            <div className="absolute top-2 left-2 flex flex-col gap-1">
-              {!vm.hasStock() && (
-                <Badge variant="destructive" className="bg-red-500/90 shadow-sm text-[10px]">Agotado</Badge>
-              )}
-              {vm.isOnSale() && (
-                <Badge className="bg-green-500/90 shadow-sm text-[10px] animate-pulse">
-                  {vm.getDiscountBadge()}             {/* ← vm.getDiscountBadge() — Abstracción */}
-                </Badge>
-              )}
-            </div>
+        <CardContent className="p-6 relative">
+          <div className="mb-3 flex items-center gap-2">
+            <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest border-primary/20 text-primary bg-primary/5 px-2">
+              {vm.getPlatformName()}
+            </Badge>
+            {!vm.hasStock() && <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-destructive/10 text-destructive border-none">Agotado</Badge>}
           </div>
 
-          {/* --- DATA --- */}
-          <div className="flex justify-between items-start gap-2">
-            <div className="flex flex-col gap-0.5">
-              <h3
-                id={`game-title-${vm.getDisplayId()}`}
-                className="font-headline font-bold text-base md:text-lg leading-tight text-foreground truncate max-w-[200px] group-hover:text-primary transition-colors"
-                title={game.name}
-              >
-                {game.name}
-              </h3>
-            </div>
-
-            <div className="flex flex-col items-end">
-              {vm.isOnSale() && (
-                <span className="text-sm text-muted-foreground line-through decoration-red-500/50">
-                  {vm.getOriginalPrice()}             {/* ← precio original tachado */}
-                </span>
-              )}
-              <span className={cn(
-                "font-bold text-base md:text-lg bg-transparent",
-                vm.isOnSale() ? "text-green-400" : "text-foreground"
-              )}>
-                {vm.toDisplayPrice()}                 {/* ← POLIMORFISMO: precio final */}
+          <h3 className="line-clamp-1 font-headline text-xl font-bold text-white group-hover:text-primary transition-colors mb-1 tracking-tight">
+            {game.name}
+          </h3>
+          <p className="text-[10px] text-muted-foreground mb-4 font-black uppercase tracking-[0.2em] opacity-60">
+            {vm.getGenreName()}
+          </p>
+          
+          <div className="flex items-end gap-3">
+            {/**
+              * RN - Localización Monetaria: El ViewModel garantiza el formato ARS (Pesos Argentinos)
+              * operando bajo los estándares transaccionales del TFI.
+              */}
+            <span className="text-3xl font-black text-white tracking-tighter">{vm.toDisplayPrice()}</span>
+            
+            {vm.isOnSale() && (
+              <span className="text-sm text-muted-foreground line-through opacity-40 font-bold mb-1">
+                {vm.getOriginalPrice()}
               </span>
-            </div>
+            )}
           </div>
-        </Card>
+        </CardContent>
       </Link>
-    </>
+
+      <CardFooter className="p-6 pt-0">
+        <Button
+          onClick={() => addToCart(game)}
+          className="w-full h-12 rounded-xl bg-white/5 text-white hover:bg-primary hover:text-black border border-white/10 hover:border-primary transition-all font-black uppercase text-[10px] tracking-[0.2em] group/btn shadow-xl disabled:opacity-20"
+          disabled={!vm.hasStock()}
+        >
+          {vm.hasStock() ? (
+            <>
+              <ShoppingCart className="h-4 w-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
+              Adquirir Licencia
+            </>
+          ) : (
+            "Sin Existencias"
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

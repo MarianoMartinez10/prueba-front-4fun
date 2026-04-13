@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * Capa de Interfaz: Ventana Institucional (About Dialog)
+ * --------------------------------------------------------------------------
+ * Provee un punto de información detallado sobre el origen y propósito 
+ * del sistema. Justifica la arquitectura tecnológica y establece la 
+ * trazabilidad académica del proyecto "4Fun Marketplace" para el 
+ * tribunal evaluador del TFI. (MVC / View)
+ */
+
 import Image from "next/image";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Heart, Code, ShieldCheck } from "lucide-react";
@@ -11,42 +20,46 @@ export function AboutDialog({ children }: { children: React.ReactNode }) {
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] overflow-hidden">
-                <DialogHeader className="mb-4">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-2">
-                        <Image src="/logo.png" alt="4Fun Logo" width={80} height={40} className="h-10 w-auto object-contain" />
-                        <DialogTitle className="text-2xl font-headline mt-1 sm:mt-0">Sobre Nosotros</DialogTitle>
+            <DialogContent className="sm:max-w-[650px] overflow-hidden bg-card/95 backdrop-blur-xl border-white/10 shadow-3xl">
+                <DialogHeader className="mb-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-4">
+                        <Image src="/logo.png" alt="Logotipo 4Fun" width={100} height={100} className="h-14 w-14 object-contain" />
+                        <div>
+                            <DialogTitle className="text-3xl font-headline font-bold text-white uppercase tracking-tight">Síntesis Institucional</DialogTitle>
+                            <DialogDescription className="text-sm text-primary font-bold uppercase tracking-widest mt-1">
+                                Misión, Visión y Arquitectura del Sistema
+                            </DialogDescription>
+                        </div>
                     </div>
-                    <DialogDescription className="text-base text-muted-foreground">
-                        Conocé más sobre la historia y la misión detrás de 4Fun Marketplace.
-                    </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-6">
-                    <div className="space-y-4 text-sm md:text-base leading-relaxed text-muted-foreground">
+                <div className="space-y-8">
+                    {/* Justificación Académica / TFI */}
+                    <div className="space-y-4 text-sm md:text-base leading-relaxed text-muted-foreground border-l-4 border-primary/20 pl-6">
                         <p>
-                            <strong className="text-foreground">4Fun Marketplace</strong> nació como un proyecto académico integrador, desarrollado para aplicar los conocimientos adquiridos en el diseño y construcción de una plataforma de comercio electrónico de punta a punta.
+                            <strong className="text-white">4Fun Marketplace</strong> surge como el Núcleo del Trabajo Final Integrador, implementando una arquitectura de comercio electrónico robusta, escalable y modular. El sistema ha sido diseñado bajo estándares industriales para demostrar la integración de múltiples capas tecnológicas.
                         </p>
                         <p>
-                            Nuestra misión es proporcionar una interfaz intuitiva, rápida y estéticamente atractiva para que gamers de todas partes puedan explorar, descubrir y adquirir sus videojuegos favoritos, ya sean copias digitales o ediciones físicas.
+                            El objetivo primordial radica en la provisión de una interfaz de alta fidelidad que orqueste la adquisición de activos digitales y físicos, garantizando la integridad transaccional y una experiencia de usuario (UX) inmersiva y eficiente.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-                        <div className="flex flex-col items-center text-center p-3 rounded-lg bg-muted/50 border border-border/50">
-                            <Code className="h-8 w-8 text-blue-400 mb-2" />
-                            <h4 className="font-semibold text-foreground mb-1">Tecnología</h4>
-                            <p className="text-xs text-muted-foreground">Desarrollado con las últimas tecnologías web para máxima velocidad.</p>
+                    {/* Columnas de Pilares Técnicos */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-white/5">
+                        <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-muted/20 border border-white/5 shadow-inner group hover:border-primary/30 transition-colors">
+                            <Code className="h-10 w-10 text-primary mb-3 shadow-glow-primary" />
+                            <h4 className="font-bold text-white mb-2 uppercase tracking-tighter text-xs">Vanguardia</h4>
+                            <p className="text-[10px] text-muted-foreground uppercase leading-tight">Implementación de Next.js 15, React 19 y orquestación de servicios asíncronos.</p>
                         </div>
-                        <div className="flex flex-col items-center text-center p-3 rounded-lg bg-muted/50 border border-border/50">
-                            <ShieldCheck className="h-8 w-8 text-green-400 mb-2" />
-                            <h4 className="font-semibold text-foreground mb-1">Seguridad</h4>
-                            <p className="text-xs text-muted-foreground">Gestión de datos y transacciones seguras de principio a fin.</p>
+                        <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-muted/20 border border-white/5 shadow-inner group hover:border-primary/30 transition-colors">
+                            <ShieldCheck className="h-10 w-10 text-primary mb-3 shadow-glow-primary" />
+                            <h4 className="font-bold text-white mb-2 uppercase tracking-tighter text-xs">Integridad</h4>
+                            <p className="text-[10px] text-muted-foreground uppercase leading-tight">Seguridad transaccional de extremo a extremo y validaciones de esquema rigurosas.</p>
                         </div>
-                        <div className="flex flex-col items-center text-center p-3 rounded-lg bg-muted/50 border border-border/50">
-                            <Heart className="h-8 w-8 text-red-400 mb-2" />
-                            <h4 className="font-semibold text-foreground mb-1">Pasión</h4>
-                            <p className="text-xs text-muted-foreground">Creado por gamers, con un profundo amor por la industria.</p>
+                        <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-muted/20 border border-white/5 shadow-inner group hover:border-primary/30 transition-colors">
+                            <Heart className="h-10 w-10 text-primary mb-3 shadow-glow-primary" />
+                            <h4 className="font-bold text-white mb-2 uppercase tracking-tighter text-xs">Propósito</h4>
+                            <p className="text-[10px] text-muted-foreground uppercase leading-tight">Diseñado por y para la industria gaming desde una perspectiva académica superior.</p>
                         </div>
                     </div>
                 </div>

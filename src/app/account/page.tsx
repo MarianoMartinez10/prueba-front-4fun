@@ -1,5 +1,17 @@
 "use client";
 
+/**
+ * Capa de Interfaz: Central de Gestión de Identidad (Account Page)
+ * --------------------------------------------------------------------------
+ * Orquesta la administración de perfiles, historial transaccional y 
+ * configuración de seguridad del usuario. 
+ * Responsabilidades:
+ * 1. Auditoría Transaccional: Visualización de órdenes y recuperación de claves digitales.
+ * 2. Gestión de Identidad: Actualización de biometría y activos multimedia (Avatar).
+ * 3. Protocolos de Seguridad: Mutación de credenciales de acceso.
+ * (MVC / View)
+ */
+
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -39,25 +51,15 @@ import {
   CheckCircle2,
   XCircle,
   Trash2,
+  ArrowRight,
+  ShieldCheck,
+  CreditCard,
+  BadgeCheck
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-
-interface DigitalKey {
-  _id: string;
-  productoId: string;
-  clave: string;
-}
-
-interface Order {
-  _id: string;
-  createdAt: string;
-  totalPrice: number;
-  orderStatus: string;
-  isPaid: boolean;
-  orderItems: any[];
-  digitalKeys?: DigitalKey[];
-}
+import { motion, AnimatePresence } from "framer-motion";
+import type { Order } from "@/lib/types";
 
 export default function AccountPage() {
   const { user, loading, refreshUser } = useAuth();
@@ -65,30 +67,35 @@ export default function AccountPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Orders
+  // RN - Estado Transaccional: Historial de Órdenes
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
-  // Profile editing
+  // RN - Gestión de Perfil: Estados de Edición
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  // Password change
+  // RN - Seguridad: Protocolo de Cambio de Credenciales
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
 
+  /**
+   * RN - Guarda de Navegación: Redirección automática si no hay sesión activa.
+   */
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
     }
   }, [user, loading, router]);
 
-  // Initialize edit fields when user loads
+  /** 
+   * Hidratación de Campos de Edición
+   */
   useEffect(() => {
     if (user) {
       setEditName(user.name || "");
@@ -97,28 +104,34 @@ export default function AccountPage() {
     }
   }, [user]);
 
+  /**
+   * RN - Sincronización de Órdenes: Recupera el historial del usuario desde el API.
+   */
   useEffect(() => {
     if (user) {
-      ApiClient.getUserOrders()
-        .then((data) => {
-          const list = Array.isArray(data) ? data : (data as any)?.orders || [];
-          setOrders(list as Order[]);
+      ApiClient.getMyOrders()
+        .then((data: any) => {
+          const list = Array.isArray(data) ? data : (data?.orders || []);
+          setOrders(list);
         })
-        .catch(console.error)
+        .catch((err) => console.error("[Account] Error retrieving orders:", err))
         .finally(() => setLoadingOrders(false));
     }
   }, [user]);
 
+  /**
+   * RN - Gestión de Multimedia: Carga de Avatar a infraestructura Cloudinary.
+   */
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast({ title: "Error", description: "Solo se permiten archivos de imagen.", variant: "destructive" });
+      toast({ title: "Validación Fallida", description: "Formato de imagen no soportado.", variant: "destructive" });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Error", description: "La imagen no puede superar los 5 MB.", variant: "destructive" });
+      toast({ title: "Exceso de Volumen", description: "El activo supera el límite de 5MB.", variant: "destructive" });
       return;
     }
 
@@ -127,9 +140,9 @@ export default function AccountPage() {
       const imageUrl = await ApiClient.uploadImage(file);
       await ApiClient.updateProfile({ avatar: imageUrl });
       await refreshUser();
-      toast({ title: "Avatar actualizado", description: "Tu foto de perfil se ha cambiado correctamente." });
+      toast({ title: "Identidad Actualizada", description: "El avatar ha sido sincronizado correctamente." });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "No se pudo subir la imagen.", variant: "destructive" });
+      toast({ title: "Error en Carga", description: error.message || "Fallo en la nube de activos.", variant: "destructive" });
     } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -141,17 +154,20 @@ export default function AccountPage() {
     try {
       await ApiClient.updateProfile({ avatar: null });
       await refreshUser();
-      toast({ title: "Avatar eliminado", description: "Se ha removido tu foto de perfil." });
+      toast({ title: "Avatar Removido", description: "Se ha purgado el activo multimedia del perfil." });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Fallo en Operación", description: error.message, variant: "destructive" });
     } finally {
       setUploadingAvatar(false);
     }
   };
 
+  /**
+   * RN - Persistencia de Perfil: Actualiza metadatos del usuario.
+   */
   const handleSaveProfile = async () => {
     if (!editName.trim()) {
-      toast({ title: "Error", description: "El nombre no puede estar vacío.", variant: "destructive" });
+      toast({ title: "Validación Requerida", description: "El campo nominal es obligatorio.", variant: "destructive" });
       return;
     }
 
@@ -163,37 +179,40 @@ export default function AccountPage() {
         address: editAddress.trim() || null,
       });
       await refreshUser();
-      toast({ title: "Perfil actualizado", description: "Tus datos se han guardado correctamente." });
+      toast({ title: "Perfil Sincronizado", description: "Los cambios han sido persistidos en el padrón." });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "No se pudo actualizar el perfil.", variant: "destructive" });
+      toast({ title: "Error de Guardado", description: error.message || "No se pudo actualizar la entidad.", variant: "destructive" });
     } finally {
       setSavingProfile(false);
     }
   };
 
+  /**
+   * RN - Seguridad Criptográfica: Mutación de credenciales.
+   */
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
-      toast({ title: "Error", description: "Completá ambos campos de contraseña.", variant: "destructive" });
+      toast({ title: "Datos Incompletos", description: "Especifique las credenciales solicitadas.", variant: "destructive" });
       return;
     }
     if (newPassword.length < 6) {
-      toast({ title: "Error", description: "La nueva contraseña debe tener al menos 6 caracteres.", variant: "destructive" });
+      toast({ title: "Fortaleza Insuficiente", description: "La nueva contraseña debe poseer al menos 6 caracteres.", variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: "Error", description: "Las contraseñas no coinciden.", variant: "destructive" });
+      toast({ title: "Discrepancia", description: "La validación de contraseña no coincide.", variant: "destructive" });
       return;
     }
 
     setChangingPassword(true);
     try {
       const res = await ApiClient.changePassword({ currentPassword, newPassword });
-      toast({ title: "Contraseña actualizada", description: res.message || "Tu contraseña se ha cambiado correctamente." });
+      toast({ title: "Seguridad Reforzada", description: res.message || "Credenciales actualizadas correctamente." });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "No se pudo cambiar la contraseña.", variant: "destructive" });
+      toast({ title: "Fallo de Validación", description: error.message || "La contraseña actual es incorrecta.", variant: "destructive" });
     } finally {
       setChangingPassword(false);
     }
@@ -201,8 +220,9 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-12 text-center flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container mx-auto px-4 py-32 text-center flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" />
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sincronizando Identidad...</p>
       </div>
     );
   }
@@ -212,348 +232,321 @@ export default function AccountPage() {
   const initials = (user.name || "U").substring(0, 2).toUpperCase();
   const memberSince = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString("es-AR", { year: "numeric", month: "long" })
-    : "—";
+    : "Evaluación TFI";
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
-      {/* Header con Avatar grande */}
-      <header className="mb-8 flex flex-col sm:flex-row items-center gap-6">
-        <div className="relative group">
-          <Avatar className="h-24 w-24 border-4 border-primary/20">
-            {user.avatar ? (
-              <AvatarImage src={user.avatar} alt={user.name} />
-            ) : null}
-            <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadingAvatar}
-            className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-          >
-            {uploadingAvatar ? (
-              <Loader2 className="h-6 w-6 text-white animate-spin" />
-            ) : (
-              <Camera className="h-6 w-6 text-white" />
-            )}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarUpload}
-          />
+    <div className="container mx-auto px-4 py-16 md:py-24 max-w-5xl animate-in fade-in duration-1000">
+      
+      {/* Cabecera Técnica de Cuenta */}
+      <header className="mb-16 flex flex-col md:flex-row items-center gap-10 bg-card/20 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/5 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        
+        <div className="relative z-10">
+          <div className="relative group/avatar">
+            <Avatar className="h-40 w-40 border-8 border-background shadow-3xl ring-1 ring-white/10">
+              {user.avatar ? (
+                <AvatarImage src={user.avatar} alt={user.name} className="object-cover" />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-primary text-4xl font-black">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-sm"
+            >
+              {uploadingAvatar ? (
+                <Loader2 className="h-10 w-10 text-white animate-spin" />
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                    <Camera className="h-8 w-8 text-white" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white">Actualizar Activo</span>
+                </div>
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+          </div>
         </div>
-        <div className="text-center sm:text-left">
-          <h1 className="text-3xl font-bold font-headline">¡Hola, {user.name}!</h1>
-          <p className="text-muted-foreground flex items-center gap-2 justify-center sm:justify-start mt-1">
-            <Mail className="h-4 w-4" /> {user.email}
-          </p>
-          <div className="flex items-center gap-3 mt-2 justify-center sm:justify-start">
-            <Badge variant="outline" className="gap-1">
-              <Shield className="h-3 w-3" />
-              {user.role === "admin" ? "Administrador" : "Usuario"}
+
+        <div className="text-center md:text-left space-y-4 relative z-10 flex-1">
+          <div className="space-y-1">
+              <h1 className="text-5xl font-black font-headline text-white tracking-tighter italic italic-shadow">Terminal: {user.name}</h1>
+              <p className="text-muted-foreground flex items-center gap-2 justify-center md:justify-start font-medium opacity-60">
+                <Mail className="h-4 w-4 text-primary" /> {user.email}
+              </p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start">
+            <Badge variant="outline" className="h-8 px-4 bg-primary/10 border-primary/20 text-primary font-black uppercase tracking-widest text-[9px]">
+              <Shield className="h-3 w-3 mr-2" />
+              Rango: {user.role === "admin" ? "Sénior (Admin)" : "Miembro Estándar"}
             </Badge>
             {user.isVerified ? (
-              <Badge variant="outline" className="border-green-500 text-green-500 gap-1">
-                <CheckCircle2 className="h-3 w-3" /> Verificado
+              <Badge variant="outline" className="h-8 px-4 border-green-500/20 bg-green-500/5 text-green-400 font-black uppercase tracking-widest text-[9px]">
+                <BadgeCheck className="h-3 w-3 mr-2" /> Identidad Validada
               </Badge>
             ) : (
-              <Badge variant="outline" className="border-yellow-500 text-yellow-500 gap-1">
-                <XCircle className="h-3 w-3" /> Sin verificar
+              <Badge variant="outline" className="h-8 px-4 border-yellow-500/20 bg-yellow-500/5 text-yellow-500 font-black uppercase tracking-widest text-[9px]">
+                <XCircle className="h-3 w-3 mr-2" /> Pendiente de Validación
               </Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Miembro desde {memberSince}</p>
+          
+          <div className="pt-4 flex items-center gap-4 justify-center md:justify-start">
+              <div className="bg-white/5 px-4 py-2 rounded-xl">
+                  <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest opacity-40 mb-1">Registro Inicial</p>
+                  <p className="text-xs text-white font-bold">{memberSince}</p>
+              </div>
+          </div>
         </div>
       </header>
 
-      <Tabs defaultValue="orders" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
-          <TabsTrigger value="orders">Mis Pedidos</TabsTrigger>
-          <TabsTrigger value="settings">Ajustes</TabsTrigger>
+      <Tabs defaultValue="orders" className="w-full space-y-12">
+        <TabsList className="h-16 w-full max-w-2xl mx-auto bg-white/5 border border-white/10 rounded-2xl p-2">
+          <TabsTrigger value="orders" className="flex-1 rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-primary data-[state=active]:text-black transition-all">
+            <Package className="h-3 w-3 mr-2" /> Historial de Órdenes
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex-1 rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-primary data-[state=active]:text-black transition-all">
+            <Settings className="h-3 w-3 mr-2" /> Configuración de Nodo
+          </TabsTrigger>
         </TabsList>
 
-        {/* ======== PEDIDOS ======== */}
-        <TabsContent value="orders" className="space-y-4">
-          {loadingOrders ? (
-            <div className="py-10 flex justify-center"><Loader2 className="animate-spin" /></div>
-          ) : orders.length === 0 ? (
-            <Card>
-              <CardContent className="py-16 text-center text-muted-foreground">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>Aún no has comprado nada.</p>
-                <Button variant="link" asChild className="mt-2 text-primary">
-                  <Link href="/productos">Ir a la tienda</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            orders.map((order) => (
-              <Card key={order._id} className="overflow-hidden border-l-4 border-l-primary/50">
-                <CardHeader className="bg-muted/30 pb-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        Orden #{order._id.slice(-6)}
-                        <Badge variant={order.isPaid ? "default" : "secondary"}>
-                          {order.isPaid ? "Pagado" : "Pendiente"}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-1 mt-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </CardDescription>
+        {/* ======== RN - AUDITORÍA TRANSACCIONAL ======== */}
+        <TabsContent value="orders">
+          <AnimatePresence mode="wait">
+            <motion.div 
+                key="orders"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-6"
+            >
+                {loadingOrders ? (
+                    <div className="py-20 flex flex-col items-center gap-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Recuperando Historial...</span>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-lg">{formatCurrency(order.totalPrice)}</p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    {Array.isArray(order.orderItems) && order.orderItems.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0">
-                        <span className="font-medium">{item.name} <span className="text-xs text-muted-foreground">x{item.quantity}</span></span>
-
-                        {order.isPaid && Array.isArray(order.digitalKeys) && (
-                          <div className="flex flex-col items-end gap-1">
-                            {order.digitalKeys
-                              .filter((k) => k.productoId === item.product || k.productoId === item.product?._id)
-                              .map((k, kIdx) => (
-                                <div key={kIdx} className="flex items-center gap-2 bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-md text-xs font-mono border border-green-500/20">
-                                  <Key className="h-3 w-3" />
-                                  {k.clave}
+                ) : orders.length === 0 ? (
+                    <Card className="border-none bg-card/20 backdrop-blur-3xl py-24 text-center rounded-[3rem]">
+                        <CardContent className="space-y-6">
+                            <div className="h-20 w-20 bg-white/5 rounded-full mx-auto flex items-center justify-center">
+                                <Package className="h-10 w-10 text-muted-foreground opacity-20" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-bold text-white tracking-tighter">Sin Transacciones</h3>
+                                <p className="text-muted-foreground text-sm mt-2">No se han detectado operaciones financieras en este nodo.</p>
+                            </div>
+                            <Button asChild className="h-12 px-8 rounded-xl bg-primary text-black font-black uppercase text-[10px] tracking-widest hover:bg-primary/90">
+                                <Link href="/productos">Explorar el Catálogo</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 gap-6">
+                        {orders.map((order: any) => (
+                        <Card key={order.id || order._id} className="overflow-hidden border-none bg-card/20 backdrop-blur-3xl rounded-[2.5rem] group hover:bg-card/30 transition-all duration-500 shadow-xl ring-1 ring-white/5">
+                            <div className="bg-primary/5 px-8 py-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div className="flex flex-col md:flex-row items-center gap-6">
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Operación ID</span>
+                                        <CardTitle className="text-lg font-bold font-headline text-white">#{ (order.id || order._id).slice(-8).toUpperCase() }</CardTitle>
+                                    </div>
+                                    <Badge className={cn(
+                                        "h-7 px-4 rounded-full font-black uppercase text-[9px] tracking-widest",
+                                        order.isPaid ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                                    )} variant="outline">
+                                        { order.isPaid ? 'Conciliado' : 'Pendiente de Liquidación' }
+                                    </Badge>
                                 </div>
-                              ))
-                            }
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                                <div className="text-right flex flex-col items-center md:items-end">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Inversión Total</span>
+                                    <p className="font-black text-2xl text-white tabular-nums tracking-tighter">{formatCurrency(order.totalPrice || order.total)}</p>
+                                </div>
+                            </div>
+                            <CardContent className="p-8 space-y-6">
+                                <div className="space-y-4">
+                                    {Array.isArray(order.orderItems || order.items) && (order.orderItems || order.items).map((item: any, idx: number) => (
+                                    <div key={idx} className="flex justify-between items-center bg-white/5 p-5 rounded-2xl border border-white/5 hover:border-primary/20 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-lg bg-black/40 flex items-center justify-center">
+                                                <CreditCard className="h-5 w-5 text-primary opacity-60" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-white text-sm">{item.name}</p>
+                                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Unidades: {item.quantity}</p>
+                                            </div>
+                                        </div>
+
+                                        {order.isPaid && Array.isArray(order.digitalKeys) && (
+                                        <div className="flex flex-col items-end gap-2">
+                                            {order.digitalKeys
+                                            .filter((k: any) => k.productoId === item.product || k.productoId === (item.product as any)?._id || k.productoId === item.productId)
+                                            .map((k: any, kIdx: number) => (
+                                                <div key={kIdx} className="flex items-center gap-3 bg-green-500/10 text-green-400 px-4 py-2 rounded-xl text-xs font-mono border border-green-500/20 animate-in slide-in-from-right-2">
+                                                <Key className="h-4 w-4 animate-pulse" />
+                                                {k.clave}
+                                                </div>
+                                            ))
+                                            }
+                                        </div>
+                                        )}
+                                    </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="flex items-center justify-between pt-4 opacity-40">
+                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                        <Calendar className="h-3 w-3" /> Registrada: { new Date(order.createdAt).toLocaleDateString("es-AR") }
+                                    </div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Gateway: {order.paymentMethod || 'Mercado Pago'}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        ))}
+                    </div>
+                )}
+            </motion.div>
+          </AnimatePresence>
         </TabsContent>
 
-        {/* ======== AJUSTES ======== */}
-        <TabsContent value="settings" className="space-y-6">
+        {/* ======== RN - CONFIGURACIÓN DE NODO ======== */}
+        <TabsContent value="settings" className="space-y-12">
+          
+          {/* RN - Identidad Visual */}
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="border-none bg-card/20 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden group/card shadow-xl">
+                <CardHeader className="p-10 pb-6">
+                    <CardTitle className="flex items-center gap-4 text-2xl font-black text-white italic">
+                        <Camera className="h-6 w-6 text-primary" /> Atributos Visuales
+                    </CardTitle>
+                    <CardDescription className="text-xs uppercase font-black tracking-widest text-muted-foreground opacity-60 mt-2">
+                        Gestión de la Capa de Presentación Personal
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="px-10 pb-10">
+                    <div className="flex flex-col items-center gap-8">
+                        <Avatar className="h-32 w-32 border-4 border-white/10 shadow-2xl">
+                            {user.avatar ? <AvatarImage src={user.avatar} className="object-cover" /> : null}
+                            <AvatarFallback className="bg-primary/5 text-primary text-3xl font-black">{initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col w-full gap-4">
+                            <Button
+                                variant="outline"
+                                className="h-14 rounded-2xl border-white/10 hover:bg-white/5 font-black uppercase tracking-widest text-[10px]"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingAvatar}
+                            >
+                                {uploadingAvatar ? <Loader2 className="mr-3 h-4 w-4 animate-spin text-primary" /> : <Camera className="mr-3 h-4 w-4" />}
+                                Sincronizar Nuevo Activo
+                            </Button>
+                            {user.avatar && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleRemoveAvatar}
+                                    disabled={uploadingAvatar}
+                                    className="h-14 font-black uppercase tracking-widest text-[10px] text-destructive hover:bg-destructive/10"
+                                >
+                                    <Trash2 className="mr-3 h-4 w-4" /> Purgar Imagen
+                                </Button>
+                            )}
+                            <p className="text-center text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40">Formatos: JPG, PNG, WebP (Max 5MB)</p>
+                        </div>
+                    </div>
+                </CardContent>
+              </Card>
 
-          {/* --- Foto de Perfil --- */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Camera className="h-5 w-5" /> Foto de Perfil
-              </CardTitle>
-              <CardDescription>
-                Subí una imagen para personalizar tu cuenta. Se verá en tu perfil y en la comunidad.
-              </CardDescription>
+              {/* RN - Datos Nominativos */}
+              <Card className="border-none bg-card/20 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden shadow-xl">
+                <CardHeader className="p-10 pb-6">
+                    <CardTitle className="flex items-center gap-4 text-2xl font-black text-white italic">
+                        <UserIcon className="h-6 w-6 text-primary" /> Biometría de Identidad
+                    </CardTitle>
+                    <CardDescription className="text-xs uppercase font-black tracking-widest text-muted-foreground opacity-60 mt-2">
+                        Actualización de Padrón Administrativo
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="px-10 pb-10 space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nombre Nominal</Label>
+                        <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                            Email <Badge variant="outline" className="text-[8px] h-4 border-white/10 opacity-40">Bloqueado</Badge>
+                        </Label>
+                        <div className="h-12 bg-white/5 border border-white/5 rounded-xl flex items-center px-4 text-muted-foreground text-sm font-medium">
+                            {user.email}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-phone" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Teléfono</Label>
+                            <Input id="edit-phone" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+54 11 ..." className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-address" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Región</Label>
+                            <Input id="edit-address" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Provincia, País" className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                        </div>
+                    </div>
+
+                    <div className="pt-4">
+                        <Button onClick={handleSaveProfile} disabled={savingProfile} className="h-14 w-full bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/10">
+                            {savingProfile ? <Loader2 className="mr-3 h-5 w-5 animate-spin" /> : <BadgeCheck className="mr-3 h-5 w-5" />}
+                            Persistir Cambios
+                        </Button>
+                    </div>
+                </CardContent>
+              </Card>
+          </section>
+
+          {/* RN - Protocolo de Seguridad */}
+          <Card className="border-none bg-destructive/5 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden ring-1 ring-destructive/10">
+            <CardHeader className="p-10 pb-6">
+                <CardTitle className="flex items-center gap-4 text-2xl font-black text-white italic">
+                    <Lock className="h-6 w-6 text-destructive" /> Mutación de Credenciales
+                </CardTitle>
+                <CardDescription className="text-xs uppercase font-black tracking-widest text-muted-foreground opacity-60 mt-2">
+                    Actualización Forzada de Accesos
+                </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20 border-2 border-muted">
-                  {user.avatar ? (
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                  ) : null}
-                  <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingAvatar}
-                    >
-                      {uploadingAvatar ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Camera className="mr-2 h-4 w-4" />
-                      )}
-                      {user.avatar ? "Cambiar foto" : "Subir foto"}
+            <CardContent className="px-10 pb-10 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Password Vigente</Label>
+                        <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" className="h-14 bg-black/40 border-white/5 rounded-2xl" />
+                    </div>
+                    <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nueva Clave</Label>
+                        <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 chars" className="h-14 bg-black/40 border-white/5 rounded-2xl" />
+                    </div>
+                    <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Confirmación</Label>
+                        <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-ingrese password" className="h-14 bg-black/40 border-white/5 rounded-2xl" />
+                    </div>
+                </div>
+
+                <div className="flex justify-center pt-6">
+                    <Button onClick={handleChangePassword} disabled={changingPassword} variant="outline" className="h-14 px-12 rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 font-black uppercase tracking-widest text-[10px]">
+                        {changingPassword ? <Loader2 className="mr-3 h-4 w-4 animate-spin text-destructive" /> : <ShieldCheck className="mr-3 h-4 w-4" />}
+                        Reconfigurar Credencial
                     </Button>
-                    {user.avatar && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRemoveAvatar}
-                        disabled={uploadingAvatar}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">JPG, PNG o WebP. Máximo 5 MB.</p>
                 </div>
-              </div>
             </CardContent>
           </Card>
 
-          {/* --- Información Personal --- */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserIcon className="h-5 w-5" /> Información Personal
-              </CardTitle>
-              <CardDescription>
-                Actualizá tu nombre e información de contacto.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-name">Nombre</Label>
-                <Input
-                  id="edit-name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Tu nombre completo"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="edit-email" className="flex items-center gap-2">
-                  Email
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">No editable</Badge>
-                </Label>
-                <Input
-                  id="edit-email"
-                  value={user.email}
-                  disabled
-                  className="opacity-60"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="edit-phone" className="flex items-center gap-1">
-                  <Phone className="h-3.5 w-3.5" /> Teléfono
-                </Label>
-                <Input
-                  id="edit-phone"
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="+54 11 1234-5678"
-                  type="tel"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="edit-address" className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" /> Dirección
-                </Label>
-                <Input
-                  id="edit-address"
-                  value={editAddress}
-                  onChange={(e) => setEditAddress(e.target.value)}
-                  placeholder="Tu dirección (opcional)"
-                />
-              </div>
-
-              <div className="pt-2">
-                <Button onClick={handleSaveProfile} disabled={savingProfile}>
-                  {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Guardar cambios
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* --- Cambiar Contraseña --- */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" /> Cambiar Contraseña
-              </CardTitle>
-              <CardDescription>
-                Actualizá tu contraseña para mantener tu cuenta segura.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="current-password">Contraseña actual</Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <Separator />
-
-              <div className="grid gap-2">
-                <Label htmlFor="new-password">Nueva contraseña</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="confirm-password">Confirmar nueva contraseña</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repetí la nueva contraseña"
-                />
-              </div>
-
-              <div className="pt-2">
-                <Button onClick={handleChangePassword} disabled={changingPassword} variant="outline">
-                  {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Cambiar contraseña
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* --- Info de la Cuenta --- */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" /> Información de la Cuenta
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">Rol</span>
-                  <span className="font-medium capitalize">{user.role === "admin" ? "Administrador" : "Usuario"}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">Estado del email</span>
-                  <span className="font-medium flex items-center gap-1">
-                    {user.isVerified ? (
-                      <><CheckCircle2 className="h-4 w-4 text-green-500" /> Verificado</>
-                    ) : (
-                      <><XCircle className="h-4 w-4 text-yellow-500" /> Pendiente de verificación</>
-                    )}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">Miembro desde</span>
-                  <span className="font-medium">{memberSince}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">Pedidos realizados</span>
-                  <span className="font-medium">{orders.length}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+          {/* RN - Footer Administrativo */}
+          <div className="text-center opacity-20 select-none pb-12">
+            <span className="text-[9px] font-black uppercase tracking-[0.6em] text-white">Identity Manager Terminal TFI v2.4</span>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

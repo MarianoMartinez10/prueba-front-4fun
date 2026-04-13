@@ -1,10 +1,17 @@
 {
+  /**
+   * Capa de Infraestructura: Configuración del Compilador TypeScript
+   * --------------------------------------------------------------------------
+   * Define las reglas de transpilación y verificación de tipos del proyecto.
+   * Establece el estándar de seguridad del código (Type-Safety) y la 
+   * interoperabilidad entre módulos.
+   */
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": true, // RN - Calidad: Fuerza el cumplimiento de tipos estrictos.
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -18,6 +25,10 @@
         "name": "next"
       }
     ],
+    /**
+     * RN - Mantenibilidad: Alias de resolución de rutas.
+     * Permite importaciones limpias (ej. '@/lib/api') evitando rutas relativas complejas.
+     */
     "baseUrl": "src",
     "paths": {
       "@/*": ["*"]

@@ -1,49 +1,52 @@
 "use client";
 
+/**
+ * Capa de Interfaz: Central de Consultas Frecuentes (FAQ Dialog)
+ * --------------------------------------------------------------------------
+ * Provee un repositorio de respuestas técnicas y operativas para el usuario.
+ * Documenta la logística de entrega de licencias, la integración con 
+ * Mercado Pago y las políticas de post-venta para productos digitales. 
+ * Implementa una arquitectura de acordeones para optimizar la legibilidad. 
+ * (MVC / View)
+ */
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HelpCircle } from "lucide-react";
 
+/**
+ * RN - Base de Conocimiento: Mapeo de reglas de negocio operativas.
+ */
 const faqItems = [
   {
-    question: "¿Cómo recibo mi juego después de la compra?",
+    question: "¿Cómo recibo mi licencia después de la transacción?",
     answer:
-      "Una vez que tu pago sea aprobado, recibirás las claves de activación (keys) directamente en tu correo electrónico. También podés verlas en la sección 'Mi Cuenta' → 'Mis Pedidos'."
+      "Tras la validación de la pasarela de pagos, el sistema asigna automáticamente las claves de activación (E-Keys) a su perfil. Recibirá una notificación instantánea vía E-mail y podrá auditar el registro en la sección 'Mi Cuenta' → 'Mis Pedidos'."
   },
   {
-    question: "¿Qué métodos de pago aceptan?",
+    question: "¿Qué protocolos de pago soporta la plataforma?",
     answer:
-      "Aceptamos todos los métodos de pago disponibles a través de MercadoPago: tarjetas de crédito y débito, transferencia bancaria, Mercado Crédito, y pagos en efectivo por Rapipago o Pago Fácil."
+      "Operamos íntegramente a través de Mercado Pago, soportando transacciones mediante tarjetas de crédito/débito, transferencias bancarias (Vía CVU), y redes de cobranza extrabancaria (Pago Fácil / Rapipago)."
   },
   {
-    question: "¿Puedo devolver un juego?",
+    question: "¿Cuál es la política de restitución para bienes digitales?",
     answer:
-      "Debido a la naturaleza digital de nuestros productos, las ventas son finales una vez que la clave fue entregada. Si tenés problemas con una key, contactanos y te ayudaremos a resolverlo."
+      "Al tratarse de licencias digitales de un solo uso, las transacciones se consideran definitivas una vez emitido el despacho técnico. Ante inconsistencias técnicas con una licencia, nuestro departamento de soporte realizará la auditoría correspondiente para su resolución."
   },
   {
-    question: "¿Cuánto tarda en llegar mi key?",
+    question: "¿La entrega de activos es inmediata?",
     answer:
-      "La entrega es inmediata. Una vez que MercadoPago confirma tu pago, las claves se asignan automáticamente y se envían a tu email en cuestión de segundos."
+      "Correcto. El flujo está automatizado mediante Webhooks. Una vez que la entidad financiera confirma la operación, el motor de inventario despacha la licencia en milisegundos."
   },
   {
-    question: "¿Es seguro comprar acá?",
+    question: "¿Cómo se garantiza la procedencia de los productos?",
     answer:
-      "Sí. Todos los pagos son procesados de forma segura por MercadoPago, y las claves digitales que vendemos son 100% originales y legítimas."
+      "4Fun Marketplace actúa como un canal oficial. Todas las licencias y medios físicos son 100% originales, legítimos y provistos directamente por sellos editoriales autorizados."
   },
   {
-    question: "¿Cómo activo mi key?",
+    question: "¿Existen facilidades de financiación?",
     answer:
-      "Depende de la plataforma: en Steam, andá a 'Juegos' → 'Activar un producto en Steam'. En PlayStation Store o Xbox, buscá 'Canjear código' en la tienda. Te enviamos las instrucciones junto con la key."
-  },
-  {
-    question: "¿Tienen soporte técnico?",
-    answer:
-      "Sí, podés contactarnos a través del formulario de contacto en nuestra web. Respondemos dentro de las 24 horas hábiles."
-  },
-  {
-    question: "¿Puedo pagar en cuotas?",
-    answer:
-      "Sí, las opciones de cuotas dependen del medio de pago que selecciones en MercadoPago. Generalmente, las tarjetas de crédito permiten pagar en hasta 12 cuotas."
+      "La plataforma permite planes de pago en cuotas, sujetos a las condiciones vigentes de las entidades emisoras y las promociones activas en la pasarela de Mercado Pago al momento del checkout."
   }
 ];
 
@@ -55,20 +58,22 @@ export function FaqDialog({ children }: FaqDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl font-headline">
-            <HelpCircle className="h-6 w-6 text-primary" />
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-card/95 backdrop-blur-xl border-white/10 shadow-3xl custom-scrollbar">
+        <DialogHeader className="mb-4">
+          <DialogTitle className="flex items-center gap-3 text-3xl font-headline font-bold text-white uppercase tracking-tight">
+            <HelpCircle className="h-8 w-8 text-primary shadow-glow-primary rounded-full" />
             Preguntas Frecuentes
           </DialogTitle>
+          <p className="text-xs text-primary font-bold uppercase tracking-[0.2em] mt-2">Centro de Asistencia Operativa</p>
         </DialogHeader>
-        <Accordion type="single" collapsible className="w-full mt-2">
+        
+        <Accordion type="single" collapsible className="w-full mt-4 border-t border-white/5">
           {faqItems.map((item, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-left text-sm font-medium">
+            <AccordionItem key={index} value={`item-${index}`} className="border-white/5">
+              <AccordionTrigger className="text-left text-sm font-bold text-white hover:text-primary transition-colors py-4 uppercase tracking-tighter decoration-transparent">
                 {item.question}
               </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
+              <AccordionContent className="text-muted-foreground text-sm leading-relaxed border-l-2 border-primary/20 pl-4 py-2">
                 {item.answer}
               </AccordionContent>
             </AccordionItem>

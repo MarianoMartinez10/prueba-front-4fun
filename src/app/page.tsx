@@ -1,14 +1,26 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PixelHero } from '@/components/pixel-hero';
-// ELIMINADA: import { GameRecommendations } from '@/components/game/recommendations';
 import { CategoryCard } from '@/components/game/category-card';
 import { ApiClient } from '@/lib/api';
-// Fallback image
+
+/**
+ * Capa de Presentación: Página de Inicio (Home Page)
+ * --------------------------------------------------------------------------
+ * Actúa como el punto de entrada principal (Landing Page) del sistema.
+ * Implementa el patrón 'Server Side Fetching' de Next.js para optimizar
+ * el SEO y la velocidad de carga inicial. (MVC / View-Controller)
+ */
+
+// RN - Infraestructura: Imagen de respaldo en caso de fallo de sincronización de assets.
 const defaultImage = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600";
 
 export default async function Home() {
-  // 1. Fetch data del Backend
+  /**
+   * RN - Hidratación de Datos: Recuperación de metadatos del catálogo.
+   * Se utiliza Promise.all para ejecutar las peticiones en paralelo,
+   * reduciendo el tiempo de bloqueo del renderizado en el servidor.
+   */
   let platformsData: any[] = [];
   let genresData: any[] = [];
 
@@ -18,14 +30,17 @@ export default async function Home() {
       ApiClient.getGenres().catch(() => [])
     ]);
 
-    // Manejamos estructura de respuesta (Array vs Objeto)
+    // RN - Resiliencia: Maneja la variabilidad en la estructura de respuesta del Backend.
     platformsData = Array.isArray(pData) ? pData : (pData?.data || []);
     genresData = Array.isArray(gData) ? gData : (gData?.data || []);
   } catch (error) {
-    console.error("Error fetching home visuals:", error);
+    console.error("[Home] Error en carga de visuales:", error);
   }
 
-  // 2. Mapeo data Backend -> UI
+  /**
+   * RN - Transformación DTO: Normaliza las entidades del backend para la UI.
+   * Desacopla la lógica visual de los nombres de campos específicos de la DB.
+   */
   const platforms = platformsData.map((p: any) => ({
     id: p.id,
     name: p.name,
@@ -40,11 +55,12 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col gap-12 md:gap-16">
+      {/* Sección Hero: Impacto visual inicial y Call to Action (CTA). */}
       <PixelHero />
 
-      {/* Sección: Explorar por Plataforma */}
+      {/* Sección: Explorar por Plataforma (RN - Taxonomía Industrial) */}
       <section className="relative w-full overflow-hidden bg-background py-12 md:py-16">
-        {/* Fondo Grid */}
+        {/* RN - Estética TFI: Fondo decorativo con grid geométrico. */}
         <div className="absolute inset-0 z-0 opacity-[0.03]"
           style={{
             backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -72,6 +88,7 @@ export default async function Home() {
             ))}
           </div>
 
+          {/* RN - UX Adaptativa: Botón de acción para dispositivos con factor de forma pequeño. */}
           <div className="mt-8 text-center md:hidden">
             <Button variant="outline" asChild className="w-full">
               <Link href="/productos">Ver todo</Link>
@@ -80,9 +97,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Sección: Explorar por Género */}
+      {/* Sección: Explorar por Género (RN - Categorización de Mercado) */}
       <section className="relative w-full overflow-hidden bg-background py-12 md:py-16">
-        {/* Fondo Grid */}
         <div className="absolute inset-0 z-0 opacity-[0.03]"
           style={{
             backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',

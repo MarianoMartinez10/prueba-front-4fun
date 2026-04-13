@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * Capa de Interfaz: Sistema de Reseñas y Feedback (Product Reviews)
+ * --------------------------------------------------------------------------
+ * Orquesta la captura y visualización de la experiencia del usuario.
+ * Implementa el análisis de sentimiento automatizado (IA), métricas de 
+ * utilidad y validación de compra veríficada para asegurar la integridad 
+ * de la reputación del catálogo. (MVC / View)
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { ApiClient, ApiError } from "@/lib/api";
@@ -35,9 +44,9 @@ interface ProductReviewsProps {
   productName: string;
 }
 
-// ────────────────────────────────────────────────────────────────
-// Sentiment helpers
-// ────────────────────────────────────────────────────────────────
+/**
+ * RN - Configuración de Semántica: Mapeo de estados del análisis de sentimiento IA.
+ */
 const sentimentConfig: Record<ReviewSentiment, { label: string; color: string; emoji: string }> = {
   positive: { label: "Positivo", color: "bg-green-500/15 text-green-400 border-green-500/30", emoji: "😄" },
   neutral: { label: "Neutral", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", emoji: "😐" },
@@ -45,9 +54,9 @@ const sentimentConfig: Record<ReviewSentiment, { label: string; color: string; e
   mixed: { label: "Mixto", color: "bg-purple-500/15 text-purple-400 border-purple-500/30", emoji: "🤔" },
 };
 
-// ────────────────────────────────────────────────────────────────
-// Star Rating selector
-// ────────────────────────────────────────────────────────────────
+/**
+ * Componente Atómico: Selector de Calificación (Escala 1-5).
+ */
 function StarRating({ value, onChange, disabled }: { value: number; onChange: (v: number) => void; disabled?: boolean }) {
   const [hover, setHover] = useState(0);
   return (
@@ -72,9 +81,9 @@ function StarRating({ value, onChange, disabled }: { value: number; onChange: (v
   );
 }
 
-// ────────────────────────────────────────────────────────────────
-// Read-only star display
-// ────────────────────────────────────────────────────────────────
+/**
+ * Componente Atómico: Visualizador de Estrellas (Solo Lectura).
+ */
 function StarDisplay({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" | "lg" }) {
   const sizeClass = size === "lg" ? "h-6 w-6" : size === "md" ? "h-5 w-5" : "h-4 w-4";
   return (
@@ -92,14 +101,10 @@ function StarDisplay({ rating, size = "sm" }: { rating: number; size?: "sm" | "m
   );
 }
 
-// ────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ────────────────────────────────────────────────────────────────
 export function ProductReviews({ productId, productName }: ProductReviewsProps) {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Data
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [page, setPage] = useState(1);
@@ -107,32 +112,36 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
   const [sort, setSort] = useState("recent");
   const [loading, setLoading] = useState(true);
 
-  // Form
   const [showForm, setShowForm] = useState(false);
   const [formRating, setFormRating] = useState(0);
   const [formTitle, setFormTitle] = useState("");
   const [formText, setFormText] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Check if user already reviewed
   const userReview = reviews.find((r) => r.user.id === user?.id);
 
+  /**
+   * RN - Tracción de Datos: Recupera el listado de reseñas con soporte para paginación y ordenamiento.
+   */
   const fetchReviews = useCallback(async () => {
     try {
       const res = await ApiClient.getProductReviews(productId, { page, limit: 5, sort });
       setReviews(res.reviews || []);
       setTotalPages(res.pagination?.totalPages || 1);
     } catch {
-      // silently fail
+      // RN - Mantenibilidad: Fallo silencioso preventivo para no interrumpir la ficha técnica.
     }
   }, [productId, page, sort]);
 
+  /**
+   * RN - Analítica: Recupera las estadísticas agregadas de reputación.
+   */
   const fetchStats = useCallback(async () => {
     try {
       const res = await ApiClient.getProductRatingStats(productId);
       setStats(res.data);
     } catch {
-      // silently fail
+      // RN - Mantenibilidad: Fallo silencioso preventivo.
     }
   }, [productId]);
 
@@ -141,14 +150,17 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
     Promise.all([fetchReviews(), fetchStats()]).finally(() => setLoading(false));
   }, [fetchReviews, fetchStats]);
 
-  // ── Submit review ──
+  /**
+   * RN - Captura de Feedback: Procesa la creación de una nueva reseña.
+   * Justificación TFI: Implementa validaciones de integridad antes del despacho al API.
+   */
   const handleSubmit = async () => {
     if (!formRating) {
-      toast({ title: "Seleccioná una calificación", variant: "destructive" });
+      toast({ title: "Falta Calificación", variant: "destructive" });
       return;
     }
     if (formText.length < 10) {
-      toast({ title: "La reseña debe tener al menos 10 caracteres", variant: "destructive" });
+      toast({ title: "Reseña Insuficiente", description: "Mínimo 10 caracteres para asegurar feedback de calidad.", variant: "destructive" });
       return;
     }
 
@@ -159,62 +171,60 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
         title: formTitle || undefined,
         text: formText,
       });
-      toast({ title: "¡Reseña publicada!", description: "Gracias por tu opinión." });
+      toast({ title: "¡Feedback Publicado!", description: "Su opinión ha sido integrada al análisis de sentimiento." });
       setShowForm(false);
       setFormRating(0);
       setFormTitle("");
       setFormText("");
       setPage(1);
-      // Refetch
       await Promise.all([fetchReviews(), fetchStats()]);
     } catch (err: any) {
-      const message = err instanceof ApiError ? err.message : "Error al publicar la reseña";
+      const message = err instanceof ApiError ? err.message : "Error crítico al publicar";
       toast({ title: message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ── Helpful vote ──
+  /**
+   * RN - Interacción Comunitaria: Registra votos de utilidad 'Helpful'.
+   */
   const handleHelpful = async (reviewId: string) => {
     if (!user) {
-      toast({ title: "Iniciá sesión para votar", variant: "destructive" });
+      toast({ title: "Autenticación Requerida", description: "Inicie sesión para valorar opiniones.", variant: "destructive" });
       return;
     }
     try {
       const res = await ApiClient.voteReviewHelpful(reviewId);
-      // Optimistic update
       setReviews((prev) =>
         prev.map((r) =>
           r.id === reviewId ? { ...r, helpfulCount: res.data.helpfulCount } : r
         )
       );
     } catch (err: any) {
-      const message = err instanceof ApiError ? err.message : "Error al votar";
+      const message = err instanceof ApiError ? err.message : "Error al registrar voto";
       toast({ title: message, variant: "destructive" });
     }
   };
 
-  // ── Delete review ──
+  /**
+   * RN - Moderación: Eliminación de reseñas por autoría o rol administrativo.
+   */
   const handleDelete = async (reviewId: string) => {
     try {
       await ApiClient.deleteReview(reviewId);
-      toast({ title: "Reseña eliminada" });
+      toast({ title: "Reseña Eliminada Correctamente" });
       await Promise.all([fetchReviews(), fetchStats()]);
     } catch (err: any) {
-      const message = err instanceof ApiError ? err.message : "Error al eliminar";
-      toast({ title: message, variant: "destructive" });
+      toast({ title: "Fallo en Moderación", variant: "destructive" });
     }
   };
 
-  // ────────────────────────────────────────────────────────────────
-  // RENDER
-  // ────────────────────────────────────────────────────────────────
   return (
     <section className="space-y-8">
-      <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 flex items-center gap-2">
-        <MessageSquare className="h-6 w-6" />
-        Reseñas de Jugadores
+      <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 flex items-center gap-2 text-white">
+        <MessageSquare className="h-6 w-6 text-primary" />
+        Auditoría de Jugadores
       </h2>
 
       {loading ? (
@@ -223,38 +233,41 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
         </div>
       ) : (
         <>
-          {/* ───── STATS SUMMARY ───── */}
+          {/* Layer - Resumen Estadístico (RN - Algoritmos de Calidad) */}
           {stats && stats.totalReviews > 0 && (
-            <div className="bg-card/40 backdrop-blur-sm border border-white/5 rounded-xl p-6">
-              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 items-center">
-                {/* Average */}
+            <div className="bg-card/30 backdrop-blur-md border border-white/5 rounded-2xl p-6 shadow-xl">
+              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-8 items-center">
+                
+                {/* Score Promedio */}
                 <div className="text-center md:text-left space-y-1">
-                  <div className="text-5xl font-bold text-foreground">{stats.averageRating}</div>
+                  <div className="text-6xl font-black text-white">{stats.averageRating}</div>
                   <StarDisplay rating={stats.averageRating} size="md" />
-                  <p className="text-sm text-muted-foreground">{stats.totalReviews} reseña{stats.totalReviews !== 1 ? "s" : ""}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest pt-2">
+                    {stats.totalReviews} opinión{stats.totalReviews !== 1 ? "es" : ""}
+                  </p>
                 </div>
 
-                {/* Distribution bars */}
-                <div className="space-y-1.5">
+                {/* Histograma de Distribución */}
+                <div className="space-y-1.5 px-4 border-x border-white/5">
                   {[5, 4, 3, 2, 1].map((star) => {
                     const count = stats.distribution[star] || 0;
                     const pct = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
                     return (
                       <div key={star} className="flex items-center gap-2 text-sm">
-                        <span className="w-4 text-right text-muted-foreground">{star}</span>
+                        <span className="w-4 text-right text-muted-foreground font-mono">{star}</span>
                         <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
-                        <Progress value={pct} className="h-2.5 flex-1 bg-white/5 [&>div]:bg-yellow-400" />
-                        <span className="w-8 text-right text-xs text-muted-foreground">{count}</span>
+                        <Progress value={pct} className="h-2 flex-1 bg-white/5 [&>div]:bg-yellow-400" />
+                        <span className="w-8 text-right text-[10px] font-bold text-white">{count}</span>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Sentiment Summary */}
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                {/* Síntesis Semántica (IA Analysis) */}
+                <div className="space-y-3">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Análisis IA
+                    Sentimiento IA
                   </p>
                   {(["positive", "neutral", "negative", "mixed"] as ReviewSentiment[]).map((s) => {
                     const count = stats.sentiment[s] || 0;
@@ -262,9 +275,9 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
                     const cfg = sentimentConfig[s];
                     return (
                       <div key={s} className="flex items-center gap-2 text-xs">
-                        <span>{cfg.emoji}</span>
-                        <span className="text-muted-foreground">{cfg.label}</span>
-                        <span className="font-medium text-foreground">{count}</span>
+                        <span role="img" aria-label={cfg.label}>{cfg.emoji}</span>
+                        <span className="text-muted-foreground">{cfg.label}:</span>
+                        <span className="font-bold text-white">{count}</span>
                       </div>
                     );
                   })}
@@ -273,94 +286,82 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
             </div>
           )}
 
-          {/* ───── WRITE REVIEW BUTTON / FORM ───── */}
+          {/* RN - Acceso a Feedback: Formulario reactivo para nuevos aportes. */}
           {user && !userReview && (
-            <div>
+            <div className="animate-in fade-in duration-500">
               {!showForm ? (
-                <Button onClick={() => setShowForm(true)} variant="outline" className="border-primary/30 hover:bg-primary/10">
+                <Button onClick={() => setShowForm(true)} variant="outline" className="border-primary/20 hover:bg-primary/10 text-primary font-bold">
                   <Star className="mr-2 h-4 w-4" />
-                  Escribir una reseña
+                  APORTAR EXPERIENCIA JUGABLE
                 </Button>
               ) : (
-                <div className="bg-card/40 backdrop-blur-sm border border-white/5 rounded-xl p-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
-                  <h3 className="font-semibold text-lg">Tu reseña para {productName}</h3>
+                <div className="bg-card/40 border border-primary/20 rounded-2xl p-6 space-y-4 shadow-2xl">
+                  <h3 className="font-headline font-bold text-xl text-white">Tu Crítica: {productName}</h3>
 
                   <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Calificación *</label>
+                    <label className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Valoración Técnica</label>
                     <StarRating value={formRating} onChange={setFormRating} disabled={submitting} />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Título (opcional)</label>
+                    <label className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Resumen (Opcional)</label>
                     <Input
                       value={formTitle}
                       onChange={(e) => setFormTitle(e.target.value)}
-                      placeholder="Resumí tu experiencia en una frase"
-                      maxLength={100}
+                      placeholder="Ej: Sorpresa técnica inmersiva"
+                      className="bg-background/50 border-white/10"
                       disabled={submitting}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Reseña * (mín. 10 caracteres)</label>
+                    <label className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Análisis Detallado</label>
                     <Textarea
                       value={formText}
                       onChange={(e) => setFormText(e.target.value)}
-                      placeholder="Contá qué te pareció el juego, qué te gustó y qué no..."
-                      rows={4}
-                      maxLength={2000}
+                      placeholder="Describa su experiencia con el gameplay, rendimiento y narrativa..."
+                      rows={5}
+                      className="bg-background/50 border-white/10 resize-none"
                       disabled={submitting}
                     />
-                    <p className="text-xs text-muted-foreground text-right">{formText.length}/2000</p>
+                    <p className="text-[10px] text-muted-foreground text-right font-mono">{formText.length} / 2000</p>
                   </div>
 
-                  <div className="flex gap-3">
-                    <Button onClick={handleSubmit} disabled={submitting}>
-                      {submitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Analizando y publicando...
-                        </>
-                      ) : (
-                        "Publicar reseña"
-                      )}
+                  <div className="flex gap-4 pt-2">
+                    <Button onClick={handleSubmit} disabled={submitting} className="font-bold shadow-lg">
+                      {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                      PUBLICAR PARA ANALISIS IA
                     </Button>
-                    <Button variant="ghost" onClick={() => setShowForm(false)} disabled={submitting}>
-                      Cancelar
+                    <Button variant="ghost" onClick={() => setShowForm(false)} disabled={submitting} className="text-muted-foreground hover:text-white">
+                      CANCELAR
                     </Button>
                   </div>
-
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <Sparkles className="h-3 w-3 text-primary" />
-                    Tu reseña será analizada por IA para detectar sentimiento automáticamente
-                  </p>
                 </div>
               )}
             </div>
           )}
 
           {!user && (
-            <p className="text-sm text-muted-foreground">
-              <a href="/login" className="text-primary hover:underline">Iniciá sesión</a> para dejar una reseña.
+            <p className="text-sm text-muted-foreground italic">
+              Se requiere autenticación para participar en la auditoría comunitaria. 
+              <a href="/login" className="text-primary font-bold hover:underline ml-1">Ingresar →</a>
             </p>
           )}
 
-          {/* ───── SORT & LIST ───── */}
+          {/* Layer - Listado de Opiniones con Clasificación IA */}
           {(stats?.totalReviews ?? 0) > 0 && (
-            <>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {stats?.totalReviews} reseña{(stats?.totalReviews ?? 0) !== 1 ? "s" : ""}
-                </p>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">Críticas de la Comunidad</span>
                 <Select value={sort} onValueChange={(v) => { setSort(v); setPage(1); }}>
-                  <SelectTrigger className="w-[180px] h-9 text-sm bg-card/40 border-white/10">
-                    <SelectValue placeholder="Ordenar por" />
+                  <SelectTrigger className="w-[200px] h-9 text-xs bg-card/20 border-primary/20 text-white font-mono">
+                    <SelectValue placeholder="Ordenar Por" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="recent">Más recientes</SelectItem>
-                    <SelectItem value="helpful">Más útiles</SelectItem>
-                    <SelectItem value="highest">Mayor calificación</SelectItem>
-                    <SelectItem value="lowest">Menor calificación</SelectItem>
+                  <SelectContent className="bg-background/95 backdrop-blur-xl">
+                    <SelectItem value="recent">Recientes</SelectItem>
+                    <SelectItem value="helpful">Más Útiles</SelectItem>
+                    <SelectItem value="highest">Mejor Calificadas</SelectItem>
+                    <SelectItem value="lowest">Baja Calificación</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -378,39 +379,41 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
                 ))}
               </div>
 
-              {/* Pagination */}
+              {/* RN - Paginación de Opiniones */}
               {totalPages > 1 && (
-                <div className="flex justify-center gap-2 pt-2">
+                <div className="flex justify-center gap-3 pt-6">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="border-primary/20 text-xs"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => p - 1)}
                   >
-                    Anterior
+                    Retroceder
                   </Button>
-                  <span className="text-sm text-muted-foreground flex items-center px-3">
+                  <span className="text-xs font-mono text-white flex items-center px-4 bg-primary/10 rounded-full border border-primary/20">
                     {page} / {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
+                    className="border-primary/20 text-xs"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    Siguiente
+                    Avanzar
                   </Button>
                 </div>
               )}
-            </>
+            </div>
           )}
 
-          {/* Empty state */}
+          {/* Empty State: Sin datos de reputación. */}
           {stats?.totalReviews === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="text-lg font-medium">Aún no hay reseñas</p>
-              <p className="text-sm">Sé el primero en compartir tu opinión sobre este juego.</p>
+            <div className="text-center py-24 bg-card/10 rounded-3xl border border-dashed border-white/5">
+              <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-10 text-primary" />
+              <p className="text-xl font-headline font-bold text-white">Ficha en Blanco</p>
+              <p className="text-sm text-muted-foreground mt-2">Este producto aún no cuenta con auditoría de jugadores.</p>
             </div>
           )}
         </>
@@ -419,9 +422,9 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
   );
 }
 
-// ────────────────────────────────────────────────────────────────
-// REVIEW CARD
-// ────────────────────────────────────────────────────────────────
+/**
+ * Componente de Presentación: Tarjeta de Reseña Individual.
+ */
 function ReviewCard({
   review,
   currentUserId,
@@ -437,93 +440,82 @@ function ReviewCard({
 }) {
   const isOwner = currentUserId === review.user.id;
   const canDelete = isOwner || isAdmin;
-  const initials = review.user.name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = review.user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="bg-card/30 border border-white/5 rounded-xl p-5 space-y-3 hover:border-white/10 transition-colors">
-      {/* Header */}
+    <div className="bg-card/20 backdrop-blur-sm border border-white/5 rounded-2xl p-6 space-y-4 hover:border-primary/20 transition-all duration-300">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9 bg-primary/20">
-            {review.user.avatar ? (
-              <AvatarImage src={review.user.avatar} alt={review.user.name} />
-            ) : null}
-            <AvatarFallback className="text-xs font-bold text-primary">{initials}</AvatarFallback>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-10 w-10 ring-1 ring-primary/20">
+            {review.user.avatar && <AvatarImage src={review.user.avatar} alt={review.user.name} />}
+            <AvatarFallback className="bg-primary/10 text-primary font-bold">{initials}</AvatarFallback>
           </Avatar>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">{review.user.name}</span>
+              <span className="font-bold text-sm text-white">{review.user.name}</span>
               {review.verified && (
-                <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400 gap-1 px-1.5 py-0">
-                  <ShieldCheck className="h-3 w-3" />
-                  Compra verificada
+                <Badge variant="outline" className="text-[9px] border-green-500/20 bg-green-500/5 text-green-400 gap-1 px-2 py-0 uppercase tracking-tighter">
+                  <ShieldCheck className="h-3 w-3" /> Adquisición Verificada
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-3 mt-1">
               <StarDisplay rating={review.rating} size="sm" />
-              <span className="text-xs text-muted-foreground">
-                {new Date(review.createdAt).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}
+              <span className="text-[10px] text-muted-foreground font-mono uppercase">
+                {new Date(review.createdAt).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Sentiment badge */}
+        {/* Badge de Sentimiento (RN - Auditoría IA) */}
         {review.sentiment && (
-          <Badge variant="outline" className={cn("text-[10px] gap-1 px-2 py-0.5 shrink-0", sentimentConfig[review.sentiment].color)}>
-            <Sparkles className="h-3 w-3" />
-            {sentimentConfig[review.sentiment].emoji} {sentimentConfig[review.sentiment].label}
+          <Badge variant="outline" className={cn("text-[9px] gap-1 px-2 py-1 shrink-0 uppercase tracking-widest font-bold", sentimentConfig[review.sentiment].color)}>
+            <Sparkles className="h-2.5 w-2.5" />
+            {sentimentConfig[review.sentiment].label}
           </Badge>
         )}
       </div>
 
-      {/* Title */}
-      {review.title && <h4 className="font-semibold text-sm">{review.title}</h4>}
-
-      {/* Text */}
-      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{review.text}</p>
-
-      {/* Sentiment keywords */}
-      {review.sentimentKeywords.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {review.sentimentKeywords.map((kw) => (
-            <Badge key={kw} variant="secondary" className="text-[10px] bg-white/5 text-muted-foreground font-normal">
-              {kw}
-            </Badge>
-          ))}
-        </div>
-      )}
+      <div className="space-y-2 pl-14">
+        {review.title && <h4 className="font-headline font-bold text-white tracking-wide">{review.title}</h4>}
+        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-l-2 border-white/5 pl-4">{review.text}</p>
+        
+        {/* Keywords extraídas por IA */}
+        {review.sentimentKeywords.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            {review.sentimentKeywords.map((kw) => (
+              <span key={kw} className="text-[10px] font-mono text-primary/60 bg-primary/5 px-2 py-0.5 rounded border border-primary/10 capitalize">
+                #{kw}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
       <Separator className="bg-white/5" />
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pl-14">
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs text-muted-foreground hover:text-primary h-7 px-2 gap-1.5"
+          className="text-[10px] font-bold text-muted-foreground hover:text-primary gap-2 h-8 px-3 rounded-full border border-transparent hover:border-primary/10"
           onClick={() => onHelpful(review.id)}
           disabled={isOwner}
         >
           <ThumbsUp className="h-3.5 w-3.5" />
-          Útil ({review.helpfulCount})
+          ¿Es útil? ({review.helpfulCount})
         </Button>
 
         {canDelete && (
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-muted-foreground hover:text-red-400 h-7 px-2 gap-1.5"
+            className="text-[10px] font-bold text-muted-foreground hover:text-red-400 gap-2 h-8 px-3 rounded-full border border-transparent hover:border-red-500/10"
             onClick={() => onDelete(review.id)}
           >
             <Trash2 className="h-3.5 w-3.5" />
-            Eliminar
+            Eliminar Opinión
           </Button>
         )}
       </div>

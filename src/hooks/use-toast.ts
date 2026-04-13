@@ -1,13 +1,20 @@
 "use client"
 
-// Inspired by react-hot-toast library
-import * as React from "react"
+/**
+ * Capa de Interfaz: Sistema de Notificaciones Persistentes (Toast Hook)
+ * --------------------------------------------------------------------------
+ * Orquesta la visualización de mensajes efímeros para el usuario.
+ * Provee un mecanismo centralizado para comunicar estados de éxito, error
+ * o advertencia sin interrumpir el flujo de navegación principal. (UI / Hook)
+ */
 
+import * as React from "react"
 import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
 
+// RN - UX: Límite de notificaciones simultáneas para evitar saturación visual.
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
@@ -18,6 +25,9 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
+/**
+ * Definición de acciones del Reducer para la gestión del estado de notificaciones.
+ */
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
@@ -27,6 +37,9 @@ const actionTypes = {
 
 let count = 0
 
+/**
+ * Generador de IDs Únicos para la gestión de colas de mensajes.
+ */
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER
   return count.toString()
@@ -58,10 +71,11 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
+/**
+ * RN - Gestión de Ciclo de Vida: Programa la eliminación final de la notificación.
+ */
 const addToRemoveQueue = (toastId: string) => {
-  if (toastTimeouts.has(toastId)) {
-    return
-  }
+  if (toastTimeouts.has(toastId)) return;
 
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
@@ -74,6 +88,9 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
+/**
+ * Reducer central: Procesa las mutaciones del estado de los mensajes.
+ */
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -93,8 +110,7 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
+      // RN - Efectos Colaterales: Inicia la salida del componente del DOM tras descartarlo.
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -133,6 +149,9 @@ const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
+/**
+ * Despachador de acciones con notificación a suscriptores.
+ */
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
   listeners.forEach((listener) => {
@@ -142,6 +161,9 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
+/**
+ * RN - Interfaz de Programación: Inyecta un nuevo mensaje en el sistema.
+ */
 function toast({ ...props }: Toast) {
   const id = genId()
 
@@ -171,6 +193,9 @@ function toast({ ...props }: Toast) {
   }
 }
 
+/**
+ * Hook de consumidor del sistema de notificaciones.
+ */
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 

@@ -1,5 +1,16 @@
 "use client";
 
+/**
+ * Capa de Interfaz: Central de Consultas y Soporte Técnico (Contact Page)
+ * --------------------------------------------------------------------------
+ * Orquesta la captura de requerimientos de usuarios externos e integradores.
+ * Responsabilidades:
+ * 1. Validación de Esquemas: Aplica reglas estrictas vía Zod para integridad de datos.
+ * 2. Gestión de Mensajería: Despacha los registros al motor de notificaciones.
+ * 3. Feedback Operativo: Gestiona los estados de envío exitoso y reintentos.
+ * (MVC / View)
+ */
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,13 +22,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { ApiClient } from "@/lib/api";
-import { Loader2, CheckCircle, Mail, MessageSquare } from "lucide-react";
+import { Loader2, CheckCircle, Mail, MessageSquare, Send, ArrowRight, User } from "lucide-react";
 
+/**
+ * RN - Validación de Identidad y Contenido: Protocolo de seguridad registral.
+ */
 const contactSchema = z.object({
-  firstName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
-  email: z.string().email("Ingresá un email válido"),
-  message: z.string().min(10, "El mensaje debe tener al menos 10 caracteres").max(1000, "El mensaje no puede superar los 1000 caracteres")
+  firstName: z.string().min(2, "Identificador nominal demasiado breve (mínimo 2 caracteres)"),
+  lastName: z.string().min(2, "Identificador registral demasiado breve (mínimo 2 caracteres)"),
+  email: z.string().email("Formato de correo electrónico institucional/personal inválido"),
+  message: z.string().min(10, "El cuerpo del requerimiento debe ser descriptivo (mínimo 10 caracteres)").max(1000, "Límite de caracteres excedido (máximo 1000)")
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
@@ -31,39 +45,49 @@ export default function ContactoPage() {
     defaultValues: { firstName: "", lastName: "", email: "", message: "" }
   });
 
+  /**
+   * RN - Despacho de Requerimientos: Procesa la ingesta de la consulta.
+   */
   const onSubmit = async (data: ContactFormData) => {
     try {
       await ApiClient.sendContactMessage(data);
       setSent(true);
       reset();
       toast({
-        title: "¡Mensaje enviado!",
-        description: "Te responderemos a la brevedad.",
-        className: "bg-green-50 border-green-200 text-green-900"
+        title: "Registro de Consulta Exitoso",
+        description: "Su requerimiento ha sido ingresado al sistema de tickets.",
+        className: "bg-green-50/10 border-green-500/20 text-green-400"
       });
     } catch (error: any) {
+      console.error("[ContactModule] Fallo en despacho:", error);
       toast({
-        title: "Error al enviar",
-        description: error.message || "Hubo un problema al conectar con el servidor.",
+        title: "Atención: Error de Red",
+        description: error.message || "No se pudo sincronizar la consulta con el servidor de soporte.",
         variant: "destructive"
       });
     }
   };
 
+  /**
+   * Layer - Confirmación de Recepción: Estado visual post-despacho.
+   */
   if (sent) {
     return (
-      <div className="container mx-auto max-w-2xl py-12 px-4">
-        <Card className="text-center border-green-500/20 bg-green-500/5">
-          <CardContent className="pt-10 pb-8 space-y-4">
-            <div className="mx-auto bg-green-100 dark:bg-green-900/30 p-4 rounded-full w-fit">
-              <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+      <div className="container mx-auto max-w-2xl py-24 px-4 animate-in fade-in zoom-in-95 duration-700">
+        <Card className="text-center border-none bg-card/40 backdrop-blur-3xl shadow-3xl rounded-[2.5rem] overflow-hidden">
+          <CardContent className="pt-16 pb-12 space-y-6">
+            <div className="mx-auto bg-green-500/10 border border-green-500/20 p-6 rounded-full w-fit relative">
+              <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full opacity-50 animate-pulse" />
+              <CheckCircle className="h-12 w-12 text-green-400 relative z-10" />
             </div>
-            <h2 className="text-2xl font-headline font-bold">¡Mensaje enviado!</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Recibimos tu consulta correctamente. Te responderemos por email lo antes posible.
-            </p>
-            <Button variant="outline" onClick={() => setSent(false)} className="mt-4">
-              Enviar otro mensaje
+            <div className="space-y-2">
+                <h2 className="text-3xl font-headline font-bold text-white tracking-tighter">Requerimiento Recibido</h2>
+                <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
+                  Su solicitud de contacto ha sido normalizada e ingresada. Un operador técnico responderá vía correo electrónico en breve.
+                </p>
+            </div>
+            <Button variant="outline" onClick={() => setSent(false)} className="mt-6 h-12 px-8 border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/5 rounded-xl transition-all">
+              <ArrowRight className="mr-2 h-4 w-4 rotate-180" /> Enviar otro Requerimiento
             </Button>
           </CardContent>
         </Card>
@@ -72,65 +96,82 @@ export default function ContactoPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl py-12 px-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2 mb-1">
-            <Mail className="h-5 w-5 text-primary" />
-            <CardTitle className="text-3xl font-headline">Contacto</CardTitle>
+    <div className="container mx-auto max-w-2xl py-20 px-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+      <Card className="border-none bg-card/40 backdrop-blur-3xl shadow-3xl rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="pt-12 px-10">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="p-3 bg-primary/10 rounded-2xl border border-primary/20">
+                <Mail className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+                <CardTitle className="text-4xl font-headline font-bold text-white tracking-tighter">Central de Consultas</CardTitle>
+                <CardDescription className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-70">Canal Directo de Soporte y Asesoría Técnica</CardDescription>
+            </div>
           </div>
-          <CardDescription>
-            ¿Tenés alguna pregunta? Completá el formulario y nos pondremos en contacto con vos.
-          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="firstName">Nombre</Label>
-                <Input id="firstName" {...register("firstName")} />
+        <CardContent className="px-10 pb-12">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <User className="h-3 w-3" /> Nombre
+                </Label>
+                <Input id="firstName" {...register("firstName")} className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary/40 text-white placeholder:opacity-20" placeholder="Ej: Juan" />
                 {errors.firstName && (
-                  <p className="text-sm text-destructive">{errors.firstName.message}</p>
+                  <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">{errors.firstName.message}</p>
                 )}
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="lastName">Apellido</Label>
-                <Input id="lastName" {...register("lastName")} />
+              <div className="space-y-3">
+                <Label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <User className="h-3 w-3" /> Apellido
+                </Label>
+                <Input id="lastName" {...register("lastName")} className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary/40 text-white placeholder:opacity-20" placeholder="Ej: Pérez" />
                 {errors.lastName && (
-                  <p className="text-sm text-destructive">{errors.lastName.message}</p>
+                  <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">{errors.lastName.message}</p>
                 )}
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="nombre@ejemplo.com" {...register("email")} />
+            
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Mail className="h-3 w-3" /> Correo Electrónico
+              </Label>
+              <Input id="email" type="email" placeholder="institucional@dominio.com" {...register("email")} className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary/40 text-white placeholder:opacity-20" />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">{errors.email.message}</p>
               )}
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="message">Mensaje</Label>
+
+            <div className="space-y-3">
+              <Label htmlFor="message" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <MessageSquare className="h-3 w-3" /> Cuerpo del Requerimiento
+              </Label>
               <Textarea
                 id="message"
-                className="min-h-[120px]"
-                placeholder="¿En qué podemos ayudarte?"
+                className="min-h-[160px] bg-white/5 border-white/10 rounded-2xl focus:ring-primary/40 text-white placeholder:opacity-20 resize-none p-4"
+                placeholder="Describa de forma detallada su consulta o inconveniente técnico..."
                 {...register("message")}
               />
               {errors.message && (
-                <p className="text-sm text-destructive">{errors.message.message}</p>
+                <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">{errors.message.message}</p>
               )}
             </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isSubmitting}>
+
+            <div className="flex justify-end pt-4">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="h-14 px-10 bg-primary text-black hover:bg-primary/90 font-black uppercase text-[10px] tracking-widest transition-all rounded-xl shadow-xl shadow-primary/20 group"
+              >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
+                    <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                    Procesando Registro...
                   </>
                 ) : (
                   <>
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Enviar Mensaje
+                    <Send className="mr-3 h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    Despachar Requerimiento
                   </>
                 )}
               </Button>
@@ -138,6 +179,10 @@ export default function ContactoPage() {
           </form>
         </CardContent>
       </Card>
+      
+      <div className="mt-10 text-center">
+         <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.4em]">Soporte Técnico Oficial TFI 2026</p>
+      </div>
     </div>
   );
 }

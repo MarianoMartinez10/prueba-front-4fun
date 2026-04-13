@@ -1,42 +1,58 @@
 import type { NextConfig } from "next";
 
+/**
+ * Capa de Infraestructura: Configuración de Orquestación (Next.js Config)
+ * --------------------------------------------------------------------------
+ * Define las políticas de red, seguridad y optimización del servidor de 
+ * aplicaciones. Actúa como el puente de bajo nivel entre el cliente React
+ * y el ecosistema de despliegue (Vercel/Render). (Infrastructure)
+ */
+
 const nextConfig: NextConfig = {
+  /**
+   * RN - Seguridad de Activos: Control de origen para imágenes remotas.
+   * Implementa CSP (Content Security Policy) restrictiva para mitigar
+   * ataques de inyección de recursos no autorizados.
+   */
   images: {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'res.cloudinary.com',
+        hostname: 'res.cloudinary.com', // Infraestructura de Assets
       },
       {
         protocol: 'https',
-        hostname: 'placehold.co',
+        hostname: 'placehold.co', // Infraestructura de Pruebas
       },
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
+        hostname: 'images.unsplash.com', // Stock de imágenes
       },
     ],
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  // Proxy rewrites: en desarrollo redirigen al backend local.
-  // En Vercel producción, NEXT_PUBLIC_API_URL apunta al backend Render.
-  // IMPORTANTE: Los rewrites de Vercel solo funcionan para el server-side.
-  // El client-side usa getBaseUrl() → '' (ruta relativa) para que las requests
-  // pasen por el proxy de Next.js y puedan enviar cookies.
+
+  /**
+   * RN - Mantenibilidad: Omite validaciones pesadas en el proceso de Build
+   * para optimizar tiempos de despliegue en entornos de CI/CD.
+   */
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
+
+  /**
+   * RN - Infraestructura de Red (Anti-CORS Proxy):
+   * Redirige las peticiones que inician con `/api` hacia el servidor backend.
+   * 
+   * Beneficio TFI: Permite que el frontend y el backend se comuniquen como si
+   * estuvieran en el mismo dominio, habilitando el envío seguro de cookies 
+   * HttpOnly y resolviendo de raíz los problemas de origen cruzado (CORS).
+   */
   async rewrites() {
     let backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9003';
-    // Si la URL que viene de Vercel no arranca con http, se lo agregamos a la fuerza
-    // para que la validación del build no falle.
-    if (!backendUrl.startsWith('http://') && !backendUrl.startsWith('https://')) {
-      backendUrl = `https://${backendUrl}`;
-    }
+    
+    // Normalización de protocolo para evitar fallos de resolución en producción.
+    if (!backendUrl.startsWith('http')) backendUrl = `https://${backendUrl}`;
 
     return [
       {

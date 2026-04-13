@@ -1,8 +1,19 @@
-// Entidad de Referencia Unificada (Backend Standard DTO)
+/**
+ * Capa de Dominio: Contratos de Datos (Types & Interfaces)
+ * --------------------------------------------------------------------------
+ * Define la estructura de los objetos del sistema. Garantiza el tipado 
+ * estático y actúa como especificación técnica de las entidades de negocio.
+ */
+
+// ─── ENTIDADES DE REFERENCIA ───
+
+/**
+ * RN - Taxonomía: Interfaz base para entidades maestras (Plataformas, Géneros).
+ */
 export interface ReferenceEntity {
   id: string;
   name: string;
-  imageId: string; // Visual URL
+  imageId: string;
   active?: boolean;
 }
 
@@ -10,9 +21,12 @@ export type Platform = ReferenceEntity;
 export type Genre = ReferenceEntity;
 export type Category = ReferenceEntity;
 
-// Re-exportamos Product de schemas como Game para compatibilidad.
-// Game y Product son la MISMA entidad. Usar Product para código nuevo.
+// ─── ENTIDAD PRODUCTO (GAMES) ───
+
 import type { Product } from './schemas';
+/**
+ * RN - Unificación: Alias de compatibilidad para el dominio de Juegos.
+ */
 export type Game = Product;
 export type { Product } from './schemas';
 
@@ -32,7 +46,11 @@ export interface ProductInput {
   discountEndDate?: string | null;
 }
 
-// Unificamos User (eliminamos duplicidad de 'Usuario')
+// ─── ENTIDAD USUARIO & SESIÓN ───
+
+/**
+ * RN - Identidad: Perfil del usuario autenticado.
+ */
 export type User = {
   id: string;
   name: string;
@@ -45,6 +63,8 @@ export type User = {
   createdAt?: string;
 };
 
+// ─── DOMINIO TRANSACCIONAL (CART & ORDERS) ───
+
 export type CartItem = {
   id: string;
   productId: string;
@@ -56,34 +76,41 @@ export type CartItem = {
   platform?: { name: string };
 };
 
-// Metadata de Paginación
-export type Meta = {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-};
-
-// Respuesta Paginada Estandarizada
-export type PaginatedResponse<T> = {
-  products: T[];
-  meta: Meta;
-};
-
-// Respuesta API Genérica (Legacy support if needed, or update to use Meta)
-export type ApiResponse<T> = {
-  success: boolean;
-  message?: string;
-  data?: T;
-  pagination?: Meta;
-};
-
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
-// --- REVIEWS ---
+/**
+ * RN - Auditoría: Estructura del ticket de compra y trazabilidad.
+ */
+export interface Order {
+  id: string;
+  userId: string;
+  user?: User;
+  items: CartItem[];
+  orderItems?: CartItem[];
+  total: number;
+  totalPrice?: number;
+  status: OrderStatus;
+  orderStatus?: string;
+  isPaid?: boolean;
+  digitalKeys?: { productoId: string; clave: string }[];
+  createdAt: string;
+  shippingAddress: {
+    street: string;
+    city: string;
+    zip: string;
+    country: string;
+  };
+  paymentMethod: string;
+  paymentLink?: string;
+}
+
+// ─── DOMINIO DE FEEDBACK (REVIEWS) ───
 
 export type ReviewSentiment = 'positive' | 'neutral' | 'negative' | 'mixed';
 
+/**
+ * RN - Feedback: Contrato de reseñas con análisis de sentimiento IA.
+ */
 export interface Review {
   id: string;
   user: { id: string; name: string; avatar?: string | null };
@@ -99,6 +126,9 @@ export interface Review {
   createdAt: string;
 }
 
+/**
+ * Métricas agregadas de feedback para análisis administrativo.
+ */
 export interface ReviewStats {
   averageRating: number;
   totalReviews: number;
@@ -106,29 +136,23 @@ export interface ReviewStats {
   sentiment: Record<string, number>;
 }
 
-export interface Order {
-  id: string;
-  userId: string;
-  user?: User;
-  items: CartItem[]; // Backend puede devolver 'orderItems' o 'items'
-  orderItems?: CartItem[];
+// ─── RESPUESTAS DE RED (INFRASTRUCTURE) ───
+
+export type Meta = {
   total: number;
-  totalPrice?: number; // Alias común
-  status: OrderStatus;
-  orderStatus?: string; // Backend raw status
-  isPaid?: boolean;
-  digitalKeys?: { productoId: string; clave: string }[];
-  createdAt: string;
-  shippingAddress: {
-    fullName?: string; // Puede no venir
-    street: string;
-    city: string;
-    zip: string;
-    country: string;
-    state?: string;
-  };
-  paymentMethod: string;
-  shippingPrice?: number;
-  itemsPrice?: number;
-  paymentLink?: string; // Para checkout
-}
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export type PaginatedResponse<T> = {
+  products: T[];
+  meta: Meta;
+};
+
+export type ApiResponse<T> = {
+  success: boolean;
+  message?: string;
+  data?: T;
+  pagination?: Meta;
+};

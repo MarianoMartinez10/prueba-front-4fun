@@ -1,19 +1,26 @@
 "use client";
 
+/**
+ * Capa de Administración: Panel de Auditoría de Órdenes (Admin Orders)
+ * --------------------------------------------------------------------------
+ * Orquesta el seguimiento transaccional y la gestión de despachos.
+ * Implementa un motor de auditoría para la generación de reportes legales (PDF/CSV)
+ * y permite la mutación de estados del ciclo de vida de la orden (Logística).
+ * (MVC / Page)
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { OrderStatus } from "@/lib/types";
-import { MoreHorizontal, Search, Loader2, ChevronLeft, ChevronRight, Download, FileText } from "lucide-react";
+import { Search, Loader2, Download, FileSpreadsheet, FilePieChart, ShoppingBag, Eye, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ApiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-// ── POO: ViewModel encapsula toda la lógica de presentación de órdenes ────────
 import { OrderViewModel } from "@/lib/viewmodels";
 import {
     DropdownMenu,
@@ -26,13 +33,12 @@ import {
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogDescription,
 } from "@/components/ui/dialog";
-
-// STATUS_LABELS y getStatusBadge eliminados — encapsulados en OrderViewModel
+import { cn } from "@/lib/utils";
 
 export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
@@ -44,6 +50,9 @@ export default function AdminOrdersPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const { toast } = useToast();
 
+    /**
+     * RN - Auditoría Transaccional: Sincroniza el historial de órdenes con el API.
+     */
     const fetchOrders = useCallback(async () => {
         setLoading(true);
         try {
@@ -52,270 +61,239 @@ export default function AdminOrdersPage() {
                 limit: 15,
                 status: statusFilter !== "all" ? statusFilter : undefined,
             });
-            setOrders(res.orders);
-            setTotal(res.total);
-            setTotalPages(res.totalPages);
+            setOrders(res.orders || []);
+            setTotal(res.total || 0);
+            setTotalPages(res.totalPages || 1);
         } catch (error) {
-            console.error("Error fetching orders:", error);
-            toast({ title: "Error", description: "No se pudieron cargar las órdenes.", variant: "destructive" });
+            console.error("[AdminOrders] Fallo en recuperación:", error);
+            toast({ title: "Fallo de Carga", description: "No se pudo sincronizar el historial transaccional.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
     }, [page, statusFilter, toast]);
 
-    useEffect(() => {
-        fetchOrders();
-    }, [fetchOrders]);
+    useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-    // Reset page on filter change
-    useEffect(() => {
-        setPage(1);
-    }, [statusFilter]);
-
+    /**
+     * RN - Motor Logístico: Gestiona la transición de estados de la orden.
+     */
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         try {
             await ApiClient.updateOrderStatus(orderId, newStatus);
-            // ── POO: OrderViewModel.getStatusLabel() — Encapsulamiento ─────────
-            const tempVm = new OrderViewModel({ id: orderId, status: newStatus as OrderStatus } as any);
-            toast({ title: "Estado actualizado", description: `Orden actualizada a "${tempVm.getStatusLabel()}".` });
+            toast({ title: "Estado Sincronizado", description: `Orden transicionada a: ${newStatus.toUpperCase()}` });
             fetchOrders();
         } catch (error) {
-            toast({ title: "Error", description: "No se pudo actualizar el estado.", variant: "destructive" });
+            toast({ title: "Error Operativo", description: "No se pudo mutar el registro de la operación.", variant: "destructive" });
         }
     };
 
-    // ── POO: Instanciamos ViewModels — getCustomerName/Email eliminados ────────
-    // HERENCIA: cada OrderViewModel hereda getSummaryLine() de BaseViewModel
+    /**
+     * MVVM: Transformación a ViewModels para orquestación de reportes.
+     */
     const orderViewModels = orders.map(o => new OrderViewModel(o));
 
-    // Client-side search filter usando el ViewModel (Encapsulamiento)
+    /**
+     * RN - Localización: Filtrado en caliente sobre el set de datos hidratado.
+     */
     const filteredVMs = searchTerm
         ? orderViewModels.filter(vm => {
             const term = searchTerm.toLowerCase();
-            return (
-                vm.getDisplayId().toLowerCase().includes(term) ||
-                vm.getCustomerName().toLowerCase().includes(term) ||
-                vm.getCustomerEmail().toLowerCase().includes(term)
-            );
+            return vm.getDisplayId().toLowerCase().includes(term) ||
+                   vm.getCustomerName().toLowerCase().includes(term);
         })
         : orderViewModels;
 
-    // ── POO: toReportRow() — Abstracción: el formato del reporte está en el ViewModel
+    // ─── SUBSISTEMA DE AUDITORÍA (PDF/CSV) ───
+
+    const handleExportPDF = () => {
+        if (!filteredVMs.length) return;
+        
+        const doc = new jsPDF();
+        doc.setFontSize(22);
+        doc.text("4Fun Marketplace — Auditoría Transaccional", 14, 22);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Fecha del Reporte: ${new Date().toLocaleString("es-AR")}`, 14, 30);
+        doc.text(`Cobertura: ${total} transacciones en el periodo`, 14, 35);
+        doc.setTextColor(0);
+
+        autoTable(doc, {
+            startY: 45,
+            head: [["ID TICKET", "CLIENTE / ENTIDAD", "TOTALIZACIÓN", "ESTADO", "LIQUIDACIÓN", "CRONOLOGÍA"]],
+            body: filteredVMs.map(vm => vm.toReportRow()), 
+            styles: { fontSize: 8, cellPadding: 4 },
+            headStyles: { fillColor: [45, 45, 55], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [245, 245, 250] }
+        });
+
+        doc.save(`auditoria_ventas_${new Date().getTime()}.pdf`);
+        toast({ title: "Reporte PDF Generado" });
+    };
+
     const handleExportCSV = () => {
-        if (!filteredVMs.length) {
-            toast({ title: "Atención", description: "No hay órdenes para exportar.", variant: "destructive" });
-            return;
-        }
-        const headers = ["ID Orden", "Cliente", "Email", "Método", "Total", "Estado", "Pago", "Fecha"];
-        const rows = filteredVMs.map(vm => vm.toReportRow()); // ← Abstracción pura
+        if (!filteredVMs.length) return;
+        const headers = ["ID", "Cliente", "Email", "Método", "Total", "Estado", "Pago", "Fecha"];
+        const rows = filteredVMs.map(vm => vm.toReportRow());
         const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
         const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `reporte_ordenes_4fun_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
+        link.href = url;
+        link.download = `matriz_ventas_${new Date().getTime()}.csv`;
         link.click();
-        document.body.removeChild(link);
-    };
-
-    const handleExportPDF = () => {
-        if (!filteredVMs.length) {
-            toast({ title: "Atención", description: "No hay órdenes para exportar.", variant: "destructive" });
-            return;
-        }
-        const doc = new jsPDF();
-        doc.setFontSize(18);
-        doc.text("Reporte de Órdenes — 4Fun", 14, 20);
-        doc.setFontSize(10);
-        doc.setTextColor(120);
-        doc.text(`Generado: ${new Date().toLocaleDateString("es-AR")}`, 14, 27);
-        doc.setTextColor(0);
-        autoTable(doc, {
-            startY: 32,
-            head: [["ID Orden", "Cliente", "Email", "Total", "Estado", "Pago", "Fecha"]],
-            body: filteredVMs.map(vm => vm.toReportRow()), // ← Abstracción pura
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [30, 30, 40] },
-        });
-        doc.save(`reporte_ordenes_4fun_${new Date().toISOString().split("T")[0]}.pdf`);
+        toast({ title: "Matriz CSV Exportada" });
     };
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold font-headline">Gestión de Órdenes</h1>
-                <p className="text-muted-foreground">Revisa y actualiza el estado de los pedidos.</p>
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-                <div className="relative flex-1 min-w-[200px] max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar por ID o cliente..."
-                        className="pl-8"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filtrar por estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos los estados</SelectItem>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="processing">Procesando</SelectItem>
-                        <SelectItem value="shipped">Enviado</SelectItem>
-                        <SelectItem value="delivered">Entregado</SelectItem>
-                        <SelectItem value="cancelled">Cancelado</SelectItem>
-                    </SelectContent>
-                </Select>
-                <div className="ml-auto flex items-center gap-2">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="flex items-center gap-2"
-                                disabled={loading || filteredVMs.length === 0}
-                            >
-                                <Download className="h-4 w-4" /> Descargar datos
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-sm">
-                            <DialogHeader>
-                                <DialogTitle>Descargar en</DialogTitle>
-                                <DialogDescription>
-                                    Seleccione el formato preferido para exportar las órdenes.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex flex-col gap-3 py-4">
-                                <Button variant="outline" className="flex items-center gap-2 justify-center w-full" onClick={handleExportCSV}>
-                                    <Download className="h-4 w-4" /> Formato CSV (Excel)
+        <div className="space-y-6 animate-in fade-in duration-700">
+            <Card className="border-none bg-card/40 backdrop-blur-md shadow-2xl">
+                <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-white/5 pb-8">
+                    <div className="space-y-1">
+                        <CardTitle className="text-3xl font-headline font-bold text-white flex items-center gap-3">
+                            <ShoppingBag className="h-8 w-8 text-primary" />
+                            Consola de Auditoría Fiscal
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground uppercase tracking-widest text-[10px] font-bold">
+                            Seguimiento de Órdenes de Compra y Control Transaccional
+                        </CardDescription>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="border-white/10 hover:bg-white/5 font-bold">
+                                    <Download className="mr-2 h-4 w-4" /> EXPORTAR DOCUMENTACIÓN
                                 </Button>
-                                <Button variant="outline" className="flex items-center gap-2 justify-center w-full" onClick={handleExportPDF}>
-                                    <FileText className="h-4 w-4" /> Formato PDF Documento
-                                </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Órdenes</CardTitle>
-                    <CardDescription>Total: {total} órdenes.</CardDescription>
+                            </DialogTrigger>
+                            <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10 sm:max-w-[400px]">
+                                <DialogHeader>
+                                    <DialogTitle className="text-xl font-headline text-white">Auditoría Operativa</DialogTitle>
+                                    <DialogDescription className="text-xs uppercase font-bold tracking-widest text-muted-foreground mt-1">Formato de Salida Registral</DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-3 py-6">
+                                    <Button variant="outline" className="h-16 justify-between px-6 border-white/10 hover:border-primary/50" onClick={handleExportCSV}>
+                                        <div className="flex items-center gap-4">
+                                            <FileSpreadsheet className="h-6 w-6 text-green-500" />
+                                            <p className="font-bold text-white uppercase text-xs">Excel / Matriz CSV</p>
+                                        </div>
+                                    </Button>
+                                    <Button variant="outline" className="h-16 justify-between px-6 border-white/10 hover:border-primary/50" onClick={handleExportPDF}>
+                                        <div className="flex items-center gap-4">
+                                            <FilePieChart className="h-6 w-6 text-destructive" />
+                                            <p className="font-bold text-white uppercase text-xs">PDF Documento Legal</p>
+                                        </div>
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </CardHeader>
-                <CardContent>
-                    {loading ? (
-                        <div className="flex justify-center py-12">
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                
+                <CardContent className="pt-8">
+                    {/* Barra de Filtros Indexada */}
+                    <div className="flex flex-col md:flex-row items-center gap-4 mb-8">
+                        <div className="relative flex-1 w-full">
+                            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground opacity-50" />
+                            <input 
+                                className="w-full bg-muted/20 border border-white/10 rounded-xl h-12 pl-12 pr-4 text-sm text-white placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                placeholder="ID de Orden o Nombre del Solicitante..." 
+                                value={searchTerm} 
+                                onChange={(e) => setSearchTerm(e.target.value)} 
+                            />
                         </div>
-                    ) : filteredVMs.length === 0 ? (
-                        <div className="py-12 text-center text-muted-foreground">
-                            No se encontraron órdenes.
-                        </div>
-                    ) : (
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-full md:w-[220px] h-12 bg-muted/20 border-white/10 rounded-xl text-white font-bold text-xs uppercase tracking-widest">
+                                <SelectValue placeholder="FILTRAR ESTADO" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card/95 backdrop-blur-xl border-white/10 text-white">
+                                <SelectItem value="all">SISTEMA COMPLETO</SelectItem>
+                                <SelectItem value="pending">PENDIENTE</SelectItem>
+                                <SelectItem value="shipped">DESPACHADO</SelectItem>
+                                <SelectItem value="delivered">ENTREGADO</SelectItem>
+                                <SelectItem value="cancelled">ANULADO</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/5 overflow-hidden">
                         <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>ID Orden</TableHead>
-                                    <TableHead>Cliente</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead>Pago</TableHead>
-                                    <TableHead>Fecha</TableHead>
-                                    <TableHead className="text-right">Total</TableHead>
-                                    <TableHead className="w-[50px]"></TableHead>
+                            <TableHeader className="bg-muted/30">
+                                <TableRow className="hover:bg-transparent border-white/5">
+                                    <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Ticket ID</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Solicitante</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Estado Operativo</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Liquidez / Pago</TableHead>
+                                    <TableHead className="text-right font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Total Transado</TableHead>
+                                    <TableHead className="text-right font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {/* ── POO: iteramos ViewModels, no datos crudos ─────────────────── */}
-                                {filteredVMs.map((vm) => {
-                                    const payStatus = vm.getPaymentStatus(); // Encapsulamiento
-                                    return (
-                                    <TableRow key={vm.getDisplayId()}>
-                                        {/* ABSTRACCIÓN: getDisplayId() oculta la lógica del UUID */}
-                                        <TableCell className="font-mono text-xs">{vm.getDisplayId()}</TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                {/* ENCAPSULAMIENTO: nombre y email resueltos en el ViewModel */}
-                                                <span className="text-sm">{vm.getCustomerName()}</span>
-                                                <span className="text-xs text-muted-foreground">{vm.getCustomerEmail()}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {/* POLIMORFISMO: getStatusBadgeVariant/Color encapsulados en OrderViewModel */}
-                                            <Badge variant={vm.getStatusBadgeVariant()} className={vm.getStatusBadgeColor()}>
-                                                {vm.getStatusLabel()}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className={payStatus.color}>{payStatus.label}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-sm">{vm.getFormattedDate()}</TableCell>
-                                        {/* POLIMORFISMO: toDisplayPrice() diferente a ProductViewModel */}
-                                        <TableCell className="text-right font-bold">{vm.toDisplayPrice()}</TableCell>
-                                        <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel>Cambiar estado</DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(vm._data.id, 'processing')}>
-                                                        Procesando
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(vm._data.id, 'shipped')}>
-                                                        Enviado
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(vm._data.id, 'delivered')}>
-                                                        Entregado
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        className="text-destructive"
-                                                        onClick={() => handleStatusChange(vm._data.id, 'cancelled')}
-                                                    >
-                                                        Cancelar Orden
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
+                                {loading ? (
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <TableRow key={i} className="border-white/5"><TableCell colSpan={6}><div className="h-14 bg-muted/10 animate-pulse rounded-lg" /></TableCell></TableRow>
+                                    ))
+                                ) : filteredVMs.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">No se hallaron coincidencias transaccionales.</TableCell>
                                     </TableRow>
-                                    );
-                                })}
+                                ) : (
+                                    filteredVMs.map((vm) => (
+                                        <TableRow key={vm.getDisplayId()} className="border-white/5 hover:bg-white/5 transition-colors group">
+                                            <TableCell className="font-mono text-xs text-muted-foreground">#{vm.getDisplayId().slice(-8)}</TableCell>
+                                            <TableCell>
+                                                <div className="space-y-1">
+                                                    <p className="font-bold text-white text-sm">{vm.getCustomerName()}</p>
+                                                    <p className="text-[10px] text-muted-foreground opacity-70 italic">{vm.getOrderDate()}</p>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={cn("text-[10px] font-black uppercase py-0", vm.getStatusBadgeVariant() === 'default' ? "border-primary/50 text-primary" : "border-muted-foreground/30 text-muted-foreground")}>
+                                                    {vm.getStatusLabel()}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={cn("text-[10px] font-bold py-0.5 px-3 uppercase", vm.isPaid() ? "border-green-500/30 text-green-400 bg-green-500/5" : "border-destructive/30 text-destructive bg-destructive/5")}>
+                                                    {vm.isPaid() ? "LIQUIDADO" : "PENDIENTE DE PAGO"}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right font-black text-white">{vm.toDisplayPrice()}</TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="hover:bg-primary/20 hover:text-primary"><MoreHorizontal className="h-4 w-4" /></Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-white/10 text-white">
+                                                        <DropdownMenuLabel className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Logística de Orden</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator className="bg-white/5" />
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(vm.order.id, 'shipped')} className="text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer">
+                                                            <RefreshCw className="mr-2 h-4 w-4" /> Marcar como Despachado
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(vm.order.id, 'delivered')} className="text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer">
+                                                            <RefreshCw className="mr-2 h-4 w-4" /> Marcar como Entregado
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator className="bg-white/5" />
+                                                        <DropdownMenuItem onClick={() => toast({ title: "Acceso Restringido", description: "Vista de detalle en desarrollo para auditoría profunda." })} className="text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer">
+                                                            <Eye className="mr-2 h-4 w-4" /> Ver Auditoría Interna
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
-                    )}
+                    </div>
 
-                    {/* Pagination */}
+                    {/* Navegación Paginada */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                            <p className="text-sm text-muted-foreground">
-                                Página {page} de {totalPages}
-                            </p>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={page <= 1}
-                                    onClick={() => setPage(p => p - 1)}
-                                >
-                                    <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={page >= totalPages}
-                                    onClick={() => setPage(p => p + 1)}
-                                >
-                                    Siguiente <ChevronRight className="h-4 w-4 ml-1" />
-                                </Button>
-                            </div>
+                        <div className="flex items-center justify-between mt-8 text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">
+                             <p>Página {page} de {totalPages} ({total} totales)</p>
+                             <div className="flex gap-2">
+                                <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)} className="border-white/10">Anterior</Button>
+                                <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="border-white/10">Siguiente</Button>
+                             </div>
                         </div>
                     )}
                 </CardContent>
