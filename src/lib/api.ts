@@ -106,8 +106,14 @@ export class ApiClient {
   static async reorderProduct(id: string, newPosition: number) { return this.request(`/products/${id}/reorder`, { method: 'PATCH', body: JSON.stringify({ newPosition }) }); }
 
   // ─── TAXONOMIES (CRUD Completo — Pilar 3 TFI) ───
-  static async getPlatforms() { return this.request<any>('/platforms'); }
-  static async getGenres() { return this.request<any>('/genres'); }
+  static async getPlatforms() { 
+    const res = await this.request<any>('/platforms'); 
+    return res.data || (Array.isArray(res) ? res : []);
+  }
+  static async getGenres() { 
+    const res = await this.request<any>('/genres'); 
+    return res.data || (Array.isArray(res) ? res : []);
+  }
   static async getPlatformById(id: string) { return this.request<any>(`/platforms/${id}`); }
   static async getGenreById(id: string) { return this.request<any>(`/genres/${id}`); }
   static async createPlatform(data: any) { return this.request<any>('/platforms', { method: 'POST', body: JSON.stringify(data) }); }
@@ -147,15 +153,21 @@ export class ApiClient {
   static async addKeys(productId: string, keys: string[]) { return this.request<any>('/keys', { method: 'POST', body: JSON.stringify({ productId, keys }) }); }
   static async deleteKey(keyId: string) { return this.request(`/keys/${keyId}`, { method: 'DELETE' }); }
 
-  // ─── CART ───
-  static async getCart() { return this.request<{ success: boolean; cart: { items: CartItem[] } }>('/cart'); }
+  // ── CART ──
+  static async getCart() { 
+    const res = await this.request<any>('/cart'); 
+    return res.data || res.cart || res;
+  }
   static async addToCart(productId: string, quantity: number) { return this.request('/cart/items', { method: 'POST', body: JSON.stringify({ productId, quantity }) }); }
   static async updateCartItem(itemId: string, quantity: number) { return this.request(`/cart/items/${itemId}`, { method: 'PUT', body: JSON.stringify({ quantity }) }); }
   static async removeFromCart(itemId: string) { return this.request(`/cart/items/${itemId}`, { method: 'DELETE' }); }
   static async clearCart() { return this.request('/cart', { method: 'DELETE' }); }
 
-  // ─── WISHLIST ───
-  static async getWishlist() { return this.request<any[]>('/wishlist'); }
+  // ── WISHLIST ──
+  static async getWishlist() { 
+    const res = await this.request<any>('/wishlist'); 
+    return res.data || res.wishlist || (Array.isArray(res) ? res : []); 
+  }
   static async toggleWishlist(productId: string) { return this.request('/wishlist/toggle', { method: 'POST', body: JSON.stringify({ productId }) }); }
 
   // ─── ORDERS & CHECKOUT ───

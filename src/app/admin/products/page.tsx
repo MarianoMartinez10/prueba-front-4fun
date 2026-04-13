@@ -63,10 +63,10 @@ export default function AdminProductsPage() {
    * RN - Moderación: Ejecuta la baja lógica del registro.
    */
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`¿Confirma la baja definitiva del producto: ${name}?`)) return;
+    if (!confirm(`¿Confirma el cese de comercialización y baja lógica del producto: ${name}?`)) return;
     try {
       await ApiClient.deleteProduct(id);
-      toast({ title: "Registro Actualizado", description: "El producto ha sido desvinculado del catálogo activo." });
+      toast({ title: "Baja Sincronizada", description: "El producto ha sido marcado como inactivo en el catálogo." });
       loadProducts(meta.page, search);
     } catch (error) {
       toast({ variant: "destructive", title: "Error en Operación", description: "No se pudo procesar la baja técnica." });
@@ -246,7 +246,7 @@ export default function AdminProductsPage() {
                             <Button variant="ghost" size="icon" asChild className="hover:bg-primary/20 hover:text-primary">
                               <Link href={`/admin/products/${p.id}`}><Pencil className="h-4 w-4" /></Link>
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id, p.name)} className="hover:bg-destructive/20 hover:text-destructive">
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id, p.name)} className="hover:bg-destructive/20 hover:text-destructive" title="Dar de baja">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

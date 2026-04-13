@@ -9,7 +9,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Search, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiClient } from "@/lib/api";
@@ -150,6 +150,9 @@ export function SearchDialog({
                 <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden gap-0 bg-card/95 backdrop-blur-xl border-white/10 shadow-3xl">
                     <DialogHeader className="px-5 py-4 border-b border-white/5 bg-muted/20">
                         <DialogTitle className="sr-only">Buscador</DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Utilice este diálogo para buscar productos por nombre, género o plataforma en tiempo real.
+                        </DialogDescription>
                         <form onSubmit={handleSearch} className="flex items-center gap-3">
                             <Search className="h-5 w-5 shrink-0 text-primary opacity-80" />
                             <input

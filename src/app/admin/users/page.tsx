@@ -140,12 +140,12 @@ export default function UsersPage() {
      * RN - Baja de Entidades: Implementa la eliminación irreversible de perfiles.
      */
     const handleDelete = async (userId: string, name: string) => {
-        if (!confirm(`¿Confirma la eliminación irreversible del perfil: ${name}?`)) return;
+        if (!confirm(`¿Confirma el cese de actividad y baja lógica del perfil: ${name}?`)) return;
 
         setActionLoading(userId);
         try {
             await ApiClient.deleteUser(userId);
-            toast({ title: "Baja Ejecutada", description: "El registro ha sido eliminado del sistema." });
+            toast({ title: "Baja Sincronizada", description: "El registro ha sido desactivado del sistema según normativa." });
             fetchUsers();
         } catch (err: any) {
             toast({ title: "Error en Operación", description: err.message, variant: "destructive" });
@@ -349,7 +349,7 @@ export default function UsersPage() {
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator className="bg-white/5" />
                                                         <DropdownMenuItem className="text-red-500 font-black text-xs hover:bg-red-500/10 cursor-pointer" onClick={() => handleDelete(user.id || user._id, user.name)}>
-                                                            <Trash2 className="mr-2 h-4 w-4" /> ELIMINAR CUENTA
+                                                            <Trash2 className="mr-2 h-4 w-4" /> DAR DE BAJA
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>

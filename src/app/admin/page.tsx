@@ -19,7 +19,20 @@ import { useToast } from "@/hooks/use-toast";
 import { DashboardCardSkeleton } from "@/components/ui/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { Download, FileSpreadsheet, FilePieChart } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogDescription,
+} from "@/components/ui/dialog";
 
 interface DashboardStats {
     totalRevenue: number;
@@ -54,39 +67,112 @@ export default function AdminDashboardPage() {
     /**
      * RN - Auditoría de Procesos: Sincroniza las métricas críticas del ecosistema.
      */
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [statsData, chartRes, topRes] = await Promise.all([
-                    ApiClient.getDashboardStats(),
-                    ApiClient.getSalesChart(),
-                    ApiClient.getTopProducts()
-                ]);
+    const fetchData = async () => {
+        try {
+            const [statsData, chartRes, topRes] = await Promise.all([
+                ApiClient.getDashboardStats(),
+                ApiClient.getSalesChart(),
+                ApiClient.getTopProducts()
+            ]);
 
-                setStats(statsData);
-                
-                // RN - Visualización de Datos: Normalización cronológica para motores de gráficos.
-                const chartArr = Array.isArray(chartRes) ? chartRes : [];
-                setChartData(chartArr.map((item: any) => ({
-                    ...item,
-                    displayDate: new Date(item.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-                })));
-                
-                setTopProducts(Array.isArray(topRes) ? topRes : []);
-            } catch (error) {
-                console.error("[DashboardAdmin] Error synchronization:", error);
-                toast({
-                    title: "Fallo de Analítica",
-                    description: "No se pudieron sincronizar las métricas de BI del servidor.",
-                    variant: "destructive"
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
+            setStats(statsData);
+            
+            // RN - Visualización de Datos: Normalización cronológica para motores de gráficos.
+            const chartArr = Array.isArray(chartRes) ? chartRes : [];
+            setChartData(chartArr.map((item: any) => ({
+                ...item,
+                displayDate: new Date(item.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
+            })));
+            
+            setTopProducts(Array.isArray(topRes) ? topRes : []);
+        } catch (error) {
+            console.error("[DashboardAdmin] Error synchronization:", error);
+            toast({
+                title: "Fallo de Analítica",
+                description: "No se pudieron sincronizar las métricas de BI del servidor.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        fetchData();
-    }, [toast]);
+    useEffect(() => { fetchData(); }, [toast]);
+
+    // ── SUBSISTEMA DE AUDITORÍA MACRO (Regla 5 TFI) ──
+
+    const handleExportPDF = () => {
+        if (!stats) return;
+        const doc = new jsPDF();
+        
+        // Encabezado Institucional
+        doc.setFontSize(22);
+        doc.text("4Fun Marketplace — Informe de Auditoría General", 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generado: ${new Date().toLocaleString("es-AR")}`, 14, 30);
+        doc.setTextColor(0);
+
+        // Bloque 1: KPIs Financieros
+        doc.setFontSize(14);
+        doc.text("Resumen de Desempeño Financiero", 14, 45);
+        autoTable(doc, {
+            startY: 50,
+            head: [["KPI", "MÉTRICA ACTUAL", "INDICADOR"]],
+            body: [
+                ["Ingresos Totales", formatCurrency(stats.totalRevenue), "Auditado"],
+                ["Total Transacciones", stats.totalOrders.toString(), "Operativo"],
+                ["Crecimiento Mensual", `${stats.monthlyGrowth}%`, stats.monthlyGrowth >= 0 ? "Positivo" : "Requiere Revisión"],
+                ["Usuarios Base", stats.totalUsers.toString(), "Activos"]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: [45, 45, 55] }
+        });
+
+        // Bloque 2: Productos Estrella
+        doc.setFontSize(14);
+        doc.text("Top 5 Productos de Alta Rotación", 14, (doc as any).lastAutoTable.finalY + 15);
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 20,
+            head: [["POS", "PRODUCTO", "UNIDADES VENDIDAS", "RECAUDACIÓN"]],
+            body: topProducts.map((p, i) => [
+                (i + 1).toString(),
+                p.name,
+                p.totalSold.toString(),
+                formatCurrency(p.revenueGenerated)
+            ]),
+            headStyles: { fillColor: [70, 70, 80] }
+        });
+
+        doc.save(`informe_general_${new Date().getTime()}.pdf`);
+        toast({ title: "Informe PDF Generado", description: "El reporte de auditoría macro ha sido descargado." });
+    };
+
+    const handleExportExcel = () => {
+        if (!stats) return;
+
+        // Estructuración de Matriz para Contabilidad
+        const summaryData = [
+            { "CATEGORÍA": "MÉTRICA GLOBAL", "VALOR": "" },
+            { "CATEGORÍA": "Ingresos Totales", "VALOR": stats.totalRevenue },
+            { "CATEGORÍA": "Órdenes Totales", "VALOR": stats.totalOrders },
+            { "CATEGORÍA": "Usuarios Registrados", "VALOR": stats.totalUsers },
+            { "CATEGORÍA": "Productos Activos", "VALOR": stats.activeProducts },
+            { "CATEGORÍA": "Crecimiento %", "VALOR": stats.monthlyGrowth },
+            { "CATEGORÍA": "", "VALOR": "" },
+            { "CATEGORÍA": "TOP PRODUCTOS", "VALOR": "" },
+            ...topProducts.map((p, i) => ({
+                "CATEGORÍA": `#${i + 1} ${p.name}`,
+                "VALOR": p.revenueGenerated
+            }))
+        ];
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, ws, "Auditoría General");
+        XLSX.writeFile(wb, `auditoria_macro_${new Date().getTime()}.xlsx`);
+        toast({ title: "Matriz Excel Exportada", description: "Se ha generado la hoja de cálculo de auditoría." });
+    };
 
     if (loading) {
         return (
@@ -121,9 +207,38 @@ export default function AdminDashboardPage() {
                         Resumen de Ventas y Actividad en Tiempo Real
                     </p>
                 </div>
-                <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full">
-                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronización Activa</span>
+                <div className="flex items-center gap-3">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="border-white/10 hover:bg-white/5 font-bold">
+                                <Download className="mr-2 h-4 w-4" /> EXPORTAR AUDITORÍA
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10 sm:max-w-[400px]">
+                            <DialogHeader>
+                                <DialogTitle className="text-xl font-headline text-white">Auditoría Estratégica</DialogTitle>
+                                <DialogDescription className="text-xs uppercase font-bold tracking-widest text-muted-foreground mt-1">Consolidado General de Negocio</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-3 py-6">
+                                <Button variant="outline" className="h-16 justify-between px-6 border-white/10 hover:border-primary/50" onClick={handleExportExcel}>
+                                    <div className="flex items-center gap-4">
+                                        <FileSpreadsheet className="h-6 w-6 text-green-500" />
+                                        <p className="font-bold text-white uppercase text-xs">Excel / Matriz Contable</p>
+                                    </div>
+                                </Button>
+                                <Button variant="outline" className="h-16 justify-between px-6 border-white/10 hover:border-primary/50" onClick={handleExportPDF}>
+                                    <div className="flex items-center gap-4">
+                                        <FilePieChart className="h-6 w-6 text-destructive" />
+                                        <p className="font-bold text-white uppercase text-xs">PDF Informe Ejecutivo</p>
+                                    </div>
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                    <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full">
+                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronización Activa</span>
+                    </div>
                 </div>
             </div>
 

@@ -56,7 +56,7 @@ export function Header() {
           )}
         </nav>
 
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-5 ml-auto">
           
           {/* RN - Búsqueda Avanzada: Gatillo de motor de búsqueda indexada. */}
           <SearchDialog
