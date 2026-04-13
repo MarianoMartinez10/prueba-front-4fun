@@ -70,11 +70,11 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
 
             <main className="container mx-auto px-4 pt-28 max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-700">
                 
-                {/* Jerarquía de Navegación (Breadcrumbs) */}
+                {/* Navegación (Breadcrumbs) */}
                 <nav className="mb-8 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
-                    <Link href="/productos" className="hover:text-primary transition-colors">Catálogo Maestro</Link>
+                    <Link href="/productos" className="hover:text-primary transition-colors">Productos</Link>
                     <span className="opacity-30">/</span>
-                    <span className="text-primary/80">{game.genre?.name || "Producto"}</span>
+                    <span className="text-primary/80">{game.name || 'Producto'}</span>
                 </nav>
 
                 <div className="mb-10">
@@ -125,7 +125,7 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
                                 Descripción
                             </h2>
                             <div className="prose prose-invert max-w-none text-muted-foreground leading-relaxed text-lg">
-                                <p className="whitespace-pre-line opacity-90">{game.description || "No se dispone de una descripción detallada para este registro del catálogo."}</p>
+                                <p className="whitespace-pre-line opacity-90">{game.description || 'Este producto no tiene descripcion disponible por el momento.'}</p>
                             </div>
                         </div>
 
@@ -141,10 +141,10 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
                                 <CardContent className="pt-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                                         <SpecItem label="Sistema Operativo" value={game.requirements.os} />
-                                        <SpecItem label="Procesamiento Central" value={game.requirements.processor} />
-                                        <SpecItem label="Memoria Operativa" value={game.requirements.memory} />
-                                        <SpecItem label="Aceleración Gráfica" value={game.requirements.graphics} />
-                                        <SpecItem label="Almacenamiento" value={game.requirements.storage} />
+                                        <SpecItem label="Procesador" value={game.requirements.processor} />
+                                        <SpecItem label="Memoria RAM" value={game.requirements.memory} />
+                                        <SpecItem label="Gráficos" value={game.requirements.graphics} />
+                                        <SpecItem label="Espacio en Disco" value={game.requirements.storage} />
                                         <SpecItem label="Perfil de Hardware" value={game.specPreset ?? undefined} highlight />
                                     </div>
                                 </CardContent>

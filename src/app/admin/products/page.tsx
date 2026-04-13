@@ -133,10 +133,10 @@ export default function AdminProductsPage() {
           <div className="space-y-1">
             <CardTitle className="text-3xl font-headline font-bold text-white flex items-center gap-3">
               <Package className="h-8 w-8 text-primary" />
-              Gestión de Catálogo Maestro
+              Gestion de productos
             </CardTitle>
             <CardDescription className="text-muted-foreground uppercase tracking-widest text-[10px] font-bold">
-              Control de Existencias, Valorización y Auditoría Técnica
+              Administra stock, precios y estado de publicacion
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2 w-full md:w-auto">
@@ -150,7 +150,7 @@ export default function AdminProductsPage() {
                 <DialogHeader>
                   <DialogTitle className="text-xl font-headline text-white">Exportación de Datos</DialogTitle>
                   <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-                    Seleccione el formato de salida para la auditoría de stock actual.
+                    Selecciona el formato para exportar el inventario actual.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-3 py-6">
@@ -159,7 +159,7 @@ export default function AdminProductsPage() {
                       <FileSpreadsheet className="h-6 w-6 text-green-500" />
                       <div className="text-left">
                         <p className="font-bold text-white uppercase text-xs">Microsoft Excel (CSV)</p>
-                        <p className="text-[10px] text-muted-foreground">Datos crudos para análisis en planilla.</p>
+                        <p className="text-[10px] text-muted-foreground">Datos listos para trabajar en planilla.</p>
                       </div>
                     </div>
                   </Button>
@@ -168,7 +168,7 @@ export default function AdminProductsPage() {
                       <FilePieChart className="h-6 w-6 text-destructive" />
                       <div className="text-left">
                         <p className="font-bold text-white uppercase text-xs">Documento Portable (PDF)</p>
-                        <p className="text-[10px] text-muted-foreground">Formato oficial para auditoría técnica.</p>
+                        <p className="text-[10px] text-muted-foreground">Resumen listo para compartir con el equipo.</p>
                       </div>
                     </div>
                   </Button>
@@ -196,10 +196,10 @@ export default function AdminProductsPage() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent border-white/5">
-                  <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Entidad</TableHead>
-                  <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Valorización</TableHead>
+                  <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Producto</TableHead>
+                  <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Precio</TableHead>
                   <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Existencias</TableHead>
-                  <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground text-right">Acciones Técnicas</TableHead>
+                  <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

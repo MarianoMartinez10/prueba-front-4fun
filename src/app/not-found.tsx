@@ -22,15 +22,15 @@ export default function NotFound() {
                     <h1 className="text-[12rem] font-black leading-none text-white font-headline tracking-tighter opacity-10 absolute -top-20 left-1/2 -translate-x-1/2 select-none">404</h1>
                     <Ghost className="h-24 w-24 text-primary relative z-10 mx-auto animate-bounce duration-[3000ms]" />
                     <div className="mt-8 space-y-2">
-                        <h2 className="text-4xl font-black text-white tracking-tighter">Segmento No Detectado</h2>
-                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-60">Fallo en la Resolución de la URI Solicitada</p>
+                        <h2 className="text-4xl font-black text-white tracking-tighter">Pagina no encontrada</h2>
+                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-60">El enlace no existe o fue movido</p>
                     </div>
                 </div>
             </div>
 
             <div className="max-w-md space-y-8">
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                    El recurso digital solicitado no reside en el padrón de rutas actual o ha sido desestimado por el motor de contenidos.
+                    La pagina que buscabas no esta disponible. Puedes volver al inicio o seguir explorando juegos en nuestro catalogo.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -49,7 +49,7 @@ export default function NotFound() {
 
             {/* Footer de Capa de Error */}
             <div className="fixed bottom-10 opacity-20 select-none">
-                <span className="text-[9px] font-black uppercase tracking-[0.6em] text-white">Error Handler: HTTP_NOT_FOUND_404</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.6em] text-white">Error 404</span>
             </div>
         </div>
     );

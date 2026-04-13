@@ -91,7 +91,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setGenres(Array.isArray(gData) ? gData : (gData?.data || []));
 
         if (id !== 'new') {
-          const p = await ApiClient.getProductById(id);
+          const p = await ApiClient.getProductByIdAdmin(id);
           if (p) {
             // RN - Normalización: Verifica si el desarrollador está en la lista preconfigurada o es personalizado.
             const devInList = DEVELOPERS.includes(p.developer as any);
@@ -136,7 +136,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         payload.discountEndDate = "";
       }
       await ApiClient.updateProduct(id, payload);
-      toast({ title: "Sincronización Exitosa", description: "El catálogo maestro ha sido actualizado." });
+      toast({ title: 'Producto actualizado', description: 'Los cambios se guardaron correctamente.' });
       router.push("/admin/products");
       router.refresh();
     } catch (error: any) {
@@ -288,7 +288,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                       <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Sello Editorial / Desarrollador</FormLabel>
                       {isCustomDev ? (
                         <div className="flex gap-2">
-                          <FormControl><Input className="h-12 bg-background/50 border-white/10" placeholder="Ej: PlatinumGames Inc." value={field.value} onChange={field.onChange} autoFocus /></FormControl>
+                          <FormControl><Input className="h-12 bg-background/50 border-white/10" placeholder="PlatinumGames Inc." value={field.value} onChange={field.onChange} autoFocus /></FormControl>
                           <Button type="button" variant="outline" className="border-white/10 h-12" onClick={() => { setIsCustomDev(false); field.onChange(DEVELOPERS[0]); }}>CANCELAR</Button>
                         </div>
                       ) : (

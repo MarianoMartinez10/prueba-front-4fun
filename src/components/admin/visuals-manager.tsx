@@ -115,7 +115,7 @@ export function VisualsManager() {
                         </TabsList>
                     </div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <p className="text-sm text-muted-foreground">Administración de metadatos clasificatorios para el catálogo maestro.</p>
+                        <p className="text-sm text-muted-foreground">Gestion de imagenes y nombres para plataformas y generos.</p>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <div className="relative w-full sm:w-64">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -191,7 +191,7 @@ function VisualTable({ items, type, onUpdate }: { items: VisualItem[], type: Vis
         <div className="space-y-4">
             {selectedIds.size > 0 && (
                 <div className="bg-destructive/10 border border-destructive/20 p-3 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-                    <span className="text-sm font-bold text-destructive">{selectedIds.size} seleccionados para baja</span>
+                    <span className="text-sm font-bold text-destructive">{selectedIds.size} seleccionados para eliminar</span>
                     <Button variant="destructive" size="sm" onClick={() => handleDelete(Array.from(selectedIds))}>
                         <Trash2 className="mr-2 h-4 w-4" /> Eliminar Selección
                     </Button>
@@ -208,7 +208,7 @@ function VisualTable({ items, type, onUpdate }: { items: VisualItem[], type: Vis
                                 />
                             </TableHead>
                             <TableHead className="w-[120px]">Activo</TableHead>
-                            <TableHead>Identidad Técnica</TableHead>
+                            <TableHead>Nombre</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -313,16 +313,16 @@ function CreateDialog({ type, onUpdate, label }: { type: VisualType, onUpdate: (
             <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-headline text-white">{label}</DialogTitle>
-                    <DialogDescription className="sr-only">Formulario técnico de registro</DialogDescription>
+                    <DialogDescription className="sr-only">Formulario de registro</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="new-id" className="text-right text-xs uppercase font-bold tracking-widest">ID Técnico</Label>
-                        <Input id="new-id" value={id} onChange={(e) => setId(e.target.value)} placeholder="Ej: shooter-tactico" className="col-span-3 bg-background/50 border-white/10" />
+                        <Label htmlFor="new-id" className="text-right text-xs uppercase font-bold tracking-widest">ID</Label>
+                        <Input id="new-id" value={id} onChange={(e) => setId(e.target.value)} placeholder="shooter-tactico" className="col-span-3 bg-background/50 border-white/10" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="new-name" className="text-right text-xs uppercase font-bold tracking-widest">Nombre</Label>
-                        <Input id="new-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Shooter Táctico" className="col-span-3 bg-background/50 border-white/10" />
+                        <Input id="new-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Shooter tactico" className="col-span-3 bg-background/50 border-white/10" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label className="text-right text-xs uppercase font-bold tracking-widest">Imagen</Label>

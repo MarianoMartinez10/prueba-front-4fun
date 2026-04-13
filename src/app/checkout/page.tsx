@@ -211,12 +211,12 @@ export default function CheckoutPage() {
                     <form id="shipping-form" onSubmit={nextStep} className="space-y-6">
                       <div className="space-y-3">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dirección (Calle y Altura)</Label>
-                        <Input name="street" required value={formData.street} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" placeholder="Ej: Av. del Libertador 4500" />
+                        <Input name="street" required value={formData.street} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" placeholder="Av. del Libertador 4500" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-3">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ciudad / Localidad</Label>
-                            <Input name="city" required value={formData.city} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" placeholder="Ej: Buenos Aires" />
+                            <Input name="city" required value={formData.city} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" placeholder="Buenos Aires" />
                         </div>
                         <div className="space-y-3">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Provincia / Región</Label>

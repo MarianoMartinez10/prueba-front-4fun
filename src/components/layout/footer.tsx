@@ -18,16 +18,16 @@ import { FaqDialog } from "@/components/faq-dialog";
  */
 const footerLinks = {
   "Ecosistema": [
-    { title: "Catálogo Maestro", href: "/productos" },
-    { title: "Navegación por Plataforma", href: "/productos" },
-    { title: "Sectores por Género", href: "/productos" },
+    { title: "Explorar catalogo", href: "/productos" },
+    { title: "Juegos por plataforma", href: "/productos" },
+    { title: "Juegos por genero", href: "/productos" },
   ],
   "Asistencia": [
-    { title: "Centro de Contacto", href: "/contacto" },
-    { title: "Consultas Frecuentes (FAQ)", href: "#faq" },
+    { title: "Centro de ayuda", href: "/contacto" },
+    { title: "Preguntas frecuentes", href: "#faq" },
   ],
   "Institucional": [
-    { title: "Nuestra Filosofía", href: "#about" },
+    { title: "Sobre 4Fun", href: "#about" },
   ],
 };
 
@@ -43,8 +43,8 @@ export function Footer() {
               <Image src="/logo.png" alt="4Fun Logo" width={110} height={110} className="h-16 w-16 md:h-20 md:w-20 object-contain" />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Hub especializado en la distribución de activos digitales y físicos de la industria del entretenimiento. 
-              Compromiso técnico y excelencia operativa.
+              Tu tienda de juegos digitales y fisicos en un solo lugar.
+              Precios competitivos, entregas rapidas y soporte cuando lo necesites.
             </p>
           </div>
 
@@ -85,7 +85,7 @@ export function Footer() {
             &copy; {new Date().getFullYear()} 4Fun Marketplace. Derechos Reservados.
           </p>
           <div className="flex gap-6 italic opacity-50">
-            <span>Sujeto a Evaluación TFI</span>
+            <span>Tienda oficial</span>
             <span>v1.0.0-Stable</span>
           </div>
         </div>

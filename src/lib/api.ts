@@ -100,6 +100,7 @@ export class ApiClient {
     };
   }
   static async getProductById(id: string) { return this.request<Product>(`/products/${id}`); }
+  static async getProductByIdAdmin(id: string) { return this.request<Product>(`/products/admin/${id}`); }
   static async createProduct(data: ProductInput) { return this.request<Product>('/products', { method: 'POST', body: JSON.stringify(data) }); }
   static async updateProduct(id: string, data: Partial<ProductInput>) { return this.request<Product>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
   static async deleteProduct(id: string) { return this.request(`/products/${id}`, { method: 'DELETE' }); }

@@ -30,16 +30,16 @@ export default function WishlistPage() {
         <div className="space-y-1">
             <h1 className="font-headline text-4xl font-bold text-white flex items-center gap-4 tracking-tighter">
                 <Heart className="h-10 w-10 text-destructive animate-pulse fill-destructive/20" />
-                Bóveda de Deseos
+              Mis favoritos
             </h1>
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-70">
-                Reserva de Intenciones y Seguimiento de Activos ({wishlist.length})
+              Productos guardados para mas tarde ({wishlist.length})
             </p>
         </div>
         {wishlist.length > 0 && (
             <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronización de Preferencias Activa</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-widest">Lista sincronizada</span>
             </div>
         )}
       </div>
@@ -50,9 +50,9 @@ export default function WishlistPage() {
           <div className="h-24 w-24 rounded-full bg-white/5 mx-auto flex items-center justify-center mb-6">
             <Heart className="h-12 w-12 text-muted-foreground opacity-20" />
           </div>
-          <h2 className="font-headline text-3xl font-bold text-white tracking-tight">Persistencia Vacía</h2>
+          <h2 className="font-headline text-3xl font-bold text-white tracking-tight">Tu lista esta vacia</h2>
           <p className="mt-4 text-muted-foreground max-w-sm mx-auto leading-relaxed text-sm font-medium">
-            No se han registrado activos en su bóveda de seguimiento. Explore el catálogo maestro para marcar sus próximas adquisiciones.
+            Guarda tus juegos favoritos para encontrarlos rapido. Explora el catalogo y agregalos con un clic.
           </p>
           <Button asChild className="mt-10 h-14 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] bg-primary text-black hover:bg-primary/90 shadow-xl transition-all shadow-primary/20">
             <Link href="/productos">Explorar el Catálogo <ArrowRight className="ml-2 h-4 w-4" /></Link>
@@ -86,7 +86,7 @@ export default function WishlistPage() {
       {wishlist.length > 0 && (
         <div className="mt-16 text-center">
             <Link href="/productos" className="inline-flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em] hover:text-white transition-all group">
-                <ShoppingBag className="h-4 w-4 group-hover:-translate-y-1 transition-transform" /> Continuar Explorando Adquisiciones
+                <ShoppingBag className="h-4 w-4 group-hover:-translate-y-1 transition-transform" /> Seguir explorando juegos
             </Link>
         </div>
       )}

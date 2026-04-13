@@ -30,10 +30,10 @@ export default function ComparisonPage() {
                 <div className="h-24 w-24 rounded-full bg-white/5 mx-auto flex items-center justify-center mb-6">
                     <Scale className="h-12 w-12 text-muted-foreground opacity-20" />
                 </div>
-                <h1 className="text-4xl font-headline font-bold mb-4 text-white tracking-tight">Matriz de Comparación</h1>
-                <p className="text-muted-foreground mb-8 text-sm uppercase tracking-widest font-black opacity-60">No se han detectado activos en la lista de contraste.</p>
+                <h1 className="text-4xl font-headline font-bold mb-4 text-white tracking-tight">Comparar juegos</h1>
+                <p className="text-muted-foreground mb-8 text-sm uppercase tracking-widest font-black opacity-60">Todavia no agregaste juegos para comparar.</p>
                 <Button asChild className="h-12 px-8 rounded-full font-black uppercase tracking-widest text-[10px] bg-primary text-black hover:bg-primary/90 shadow-xl transition-all">
-                    <Link href="/productos">Regresar al Catálogo Maestro</Link>
+                    <Link href="/productos">Volver al catalogo</Link>
                 </Button>
             </div>
         );
@@ -45,16 +45,16 @@ export default function ComparisonPage() {
                 <div className="space-y-1">
                     <h1 className="text-4xl font-headline font-bold text-white flex items-center gap-4 tracking-tighter">
                         <Scale className="h-10 w-10 text-primary" />
-                        Análisis Comparativo
+                        Comparar juegos
                     </h1>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-70">Contraste de {compareList.length} Activos Digitales en Paralelo</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-70">Comparando {compareList.length} juegos en paralelo</p>
                 </div>
                 <Button 
                     variant="outline" 
                     onClick={clearCompare} 
                     className="h-12 border-destructive/20 text-destructive hover:bg-destructive/10 font-black uppercase tracking-widest text-[10px] px-6 rounded-xl transition-all"
                 >
-                    <Trash2 className="mr-2 h-4 w-4" /> Purgar Matriz
+                    <Trash2 className="mr-2 h-4 w-4" /> Limpiar comparacion
                 </Button>
             </div>
 
@@ -75,7 +75,7 @@ export default function ComparisonPage() {
                                             size="icon"
                                             className="h-8 w-8 rounded-lg bg-white/5 hover:bg-destructive hover:text-white transition-all"
                                             onClick={() => removeFromCompare(game.id)}
-                                            title="Remover de Matriz"
+                                            title="Quitar de comparacion"
                                         >
                                             <X className="h-3.5 w-3.5" />
                                         </Button>
@@ -124,7 +124,7 @@ export default function ComparisonPage() {
                             <TableCell className="font-black uppercase tracking-widest text-[10px] text-muted-foreground pl-10 py-6">Estudio / Editor</TableCell>
                             {compareList.map((game) => (
                                 <TableCell key={game.id} className="text-center text-sm font-medium text-white/80 opacity-60">
-                                    {game.developer || "Sello No Identificado"}
+                                    {game.developer || 'Desarrollador no disponible'}
                                 </TableCell>
                             ))}
                         </TableRow>
@@ -136,7 +136,7 @@ export default function ComparisonPage() {
                                 <TableCell key={game.id} className="text-center">
                                     <Button asChild className="w-[80%] h-11 bg-white/5 hover:bg-primary hover:text-black border border-white/10 hover:border-primary transition-all font-black uppercase text-[10px] tracking-widest rounded-xl shadow-xl">
                                         <Link href={`/productos/${game.id}`}>
-                                            Explorar Activo <ArrowRight className="ml-2 h-4 w-4" />
+                                            Ver producto <ArrowRight className="ml-2 h-4 w-4" />
                                         </Link>
                                     </Button>
                                 </TableCell>
@@ -148,7 +148,7 @@ export default function ComparisonPage() {
 
             <div className="mt-8 flex justify-center">
                 <Link href="/productos" className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors text-xs font-black uppercase tracking-[0.2em]">
-                    <ShoppingBag className="h-4 w-4" /> Seguir Seleccionando Activos
+                    <ShoppingBag className="h-4 w-4" /> Seguir explorando juegos
                 </Link>
             </div>
         </div>

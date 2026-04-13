@@ -11,7 +11,7 @@
  * (MVC / View)
  */
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -59,8 +59,9 @@ type ResetPasswordValues = z.infer<typeof ResetPasswordSchema>;
 export default function ResetPasswordPage({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
+  const { token } = use(params);
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,7 +79,7 @@ export default function ResetPasswordPage({
   const onSubmit = async (values: ResetPasswordValues) => {
     setIsSubmitting(true);
     try {
-      await ApiClient.resetPassword(params.token, values.password);
+      await ApiClient.resetPassword(token, values.password);
       toast({
         title: "Actualización Exitosa",
         description: "Sus credenciales han sido normalizadas. Redirigiendo al login.",

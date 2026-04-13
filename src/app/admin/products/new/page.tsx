@@ -113,7 +113,7 @@ export default function NewProductPage() {
                 <div className="p-3 bg-primary/10 rounded-xl"><PlusCircle className="h-6 w-6 text-primary" /></div>
                 <div>
                   <CardTitle className="text-2xl font-headline font-bold text-white uppercase tracking-tight">Publicar Nuevo Activo</CardTitle>
-                  <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Ingesta de Datos Maestro para el Ecosistema</CardDescription>
+                  <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Carga de datos para un nuevo producto</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -125,7 +125,7 @@ export default function NewProductPage() {
                     <FormField control={form.control} name="name" render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Nombre Comercial</FormLabel>
-                        <FormControl><Input placeholder="Ej: Elden Ring" className="h-12 bg-background/50 border-white/10 font-bold text-white" {...field} /></FormControl>
+                        <FormControl><Input placeholder="Elden Ring" className="h-12 bg-background/50 border-white/10 font-bold text-white" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -184,7 +184,7 @@ export default function NewProductPage() {
                       <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Sello Editorial</FormLabel>
                       {isCustomDev ? (
                         <div className="flex gap-2">
-                          <FormControl><Input className="h-12 bg-background/50 border-white/10" placeholder="Ej: FromSoftware" value={field.value} onChange={field.onChange} autoFocus /></FormControl>
+                          <FormControl><Input className="h-12 bg-background/50 border-white/10" placeholder="FromSoftware" value={field.value} onChange={field.onChange} autoFocus /></FormControl>
                           <Button type="button" variant="outline" className="border-white/10 h-12" onClick={() => { setIsCustomDev(false); field.onChange(DEVELOPERS[0]); }}>CANCELAR</Button>
                         </div>
                       ) : (

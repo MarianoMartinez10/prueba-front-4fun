@@ -224,7 +224,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
     <section className="space-y-8">
       <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 flex items-center gap-2 text-white">
         <MessageSquare className="h-6 w-6 text-primary" />
-        Auditoría de Jugadores
+        Opiniones de la Comunidad
       </h2>
 
       {loading ? (
@@ -292,14 +292,14 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
               {!showForm ? (
                 <Button onClick={() => setShowForm(true)} variant="outline" className="border-primary/20 hover:bg-primary/10 text-primary font-bold">
                   <Star className="mr-2 h-4 w-4" />
-                  APORTAR EXPERIENCIA JUGABLE
+                  Calificar Producto
                 </Button>
               ) : (
                 <div className="bg-card/40 border border-primary/20 rounded-2xl p-6 space-y-4 shadow-2xl">
                   <h3 className="font-headline font-bold text-xl text-white">Tu Crítica: {productName}</h3>
 
                   <div className="space-y-2">
-                    <label className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Valoración Técnica</label>
+                    <label className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Valoracion</label>
                     <StarRating value={formRating} onChange={setFormRating} disabled={submitting} />
                   </div>
 
@@ -308,18 +308,18 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
                     <Input
                       value={formTitle}
                       onChange={(e) => setFormTitle(e.target.value)}
-                      placeholder="Ej: Sorpresa técnica inmersiva"
+                      placeholder="Excelente juego, muy entretenido"
                       className="bg-background/50 border-white/10"
                       disabled={submitting}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Análisis Detallado</label>
+                    <label className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Comentario</label>
                     <Textarea
                       value={formText}
                       onChange={(e) => setFormText(e.target.value)}
-                      placeholder="Describa su experiencia con el gameplay, rendimiento y narrativa..."
+                      placeholder="Contanos que te gusto del juego y como fue tu experiencia."
                       rows={5}
                       className="bg-background/50 border-white/10 resize-none"
                       disabled={submitting}
@@ -330,7 +330,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
                   <div className="flex gap-4 pt-2">
                     <Button onClick={handleSubmit} disabled={submitting} className="font-bold shadow-lg">
                       {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                      PUBLICAR PARA ANALISIS IA
+                      Publicar Opinión
                     </Button>
                     <Button variant="ghost" onClick={() => setShowForm(false)} disabled={submitting} className="text-muted-foreground hover:text-white">
                       CANCELAR
@@ -343,7 +343,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
 
           {!user && (
             <p className="text-sm text-muted-foreground italic">
-              Se requiere autenticación para participar en la auditoría comunitaria. 
+              Inicia sesión para dejar tu opinión. 
               <a href="/login" className="text-primary font-bold hover:underline ml-1">Ingresar →</a>
             </p>
           )}
@@ -412,8 +412,8 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
           {stats?.totalReviews === 0 && (
             <div className="text-center py-24 bg-card/10 rounded-3xl border border-dashed border-white/5">
               <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-10 text-primary" />
-              <p className="text-xl font-headline font-bold text-white">Ficha en Blanco</p>
-              <p className="text-sm text-muted-foreground mt-2">Este producto aún no cuenta con auditoría de jugadores.</p>
+              <p className="text-xl font-headline font-bold text-white">Sin opiniones aún</p>
+              <p className="text-sm text-muted-foreground mt-2">Sé el primero en calificar este producto.</p>
             </div>
           )}
         </>

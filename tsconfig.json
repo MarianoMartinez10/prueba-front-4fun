@@ -16,9 +16,11 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    "noUncheckedSideEffectImports": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
+    "ignoreDeprecations": "6.0",
     "incremental": true,
     "plugins": [
       {

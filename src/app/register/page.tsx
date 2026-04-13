@@ -129,7 +129,7 @@ export default function RegisterPage() {
               Alta de Identidad
             </CardTitle>
             <CardDescription className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">
-              Protocolo de Incorporación al Padrón Gamer
+              Crea tu cuenta en segundos
             </CardDescription>
           </div>
         </CardHeader>
@@ -143,10 +143,10 @@ export default function RegisterPage() {
                     name="name"
                     render={({ field }) => (
                     <FormItem className="space-y-3">
-                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre Nominativo</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre de usuario</FormLabel>
                         <FormControl>
                         <Input
-                            placeholder="Usuario Ej."
+                        placeholder="EjemploGamer"
                             disabled={isSubmitting}
                             className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary/40 text-white placeholder:opacity-20"
                             {...field}
@@ -161,7 +161,7 @@ export default function RegisterPage() {
                     name="email"
                     render={({ field }) => (
                     <FormItem className="space-y-3">
-                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Correo de Identidad</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Correo electronico</FormLabel>
                         <FormControl>
                         <Input
                             placeholder="tu@email.com"
@@ -183,7 +183,7 @@ export default function RegisterPage() {
                     name="password"
                     render={({ field }) => (
                     <FormItem className="space-y-3">
-                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nueva Credencial</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Contrasena</FormLabel>
                         <FormControl>
                         <Input
                             type="password"
@@ -202,7 +202,7 @@ export default function RegisterPage() {
                     name="confirmPassword"
                     render={({ field }) => (
                     <FormItem className="space-y-3">
-                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Confirmar Credencial</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Confirmar contrasena</FormLabel>
                         <FormControl>
                         <Input
                             type="password"

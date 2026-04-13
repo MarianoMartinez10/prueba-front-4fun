@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ApiClient } from '@/lib/api';
+import { ApiClient, ApiError } from '@/lib/api';
 import { ProductDetailView } from '@/components/game/product-detail-view';
 import { notFound } from 'next/navigation';
 import { Game } from '@/lib/types';
@@ -31,7 +31,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
             }
         };
     } catch (error) {
-        return { title: 'Registro no localizado | 4Fun' };
+        if (error instanceof ApiError && error.status === 404) {
+            return { title: 'Producto no encontrado | 4Fun' };
+        }
+        return { title: 'Error temporal | 4Fun' };
     }
 }
 
@@ -58,7 +61,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         return <ProductDetailView game={game} />;
         
     } catch (error) {
-        console.error("[ProductDetail] Error crítico en resolución de servidor:", error);
-        notFound(); // Tratamiento de fallo de red como recurso no disponible por robustez UX.
+        if (error instanceof ApiError && error.status === 404) {
+            notFound();
+        }
+
+        console.error('[ProductDetail] Error operativo en resolución de servidor:', error);
+        throw error;
     }
 }
