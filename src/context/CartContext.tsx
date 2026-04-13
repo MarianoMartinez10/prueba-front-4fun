@@ -49,7 +49,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const fetchCart = async () => {
     try {
       const cartRes = await ApiClient.getCart();
-      setCart(cartRes.cart?.items || []);
+      setCart(cartRes?.items || []);
     } catch (err) {
       console.error("[CartContext] Falló la sincronización remota:", err);
     }
