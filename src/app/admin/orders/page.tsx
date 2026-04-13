@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatCurrency } from "@/lib/utils";
 import type { OrderStatus } from "@/lib/types";
 import { MoreHorizontal, Search, Loader2, ChevronLeft, ChevronRight, Download, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,8 @@ import { ApiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+// ── POO: ViewModel encapsula toda la lógica de presentación de órdenes ────────
+import { OrderViewModel } from "@/lib/viewmodels";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,24 +32,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-const STATUS_LABELS: Record<string, string> = {
-    pending: "Pendiente",
-    processing: "Procesando",
-    shipped: "Enviado",
-    delivered: "Entregado",
-    cancelled: "Cancelado",
-};
-
-const getStatusBadge = (status: OrderStatus | string) => {
-    switch (status) {
-        case 'delivered': return <Badge className="bg-green-500 hover:bg-green-600">Entregado</Badge>;
-        case 'processing': return <Badge className="bg-blue-500 hover:bg-blue-600">Procesando</Badge>;
-        case 'pending': return <Badge variant="outline" className="text-yellow-600 border-yellow-600">Pendiente</Badge>;
-        case 'shipped': return <Badge className="bg-purple-500 hover:bg-purple-600">Enviado</Badge>;
-        case 'cancelled': return <Badge variant="destructive">Cancelado</Badge>;
-        default: return <Badge variant="secondary">{status}</Badge>;
-    }
-};
+// STATUS_LABELS y getStatusBadge eliminados — encapsulados en OrderViewModel
 
 export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
@@ -91,65 +75,41 @@ export default function AdminOrdersPage() {
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         try {
             await ApiClient.updateOrderStatus(orderId, newStatus);
-            toast({ title: "Estado actualizado", description: `Orden actualizada a "${STATUS_LABELS[newStatus] || newStatus}".` });
+            // ── POO: OrderViewModel.getStatusLabel() — Encapsulamiento ─────────
+            const tempVm = new OrderViewModel({ id: orderId, status: newStatus as OrderStatus } as any);
+            toast({ title: "Estado actualizado", description: `Orden actualizada a "${tempVm.getStatusLabel()}".` });
             fetchOrders();
         } catch (error) {
-            console.error("Error updating order status:", error);
             toast({ title: "Error", description: "No se pudo actualizar el estado.", variant: "destructive" });
         }
     };
 
-    // Derive display name from order — backend populates user with { name, email }
-    const getCustomerName = (order: any): string => {
-        if (order.user?.name) return order.user.name;
-        if (order.shippingAddress?.fullName) return order.shippingAddress.fullName;
-        return "Cliente";
-    };
+    // ── POO: Instanciamos ViewModels — getCustomerName/Email eliminados ────────
+    // HERENCIA: cada OrderViewModel hereda getSummaryLine() de BaseViewModel
+    const orderViewModels = orders.map(o => new OrderViewModel(o));
 
-    const getCustomerEmail = (order: any): string => {
-        return order.user?.email || "";
-    };
-
-    // Client-side search filter (on already-fetched page)
-    const filteredOrders = searchTerm
-        ? orders.filter(o => {
+    // Client-side search filter usando el ViewModel (Encapsulamiento)
+    const filteredVMs = searchTerm
+        ? orderViewModels.filter(vm => {
             const term = searchTerm.toLowerCase();
             return (
-                (o.id || o._id)?.toLowerCase().includes(term) ||
-                getCustomerName(o).toLowerCase().includes(term) ||
-                getCustomerEmail(o).toLowerCase().includes(term)
+                vm.getDisplayId().toLowerCase().includes(term) ||
+                vm.getCustomerName().toLowerCase().includes(term) ||
+                vm.getCustomerEmail().toLowerCase().includes(term)
             );
         })
-        : orders;
+        : orderViewModels;
 
+    // ── POO: toReportRow() — Abstracción: el formato del reporte está en el ViewModel
     const handleExportCSV = () => {
-        if (!filteredOrders.length) {
-            toast({
-                title: "Atención",
-                description: "No hay órdenes para exportar con los filtros actuales.",
-                variant: "destructive",
-            });
+        if (!filteredVMs.length) {
+            toast({ title: "Atención", description: "No hay órdenes para exportar.", variant: "destructive" });
             return;
         }
-
         const headers = ["ID Orden", "Cliente", "Email", "Método", "Total", "Estado", "Pago", "Fecha"];
-        const rows = filteredOrders.map(o => [
-            (o.id || o._id),
-            `"${getCustomerName(o)}"`,
-            `"${getCustomerEmail(o)}"`,
-            o.paymentMethod || 'mercadopago',
-            o.totalPrice,
-            STATUS_LABELS[o.orderStatus] || o.orderStatus,
-            o.isPaid ? 'Pagado' : 'Pendiente',
-            new Date(o.createdAt).toLocaleDateString('es-AR')
-        ]);
-
-        const csvContent = [
-            headers.join(","),
-            ...rows.map(e => e.join(","))
-        ].join("\n");
-
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for Excel formatting
+        const rows = filteredVMs.map(vm => vm.toReportRow()); // ← Abstracción pura
+        const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
@@ -160,7 +120,7 @@ export default function AdminOrdersPage() {
     };
 
     const handleExportPDF = () => {
-        if (!filteredOrders.length) {
+        if (!filteredVMs.length) {
             toast({ title: "Atención", description: "No hay órdenes para exportar.", variant: "destructive" });
             return;
         }
@@ -174,15 +134,7 @@ export default function AdminOrdersPage() {
         autoTable(doc, {
             startY: 32,
             head: [["ID Orden", "Cliente", "Email", "Total", "Estado", "Pago", "Fecha"]],
-            body: filteredOrders.map(o => [
-                (o.id || o._id)?.slice(-8).toUpperCase(),
-                getCustomerName(o),
-                getCustomerEmail(o),
-                `$${Number(o.totalPrice || 0).toFixed(2)}`,
-                STATUS_LABELS[o.orderStatus] || o.orderStatus,
-                o.isPaid ? "Pagado" : "Pendiente",
-                new Date(o.createdAt).toLocaleDateString("es-AR"),
-            ]),
+            body: filteredVMs.map(vm => vm.toReportRow()), // ← Abstracción pura
             styles: { fontSize: 8 },
             headStyles: { fillColor: [30, 30, 40] },
         });
@@ -225,7 +177,7 @@ export default function AdminOrdersPage() {
                             <Button
                                 variant="outline"
                                 className="flex items-center gap-2"
-                                disabled={loading || filteredOrders.length === 0}
+                                disabled={loading || filteredVMs.length === 0}
                             >
                                 <Download className="h-4 w-4" /> Descargar datos
                             </Button>
@@ -260,7 +212,7 @@ export default function AdminOrdersPage() {
                         <div className="flex justify-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                         </div>
-                    ) : filteredOrders.length === 0 ? (
+                    ) : filteredVMs.length === 0 ? (
                         <div className="py-12 text-center text-muted-foreground">
                             No se encontraron órdenes.
                         </div>
@@ -278,24 +230,32 @@ export default function AdminOrdersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredOrders.map((order) => (
-                                    <TableRow key={order.id || order._id}>
-                                        <TableCell className="font-mono text-xs">{(order.id || order._id)?.slice(-8).toUpperCase()}</TableCell>
+                                {/* ── POO: iteramos ViewModels, no datos crudos ─────────────────── */}
+                                {filteredVMs.map((vm) => {
+                                    const payStatus = vm.getPaymentStatus(); // Encapsulamiento
+                                    return (
+                                    <TableRow key={vm.getDisplayId()}>
+                                        {/* ABSTRACCIÓN: getDisplayId() oculta la lógica del UUID */}
+                                        <TableCell className="font-mono text-xs">{vm.getDisplayId()}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="text-sm">{getCustomerName(order)}</span>
-                                                <span className="text-xs text-muted-foreground">{getCustomerEmail(order)}</span>
+                                                {/* ENCAPSULAMIENTO: nombre y email resueltos en el ViewModel */}
+                                                <span className="text-sm">{vm.getCustomerName()}</span>
+                                                <span className="text-xs text-muted-foreground">{vm.getCustomerEmail()}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell>{getStatusBadge(order.orderStatus || order.status || 'pending')}</TableCell>
                                         <TableCell>
-                                            {order.isPaid ?
-                                                <Badge variant="outline" className="text-green-600 border-green-600">Pagado</Badge>
-                                                : <Badge variant="outline" className="text-red-500 border-red-500">Sin pagar</Badge>
-                                            }
+                                            {/* POLIMORFISMO: getStatusBadgeVariant/Color encapsulados en OrderViewModel */}
+                                            <Badge variant={vm.getStatusBadgeVariant()} className={vm.getStatusBadgeColor()}>
+                                                {vm.getStatusLabel()}
+                                            </Badge>
                                         </TableCell>
-                                        <TableCell className="text-sm">{new Date(order.createdAt).toLocaleDateString('es-AR')}</TableCell>
-                                        <TableCell className="text-right font-bold">{formatCurrency(order.totalPrice || order.total || 0)}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={payStatus.color}>{payStatus.label}</Badge>
+                                        </TableCell>
+                                        <TableCell className="text-sm">{vm.getFormattedDate()}</TableCell>
+                                        {/* POLIMORFISMO: toDisplayPrice() diferente a ProductViewModel */}
+                                        <TableCell className="text-right font-bold">{vm.toDisplayPrice()}</TableCell>
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -306,19 +266,19 @@ export default function AdminOrdersPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Cambiar estado</DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(order.id || order._id, 'processing')}>
+                                                    <DropdownMenuItem onClick={() => handleStatusChange(vm._data.id, 'processing')}>
                                                         Procesando
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(order.id || order._id, 'shipped')}>
+                                                    <DropdownMenuItem onClick={() => handleStatusChange(vm._data.id, 'shipped')}>
                                                         Enviado
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(order.id || order._id, 'delivered')}>
+                                                    <DropdownMenuItem onClick={() => handleStatusChange(vm._data.id, 'delivered')}>
                                                         Entregado
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem
                                                         className="text-destructive"
-                                                        onClick={() => handleStatusChange(order.id || order._id, 'cancelled')}
+                                                        onClick={() => handleStatusChange(vm._data.id, 'cancelled')}
                                                     >
                                                         Cancelar Orden
                                                     </DropdownMenuItem>
@@ -326,7 +286,8 @@ export default function AdminOrdersPage() {
                                             </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     )}
