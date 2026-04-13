@@ -9,7 +9,7 @@
  * Garantiza la trazabilidad del stock y la integridad de precios. (MVC / Page)
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ApiClient } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
@@ -42,7 +42,7 @@ export default function AdminProductsPage() {
   /**
    * RN - Auditoría de Catálogo: Sincroniza el listado maestro con filtros activos.
    */
-  const loadProducts = async (page = 1, searchQuery = "") => {
+  const loadProducts = useCallback(async (page = 1, searchQuery = "") => {
     try {
       setLoading(true);
       const response = await ApiClient.getProducts({ page, limit: 10, sort: 'order', search: searchQuery });
@@ -53,11 +53,11 @@ export default function AdminProductsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     if (!authLoading) loadProducts(1, debouncedSearch);
-  }, [authLoading, debouncedSearch]);
+  }, [authLoading, debouncedSearch, loadProducts]);
 
   /**
    * RN - Moderación: Ejecuta la baja lógica del registro.

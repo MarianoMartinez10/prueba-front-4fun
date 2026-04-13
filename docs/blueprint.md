@@ -7,7 +7,6 @@
 - User Account Management: Allow users to register, log in, and manage their profile, order history, and payment methods.
 - Digital Game Delivery: Automatically deliver digital game keys or provide download access upon successful purchase.
 - Wishlist: Allow users to add games to a wishlist and receive notifications about price drops or availability.
-- Personalized Game Recommendations: Suggest games to users based on their purchase history, wishlist, and browsing behavior.
 
 ## Style Guidelines:
 

@@ -9,7 +9,7 @@
  * dinámicos para el análisis de tendencias. (MVC / Page)
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -67,7 +67,7 @@ export default function AdminDashboardPage() {
     /**
      * RN - Auditoría de Procesos: Sincroniza las métricas críticas del ecosistema.
      */
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [statsData, chartRes, topRes] = await Promise.all([
                 ApiClient.getDashboardStats(),
@@ -95,9 +95,9 @@ export default function AdminDashboardPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [toast]);
 
-    useEffect(() => { fetchData(); }, [toast]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
     // ── SUBSISTEMA DE AUDITORÍA MACRO (Regla 5 TFI) ──
 

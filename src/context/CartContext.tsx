@@ -16,6 +16,45 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import type { CartItem } from '@/lib/types';
 
+const toFiniteNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const resolvePlatform = (item: any, product: any): CartItem['platform'] => {
+  if (item?.platform && typeof item.platform === 'object') {
+    return { name: item.platform.name || 'Distribuido' };
+  }
+  if (product?.platform && typeof product.platform === 'object') {
+    return { name: product.platform.name || 'Distribuido' };
+  }
+  if (typeof item?.platformName === 'string' && item.platformName.trim()) {
+    return { name: item.platformName };
+  }
+  return { name: 'Distribuido' };
+};
+
+const normalizeCartItem = (item: any): CartItem => {
+  const product = item?.product ?? null;
+  const quantity = Math.max(1, Math.trunc(toFiniteNumber(item?.quantity, 1)));
+  const productId = String(item?.productId || product?.id || item?.id || 'unknown-product');
+  const id = String(item?.id || `loc-${productId}`);
+  const price = toFiniteNumber(product?.finalPrice ?? product?.price ?? item?.price, 0);
+
+  return {
+    id,
+    productId,
+    name: item?.name || product?.name || 'Producto',
+    price,
+    quantity,
+    image: item?.image || product?.imageId || product?.image,
+    platform: resolvePlatform(item, product),
+    platformName: item?.platformName || product?.platform?.name,
+  };
+};
+
+const normalizeCartItems = (items: any[]): CartItem[] => items.map(normalizeCartItem);
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: any, quantity?: number) => Promise<void>;
@@ -39,8 +78,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
    * RN - Cálculos de Carrito: Derivación de estado para indicadores de UI.
    * Mantenibilidad: Evita la redundancia de datos calculando totales al vuelo.
    */
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartTotal = cart.reduce((sum, item) => {
+    const price = toFiniteNumber(item.price, 0);
+    const quantity = Math.max(1, Math.trunc(toFiniteNumber(item.quantity, 1)));
+    return sum + (price * quantity);
+  }, 0);
+  const cartCount = cart.reduce((sum, item) => {
+    const quantity = Math.max(1, Math.trunc(toFiniteNumber(item.quantity, 1)));
+    return sum + quantity;
+  }, 0);
 
   /**
    * Sincronizador de la "Fuente de la Verdad" (SSOT).
@@ -49,7 +95,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const fetchCart = async () => {
     try {
       const cartRes = await ApiClient.getCart();
-      setCart(cartRes?.items || []);
+      setCart(normalizeCartItems(cartRes?.items || []));
     } catch (err) {
       console.error("[CartContext] Falló la sincronización remota:", err);
     }
@@ -66,7 +112,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } else {
       const local = localStorage.getItem('cart');
       if (local) {
-        try { setCart(JSON.parse(local)); } catch { setCart([]); }
+        try {
+          const parsed = JSON.parse(local);
+          setCart(normalizeCartItems(Array.isArray(parsed) ? parsed : []));
+        } catch {
+          setCart([]);
+        }
       }
       setIsLoading(false);
     }
@@ -79,10 +130,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
    * @param {number} quantity - Cantidad deseada.
    */
   const addToCart = useCallback(async (product: any, quantity = 1) => {
+    const safeQuantity = Math.max(1, Math.trunc(toFiniteNumber(quantity, 1)));
+
     if (user) {
       try {
         // Ejecución Remota: Registra la intención en la BDD.
-        await ApiClient.addToCart(product.id, quantity);
+        await ApiClient.addToCart(product.id, safeQuantity);
         await fetchCart(); // Re-sincronización tras mutación
         toast({ title: "Producto Añadido", description: `${product.name} sumado a tu pedido.` });
       } catch (e: any) {
@@ -94,17 +147,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const exist = prev.find(p => p.productId === product.id);
         let newCart;
         if (exist) {
-          newCart = prev.map(p => p.productId === product.id ? { ...p, quantity: p.quantity + quantity } : p);
+          newCart = prev.map(p => p.productId === product.id ? { ...p, quantity: p.quantity + safeQuantity } : p);
         } else {
-          const newItem = {
+          const newItem = normalizeCartItem({
             id: `loc-${Date.now()}`,
             productId: product.id,
             name: product.name,
-            price: product.price,
-            quantity,
+            price: product.finalPrice ?? product.price,
+            quantity: safeQuantity,
             image: product.imageId || product.image,
             platform: product.platform
-          };
+          });
           newCart = [...prev, newItem];
         }
         localStorage.setItem('cart', JSON.stringify(newCart));
@@ -119,22 +172,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
    * de confirmar con el servidor para mejorar la percepción de velocidad.
    */
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
-    if (quantity < 1) return;
+    const safeQuantity = Math.max(1, Math.trunc(toFiniteNumber(quantity, 1)));
     const oldCart = [...cart];
     
     // UI Optimista: Aplicamos el cambio inmediato en la interfaz
-    setCart(prev => prev.map(i => i.id === itemId ? { ...i, quantity } : i));
+    setCart(prev => prev.map(i => i.id === itemId ? { ...i, quantity: safeQuantity } : i));
 
     if (user) {
       try {
-        await ApiClient.updateCartItem(itemId, quantity);
+        await ApiClient.updateCartItem(itemId, safeQuantity);
       } catch {
         // Rollback: Si falla el servidor, revertimos al estado anterior (Seguridad).
         setCart(oldCart);
       }
     } else {
-      const newCart = cart.map(i => i.id === itemId ? { ...i, quantity } : i);
-      localStorage.setItem('cart', JSON.stringify(newCart));
+      setCart(prev => {
+        const newCart = prev.map(i => i.id === itemId ? { ...i, quantity: safeQuantity } : i);
+        localStorage.setItem('cart', JSON.stringify(newCart));
+        return newCart;
+      });
     }
   }, [user, cart]);
 
@@ -152,8 +208,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCart(oldCart);
       }
     } else {
-      const newCart = cart.filter(i => i.id !== itemId);
-      localStorage.setItem('cart', JSON.stringify(newCart));
+      setCart(prev => {
+        const newCart = prev.filter(i => i.id !== itemId);
+        localStorage.setItem('cart', JSON.stringify(newCart));
+        return newCart;
+      });
     }
   }, [user, cart]);
 

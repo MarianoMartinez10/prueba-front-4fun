@@ -110,8 +110,6 @@ erDiagram
     String productId FK
     Int rating
     String text
-    Sentiment sentiment
-    Decimal sentimentScore
   }
 
   ReviewHelpfulVote {

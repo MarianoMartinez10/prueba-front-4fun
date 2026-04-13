@@ -87,7 +87,7 @@ function SuccessContent() {
             <ShieldAlert className="w-6 h-6 text-orange-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
                 <p className="text-[10px] font-black uppercase tracking-widest text-orange-400">Importante: Validación Manual</p>
-                <p className="text-xs text-orange-200/70 leading-relaxed">Tras realizar el pago, nuestro personal administrativo validará el ingreso y marcará tu orden como "Pagada". Puede tomar unos minutos en reflejarse en tu cuenta.</p>
+                <p className="text-xs text-orange-200/70 leading-relaxed">Tras realizar el pago, nuestro personal administrativo validará el ingreso y marcará tu orden como &quot;Pagada&quot;. Puede tomar unos minutos en reflejarse en tu cuenta.</p>
             </div>
         </div>
 

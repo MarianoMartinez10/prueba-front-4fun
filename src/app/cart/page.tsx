@@ -27,6 +27,11 @@ export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, cartTotal, cartCount } = useCart();
   const { user } = useAuth();
 
+  const asCurrencySafe = (value: number | undefined) => {
+    const parsed = Number(value);
+    return formatCurrency(Number.isFinite(parsed) ? parsed : 0);
+  };
+
   /**
    * RN - Protocolo de Seguridad (Guest Gate):
    * Restringe el acceso a la gestión operativa de la cesta para usuarios sin 
@@ -92,12 +97,18 @@ export default function CartPage() {
           <div className="lg:col-span-8 space-y-4">
             {cart.map((item) => {
               const imageUrl = getImageUrl(item.image, "https://placehold.co/600x400/222/FFF?text=Sin+Imagen");
+              const itemName = item.name?.trim() || "Producto";
+              const itemPrice = Number(item.price);
+              const safePrice = Number.isFinite(itemPrice) ? itemPrice : 0;
+              const safeQuantity = Number.isFinite(Number(item.quantity)) && Number(item.quantity) > 0
+                ? Math.trunc(Number(item.quantity))
+                : 1;
               return (
                 <Card key={item.id} className="group relative flex items-center p-6 border-none bg-card/40 backdrop-blur-3xl rounded-3xl overflow-hidden hover:bg-card/60 transition-all duration-500 shadow-xl ring-1 ring-white/5">
                   <div className="relative h-28 w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-black/40">
                     <Image
                       src={imageUrl}
-                      alt={item.name || "Producto"}
+                      alt={itemName}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
@@ -108,8 +119,8 @@ export default function CartPage() {
                             {item.platform?.name || "Distribuido"}
                         </span>
                     </div>
-                    <h3 className="font-headline text-xl font-semibold text-white group-hover:text-primary transition-colors">{item.name || "Producto"}</h3>
-                    <p className="text-lg font-medium mt-2 text-white/90 tabular-nums tracking-tighter">{formatCurrency(item.price || 0)}</p>
+                    <h3 className="font-headline text-xl font-semibold text-white group-hover:text-primary transition-colors">{itemName}</h3>
+                    <p className="text-lg font-medium mt-2 text-white/90 tabular-nums tracking-tighter">{asCurrencySafe(safePrice)}</p>
                   </div>
                   
                   <div className="flex items-center gap-6">
@@ -118,8 +129,11 @@ export default function CartPage() {
                         <Input
                           type="number"
                           min="1"
-                          value={item.quantity}
-                          onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
+                          value={safeQuantity}
+                          onChange={(e) => {
+                            const parsed = Number(e.target.value);
+                            updateQuantity(item.id, Number.isFinite(parsed) ? parsed : 1);
+                          }}
                           className="h-10 w-16 text-center bg-black/40 border-white/10 rounded-lg text-white font-medium"
                           aria-label="Cantidad de productos"
                         />

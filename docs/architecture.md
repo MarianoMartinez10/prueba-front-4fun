@@ -34,7 +34,6 @@ graph TD
         MercadoPago[Pasarela MercadoPago API]
         Nodemailer[SMTP Gmail / Nodemailer]
         Cloudinary[Cloudinary CDN / Images]
-        OpenAI[OpenAI API / Sentiment Analysis]
     end
 
     %% Relaciones
@@ -59,7 +58,6 @@ graph TD
     %% Integraciones
     Services -->|Emails Transaccionales| Nodemailer
     Services -->|Checkout Payments| MercadoPago
-    Services -->|Análisis Reseñas| OpenAI
     UI -->|Subida de Archivos| Cloudinary
 
     classDef aws fill:#f90,stroke:#333,stroke-width:2px;

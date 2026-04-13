@@ -4,15 +4,14 @@
  * Capa de Interfaz: Sistema de Reseñas y Feedback (Product Reviews)
  * --------------------------------------------------------------------------
  * Orquesta la captura y visualización de la experiencia del usuario.
- * Implementa el análisis de sentimiento automatizado (IA), métricas de 
- * utilidad y validación de compra veríficada para asegurar la integridad 
+ * Implementa métricas de utilidad y validación de compra veríficada para asegurar la integridad 
  * de la reputación del catálogo. (MVC / View)
  */
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { ApiClient, ApiError } from "@/lib/api";
-import type { Review, ReviewStats, ReviewSentiment } from "@/lib/types";
+import type { Review, ReviewStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +33,6 @@ import {
   ThumbsUp,
   MessageSquare,
   ShieldCheck,
-  Sparkles,
   Loader2,
   Trash2,
 } from "lucide-react";
@@ -43,16 +41,6 @@ interface ProductReviewsProps {
   productId: string;
   productName: string;
 }
-
-/**
- * RN - Configuración de Semántica: Mapeo de estados del análisis de sentimiento IA.
- */
-const sentimentConfig: Record<ReviewSentiment, { label: string; color: string; emoji: string }> = {
-  positive: { label: "Positivo", color: "bg-green-500/15 text-green-400 border-green-500/30", emoji: "😄" },
-  neutral: { label: "Neutral", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", emoji: "😐" },
-  negative: { label: "Negativo", color: "bg-red-500/15 text-red-400 border-red-500/30", emoji: "😞" },
-  mixed: { label: "Mixto", color: "bg-purple-500/15 text-purple-400 border-purple-500/30", emoji: "🤔" },
-};
 
 /**
  * Componente Atómico: Selector de Calificación (Escala 1-5).
@@ -171,7 +159,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
         title: formTitle || undefined,
         text: formText,
       });
-      toast({ title: "¡Feedback Publicado!", description: "Su opinión ha sido integrada al análisis de sentimiento." });
+      toast({ title: "¡Feedback Publicado!", description: "Su opinión fue registrada correctamente." });
       setShowForm(false);
       setFormRating(0);
       setFormTitle("");
@@ -263,24 +251,9 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
                   })}
                 </div>
 
-                {/* Síntesis Semántica (IA Analysis) */}
-                <div className="space-y-3">
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Sentimiento IA
-                  </p>
-                  {(["positive", "neutral", "negative", "mixed"] as ReviewSentiment[]).map((s) => {
-                    const count = stats.sentiment[s] || 0;
-                    if (count === 0) return null;
-                    const cfg = sentimentConfig[s];
-                    return (
-                      <div key={s} className="flex items-center gap-2 text-xs">
-                        <span role="img" aria-label={cfg.label}>{cfg.emoji}</span>
-                        <span className="text-muted-foreground">{cfg.label}:</span>
-                        <span className="font-bold text-white">{count}</span>
-                      </div>
-                    );
-                  })}
+                <div className="text-right">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Muestras Analizadas</p>
+                  <p className="text-2xl font-black text-white">{stats.totalReviews}</p>
                 </div>
               </div>
             </div>
@@ -329,7 +302,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
 
                   <div className="flex gap-4 pt-2">
                     <Button onClick={handleSubmit} disabled={submitting} className="font-bold shadow-lg">
-                      {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                      {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Star className="mr-2 h-4 w-4" />}
                       Publicar Opinión
                     </Button>
                     <Button variant="ghost" onClick={() => setShowForm(false)} disabled={submitting} className="text-muted-foreground hover:text-white">
@@ -348,7 +321,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
             </p>
           )}
 
-          {/* Layer - Listado de Opiniones con Clasificación IA */}
+          {/* Layer - Listado de Opiniones */}
           {(stats?.totalReviews ?? 0) > 0 && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
@@ -468,29 +441,11 @@ function ReviewCard({
           </div>
         </div>
 
-        {/* Badge de Sentimiento (RN - Auditoría IA) */}
-        {review.sentiment && (
-          <Badge variant="outline" className={cn("text-[9px] gap-1 px-2 py-1 shrink-0 uppercase tracking-widest font-bold", sentimentConfig[review.sentiment].color)}>
-            <Sparkles className="h-2.5 w-2.5" />
-            {sentimentConfig[review.sentiment].label}
-          </Badge>
-        )}
       </div>
 
       <div className="space-y-2 pl-14">
         {review.title && <h4 className="font-headline font-bold text-white tracking-wide">{review.title}</h4>}
         <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-l-2 border-white/5 pl-4">{review.text}</p>
-        
-        {/* Keywords extraídas por IA */}
-        {review.sentimentKeywords.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2">
-            {review.sentimentKeywords.map((kw) => (
-              <span key={kw} className="text-[10px] font-mono text-primary/60 bg-primary/5 px-2 py-0.5 rounded border border-primary/10 capitalize">
-                #{kw}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       <Separator className="bg-white/5" />

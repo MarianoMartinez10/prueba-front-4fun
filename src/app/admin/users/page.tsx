@@ -9,7 +9,7 @@
  * (MVC / Page)
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -93,7 +93,7 @@ export default function UsersPage() {
     /**
      * RN - Auditoría de Identidad: Recupera el listado de usuarios con filtros aplicados.
      */
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
             const res = await ApiClient.getUsers({
@@ -113,11 +113,11 @@ export default function UsersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, debouncedSearch, roleFilter, toast]);
 
     useEffect(() => {
         fetchUsers();
-    }, [page, debouncedSearch, roleFilter]);
+    }, [fetchUsers]);
 
     /**
      * RN - Moderación RBAC: Gestiona la escalación de privilegios (Admin vs User).

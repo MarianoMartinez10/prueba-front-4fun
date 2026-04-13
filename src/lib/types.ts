@@ -106,10 +106,8 @@ export interface Order {
 
 // ─── DOMINIO DE FEEDBACK (REVIEWS) ───
 
-export type ReviewSentiment = 'positive' | 'neutral' | 'negative' | 'mixed';
-
 /**
- * RN - Feedback: Contrato de reseñas con análisis de sentimiento IA.
+ * RN - Feedback: Contrato de reseñas de comunidad.
  */
 export interface Review {
   id: string;
@@ -118,9 +116,6 @@ export interface Review {
   rating: number;
   title: string;
   text: string;
-  sentiment: ReviewSentiment | null;
-  sentimentScore: number | null;
-  sentimentKeywords: string[];
   verified: boolean;
   helpfulCount: number;
   createdAt: string;
@@ -133,7 +128,6 @@ export interface ReviewStats {
   averageRating: number;
   totalReviews: number;
   distribution: Record<number, number>;
-  sentiment: Record<string, number>;
 }
 
 // ─── RESPUESTAS DE API ───

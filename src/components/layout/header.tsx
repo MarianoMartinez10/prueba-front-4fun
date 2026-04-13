@@ -56,7 +56,7 @@ export function Header() {
           )}
         </nav>
 
-        <div className="flex items-center gap-5 ml-auto">
+        <div className="flex items-center gap-7 ml-auto">
           
           {/* RN - Búsqueda Avanzada: Gatillo de motor de búsqueda indexada. */}
           <SearchDialog
@@ -106,7 +106,7 @@ export function Header() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full text-white hover:text-primary hover:bg-primary/10">
                   {user.avatar ? (
                     <Avatar className="h-full w-full">
                       <AvatarImage src={user.avatar} alt={user.name} />

@@ -146,8 +146,8 @@ export const PixelHero = () => {
         </div>
 
         <div className={cn(
-          "grid gap-6 lg:grid-cols-2 lg:gap-10 items-center transition-all duration-300",
-          transitioning ? "opacity-0 translate-y-2 scale-[0.98]" : "opacity-100 translate-y-0 scale-100"
+          "grid gap-6 lg:grid-cols-2 lg:gap-10 items-center transition-all duration-300 min-h-[540px] lg:min-h-[620px]",
+          transitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
         )}>
 
           {/* Columna: Atributos y Contingencia Publicitaria */}
@@ -167,10 +167,10 @@ export const PixelHero = () => {
             </div>
 
             <div className="space-y-3">
-              <h1 className="font-headline text-4xl font-semibold tracking-tighter sm:text-5xl md:text-6xl text-white drop-shadow-xl line-clamp-2 leading-tight uppercase">
+              <h1 className="font-headline text-4xl font-semibold tracking-tighter sm:text-5xl md:text-6xl text-white drop-shadow-xl leading-tight uppercase min-h-[2.4em] max-h-[2.4em] overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
                 {game.name}
               </h1>
-              <p className="max-w-[600px] text-muted-foreground text-sm md:text-lg font-body leading-relaxed line-clamp-3 min-h-[4.8em]">
+              <p className="max-w-[600px] text-muted-foreground text-sm md:text-lg font-body leading-relaxed min-h-[4.8em] max-h-[4.8em] overflow-hidden [display:-webkit-box] [-webkit-line-clamp:3] [-webkit-box-orient:vertical]">
                 {game.description}
               </p>
             </div>
