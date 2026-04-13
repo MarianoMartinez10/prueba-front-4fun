@@ -165,10 +165,6 @@ export default function CartPage() {
                         <span>Posiciones ({cartCount})</span>
                         <span className="text-white">{formatCurrency(cartTotal)}</span>
                     </div>
-                    <div className="flex justify-between items-center text-[10px] font-medium uppercase tracking-widest text-muted-foreground opacity-60">
-                        <span>Protocolo de Envío</span>
-                        <span className="text-green-400">Normalizado</span>
-                    </div>
                 </div>
                 
                 <Separator className="bg-primary/20" />

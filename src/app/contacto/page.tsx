@@ -179,10 +179,6 @@ export default function ContactoPage() {
           </form>
         </CardContent>
       </Card>
-      
-      <div className="mt-10 text-center">
-         <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.4em]">Soporte Técnico Oficial TFI 2026</p>
-      </div>
     </div>
   );
 }

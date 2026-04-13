@@ -168,10 +168,8 @@ export function SearchDialog({
 
                     <div className="max-h-[450px] overflow-y-auto p-3 custom-scrollbar">
                         {query.trim().length === 0 ? (
-                            <div className="py-12 text-center space-y-2">
+                            <div className="py-12 text-center">
                                 <Search className="h-10 w-10 mx-auto text-muted-foreground opacity-20" />
-                                <p className="text-sm text-muted-foreground font-semibold uppercase tracking-[0.2em]">Buscador Activo</p>
-                                <p className="text-xs text-muted-foreground opacity-60">Ingrese un nombre para iniciar la búsqueda.</p>
                             </div>
                         ) : query.trim().length < 2 ? (
                             <div className="py-12 text-center text-xs text-muted-foreground italic">

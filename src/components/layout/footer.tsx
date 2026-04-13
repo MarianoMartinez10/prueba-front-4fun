@@ -86,7 +86,6 @@ export function Footer() {
           </p>
           <div className="flex gap-6 italic opacity-50">
             <span>Tienda oficial</span>
-            <span>v1.0.0-Stable</span>
           </div>
         </div>
       </div>
