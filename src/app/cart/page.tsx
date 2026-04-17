@@ -71,11 +71,6 @@ export default function CartPage() {
       <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-8">
           <div>
             <h1 className="text-5xl font-semibold font-headline text-white tracking-tighter italic uppercase">Tu Carrito</h1>
-            <p className="text-[10px] font-medium uppercase tracking-[0.4em] text-muted-foreground opacity-60">Resumen de selección de productos</p>
-          </div>
-          <div className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-full hidden md:flex items-center gap-2">
-             <BadgeCheck className="h-4 w-4 text-primary" />
-             <span className="text-[9px] font-medium uppercase tracking-widest text-primary">Sesión Validada: {user.name}</span>
           </div>
       </div>
 
@@ -161,16 +156,16 @@ export default function CartPage() {
               </CardHeader>
               <CardContent className="p-10 space-y-8">
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                        <span>Posiciones ({cartCount})</span>
-                        <span className="text-white">{formatCurrency(cartTotal)}</span>
+                    <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-muted-foreground">
+                        <span>Ítems ({cartCount})</span>
+                        <span className="text-white text-sm">{formatCurrency(cartTotal)}</span>
                     </div>
                 </div>
                 
                 <Separator className="bg-primary/20" />
                 
                 <div className="flex justify-between items-end">
-                    <span className="text-[10px] font-medium uppercase tracking-[0.4em] text-muted-foreground">Total Final</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">TOTAL</span>
                     <span className="text-4xl font-medium text-white tracking-tighter tabular-nums">{formatCurrency(cartTotal)}</span>
                 </div>
               </CardContent>

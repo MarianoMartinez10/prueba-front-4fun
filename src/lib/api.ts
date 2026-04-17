@@ -241,6 +241,13 @@ export class ApiClient {
     return this.request<{ success: boolean; message: string }>(`/auth/verify?token=${encodeURIComponent(token)}`);
   }
 
+  static async resendVerification(email: string) {
+    return this.request<{ success: boolean; message: string }>('/auth/resend-verification', { 
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+  }
+
   // ─── UTILIDADES E IMAGENES ───
   static async uploadImage(file: File): Promise<string> {
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dxlbwdqop';

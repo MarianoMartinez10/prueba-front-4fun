@@ -73,6 +73,11 @@ interface User {
     isVerified: boolean;
     avatar?: string | null;
     createdAt: string;
+    sellerProfile?: {
+        storeName: string;
+        isApproved: boolean;
+        storeDescription?: string;
+    } | null;
 }
 
 export default function UsersPage() {
@@ -149,6 +154,26 @@ export default function UsersPage() {
             fetchUsers();
         } catch (err: any) {
             toast({ title: "Error en Operación", description: err.message, variant: "destructive" });
+        } finally {
+            setActionLoading(null);
+        }
+    };
+    
+    /**
+     * RN - Marketplace Approval: Habilita formalmente un perfil de tienda.
+     */
+    const handleApproveSeller = async (userId: string) => {
+        setActionLoading(userId);
+        try {
+            await ApiClient.updateUser(userId, { isApproved: true });
+            toast({ 
+                title: "Tienda Aprobada", 
+                description: "El usuario ya puede empezar a publicar productos.",
+                className: "bg-green-500/20 border-green-500/20 text-white"
+            });
+            fetchUsers();
+        } catch (err: any) {
+            toast({ title: "Error en Aprobación", description: err.message, variant: "destructive" });
         } finally {
             setActionLoading(null);
         }
@@ -327,6 +352,10 @@ export default function UsersPage() {
                                                 ) : (
                                                     <Badge variant="outline" className="border-yellow-500/30 text-yellow-500 font-bold text-[10px] py-0 bg-yellow-500/5 uppercase">Pendiente</Badge>
                                                 )}
+                                                
+                                                {user.sellerProfile && !user.sellerProfile.isApproved && (
+                                                    <Badge variant="outline" className="ml-1 border-primary/30 text-primary font-bold text-[10px] py-0 bg-primary/5 uppercase animate-pulse">Tienda Pendiente</Badge>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-center text-sm font-mono text-muted-foreground opacity-60 italic">
                                                 {new Date(user.createdAt).toLocaleDateString('es-AR')}
@@ -347,6 +376,13 @@ export default function UsersPage() {
                                                         <DropdownMenuItem onClick={() => handleRoleUpdate(user.id || user._id, user.role)} className={cn("text-sm font-bold hover:bg-primary/10 hover:text-primary cursor-pointer px-3 py-2.5", user.role === 'admin' ? "text-destructive" : "text-green-400")}>
                                                             <RefreshCw className="mr-3 h-5 w-5" /> {user.role === 'admin' ? 'Degradar a Cliente' : 'Elevar a Administrador'}
                                                         </DropdownMenuItem>
+                                                        
+                                                        {user.sellerProfile && !user.sellerProfile.isApproved && (
+                                                            <DropdownMenuItem onClick={() => handleApproveSeller(user.id || user._id)} className="text-sm font-bold text-primary hover:bg-primary/10 cursor-pointer px-3 py-2.5">
+                                                                <Shield className="mr-3 h-5 w-5" /> Aprobar Tienda
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        
                                                         <DropdownMenuSeparator className="bg-white/5" />
                                                         <DropdownMenuItem className="text-red-500 font-black text-sm hover:bg-red-500/10 cursor-pointer px-3 py-2.5" onClick={() => handleDelete(user.id || user._id, user.name)}>
                                                             <Trash2 className="mr-3 h-5 w-5" /> DAR DE BAJA

@@ -221,7 +221,7 @@ export default function AccountPage() {
               className="h-8 px-4 bg-primary/15 border-primary/30 text-primary font-black uppercase tracking-widest text-[11px] hover:bg-primary/20 hover:border-primary/40 transition-all font-headline"
             >
               <Shield className="h-4 w-4 mr-2" />
-              {vm.user.role === "admin" ? "Admin" : vm.user.role === "seller" ? "Vendedor" : "Jugador"}
+              {vm.user.role === "admin" ? "Admin" : vm.user.role === "seller" ? "Vendedor" : "Comprador"}
             </Badge>
             {vm.user.isVerified ? (
               <Badge
@@ -231,15 +231,15 @@ export default function AccountPage() {
                 <BadgeCheck className="h-4 w-4 mr-2" /> Email Verificado
               </Badge>
             ) : (
-              <Badge
-                variant="outline"
-                className="h-8 px-4 border-yellow-500/30 bg-yellow-500/10 text-yellow-500 font-black uppercase tracking-widest text-[9px] hover:bg-yellow-500/15 hover:border-yellow-500/40 transition-all"
-              >
-                <XCircle className="h-3 w-3 mr-2" /> Verificar Email
-              </Badge>
+                <Badge
+                  variant="outline"
+                  className="h-8 px-4 border-yellow-500/30 bg-yellow-500/10 text-yellow-500 font-black uppercase tracking-widest text-[9px] hover:bg-yellow-500/15 hover:border-yellow-500/40 transition-all font-headline"
+                >
+                  <XCircle className="h-3 w-3 mr-2" /> Verificación pendiente
+                </Badge>
             )}
           </div>
-
+          
           <div className="pt-4 flex items-center gap-4 justify-center md:justify-start">
             <div className="bg-white/5 px-4 py-2 rounded-xl">
               <p className="text-[12px] text-muted-foreground font-black uppercase tracking-widest opacity-40 mb-1">
@@ -247,6 +247,32 @@ export default function AccountPage() {
               </p>
               <p className="text-sm text-white font-bold">{memberSince}</p>
             </div>
+
+            {!vm.user.isVerified && (
+              <Button 
+                onClick={async () => {
+                  try {
+                    await vm.resendVerification();
+                    toast({ 
+                      title: "Email Enviado", 
+                      description: "Revisá tu bandeja de entrada para verificar tu cuenta.",
+                      className: "bg-primary/20 border-primary/20 text-white" 
+                    });
+                  } catch (error: any) {
+                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                  }
+                }}
+                disabled={vm.resendingVerification}
+                className="h-12 px-8 bg-white/5 text-white hover:bg-primary hover:text-black border border-white/10 hover:border-primary font-black uppercase text-[10px] tracking-[0.15em] rounded-xl shadow-xl hover:shadow-primary/20 transition-all duration-300 group"
+              >
+                {vm.resendingVerification ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+                )}
+                Verificar el Mail
+              </Button>
+            )}
           </div>
         </div>
       </header>

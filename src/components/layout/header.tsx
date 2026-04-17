@@ -112,8 +112,8 @@ function ProfileDropdown({
         className="w-64 bg-background backdrop-blur-2xl border-border rounded-2xl shadow-2xl p-2"
       >
         <DropdownMenuLabel className="font-semibold px-5 pt-6 pb-3">
-          <p className="text-white text-2xl truncate font-headline italic tracking-tighter">{userName}</p>
-          <span className="block text-xs text-primary uppercase font-black tracking-[0.2em] mt-2 opacity-90">
+          <p className="text-white text-lg truncate font-headline italic tracking-tighter">{userName}</p>
+          <span className="block text-[9px] text-primary uppercase font-black tracking-[0.2em] mt-1 opacity-90">
             {userRoleDisplay}
           </span>
         </DropdownMenuLabel>
@@ -121,7 +121,7 @@ function ProfileDropdown({
         <DropdownMenuItem asChild>
           <Link
             href={profileHref}
-            className="cursor-pointer hover:bg-white/5 hover:text-white text-muted-foreground focus:bg-white/5 font-black text-base uppercase tracking-widest rounded-xl transition-colors py-5 px-5"
+            className="cursor-pointer hover:bg-white/5 hover:text-white text-muted-foreground focus:bg-white/5 font-black text-[10px] uppercase tracking-[0.2em] rounded-xl transition-colors py-3 px-5"
           >
             Mi Perfil
           </Link>
@@ -130,7 +130,7 @@ function ProfileDropdown({
           <DropdownMenuItem asChild>
             <Link
               href={adminLink}
-              className="cursor-pointer hover:bg-primary/10 hover:text-primary text-primary/70 focus:bg-primary/10 focus:text-primary font-black text-base uppercase tracking-widest rounded-xl transition-colors py-5 px-5 mt-1 border border-primary/10"
+              className="cursor-pointer hover:bg-primary/10 hover:text-primary text-primary/70 focus:bg-primary/10 focus:text-primary font-black text-[10px] uppercase tracking-[0.2em] rounded-xl transition-colors py-3 px-5 mt-1 border border-primary/10"
             >
               Administración
             </Link>
@@ -139,9 +139,9 @@ function ProfileDropdown({
         <DropdownMenuSeparator className="bg-white/5 my-2" />
         <DropdownMenuItem
           onClick={onLogout}
-          className="cursor-pointer hover:bg-destructive/10 text-destructive/70 hover:text-destructive focus:bg-destructive/10 focus:text-destructive font-black text-base uppercase tracking-widest rounded-xl transition-colors py-5 px-5"
+          className="cursor-pointer hover:bg-destructive/10 text-destructive/70 hover:text-destructive focus:bg-destructive/10 focus:text-destructive font-black text-[10px] uppercase tracking-[0.2em] rounded-xl transition-colors py-3 px-5"
         >
-          <LogOut className="mr-3 h-6 w-6" />
+          <LogOut className="mr-3 h-4 w-4" />
           Cerrar Sesión
         </DropdownMenuItem>
       </DropdownMenuContent>

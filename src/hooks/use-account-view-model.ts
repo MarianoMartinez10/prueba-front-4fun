@@ -44,6 +44,7 @@ interface AccountState {
   ordersPage: number;
   ordersTotalPages: number;
   totalOrders: number;
+  resendingVerification: boolean;
 }
 
 interface AccountActions {
@@ -74,6 +75,7 @@ interface AccountActions {
   updateTaxId: (value: string) => void;
   becomeSeller: (fastTrack?: boolean) => Promise<void>;
   changeOrdersPage: (page: number) => Promise<void>;
+  resendVerification: () => Promise<void>;
 }
 
 export function useAccountViewModel() {
@@ -101,6 +103,7 @@ export function useAccountViewModel() {
     ordersPage: 1,
     ordersTotalPages: 1,
     totalOrders: 0,
+    resendingVerification: false,
   });
 
   /**
@@ -365,6 +368,19 @@ export function useAccountViewModel() {
     }
   };
 
+  const resendVerification = async () => {
+    if (!user?.email) return;
+    setState(prev => ({ ...prev, resendingVerification: true }));
+    try {
+      await ApiClient.resendVerification(user.email);
+    } catch (error) {
+      console.error("[Account ViewModel] Error resending verification:", error);
+      throw error;
+    } finally {
+      setState(prev => ({ ...prev, resendingVerification: false }));
+    }
+  };
+
   // ==================== RETORNO ====================
 
   return {
@@ -394,5 +410,6 @@ export function useAccountViewModel() {
     updateTaxId,
     becomeSeller,
     changeOrdersPage,
+    resendVerification,
   };
 }

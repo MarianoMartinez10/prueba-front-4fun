@@ -32,9 +32,7 @@ export default function WishlistPage() {
                 <Heart className="h-10 w-10 text-destructive animate-pulse fill-destructive/20" />
               Mis favoritos
             </h1>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-70">
-              Productos guardados para mas tarde ({wishlist.length})
-            </p>
+
         </div>
         {wishlist.length > 0 && (
             <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full">
@@ -54,7 +52,7 @@ export default function WishlistPage() {
           <p className="mt-4 text-muted-foreground max-w-sm mx-auto leading-relaxed text-sm font-medium">
             Guarda tus juegos favoritos para encontrarlos rapido. Explora el catalogo y agregalos con un clic.
           </p>
-          <Button asChild className="mt-10 h-14 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] bg-primary text-black hover:bg-primary/90 shadow-xl transition-all shadow-primary/20">
+          <Button asChild variant="outline" className="mt-10 h-14 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] bg-white/5 text-white hover:bg-primary hover:text-black border border-white/10 hover:border-primary transition-all duration-500 shadow-xl hover:shadow-primary/20">
             <Link href="/productos">Explorar el Catálogo <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </div>

@@ -28,10 +28,10 @@ import { Loader2, CheckCircle, Mail, MessageSquare, Send, ArrowRight, User } fro
  * RN - Validación de Identidad y Contenido: Protocolo de seguridad registral.
  */
 const contactSchema = z.object({
-  firstName: z.string().min(2, "Identificador nominal demasiado breve (mínimo 2 caracteres)"),
-  lastName: z.string().min(2, "Identificador registral demasiado breve (mínimo 2 caracteres)"),
-  email: z.string().email("Formato de correo electrónico institucional/personal inválido"),
-  message: z.string().min(10, "El cuerpo del requerimiento debe ser descriptivo (mínimo 10 caracteres)").max(1000, "Límite de caracteres excedido (máximo 1000)")
+  firstName: z.string().min(2, "Tu nombre es muy corto (mínimo 2 letras)"),
+  lastName: z.string().min(2, "Tu apellido es muy corto (mínimo 2 letras)"),
+  email: z.string().email("El correo electrónico no parece válido"),
+  message: z.string().min(10, "Contanos un poco más sobre tu consulta (mínimo 10 letras)").max(1000, "El mensaje es demasiado largo (máximo 1000 letras)")
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
@@ -113,19 +113,19 @@ export default function ContactoPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <User className="h-3 w-3" /> Nombre
+                <Label htmlFor="firstName" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                    <User className="h-3.5 w-3.5" /> Nombre
                 </Label>
-                <Input id="firstName" {...register("firstName")} className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary/40 text-white placeholder:opacity-20" placeholder="" />
+                <Input id="firstName" {...register("firstName")} className="h-12 bg-white/5 border-white/10 rounded-2xl focus:ring-primary/40 text-white text-base" />
                 {errors.firstName && (
                   <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">{errors.firstName.message}</p>
                 )}
               </div>
               <div className="space-y-3">
-                <Label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <User className="h-3 w-3" /> Apellido
+                <Label htmlFor="lastName" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                    <User className="h-3.5 w-3.5" /> Apellido
                 </Label>
-                <Input id="lastName" {...register("lastName")} className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary/40 text-white placeholder:opacity-20" placeholder="" />
+                <Input id="lastName" {...register("lastName")} className="h-12 bg-white/5 border-white/10 rounded-2xl focus:ring-primary/40 text-white text-base" />
                 {errors.lastName && (
                   <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">{errors.lastName.message}</p>
                 )}
@@ -133,27 +133,26 @@ export default function ContactoPage() {
             </div>
             
             <div className="space-y-3">
-              <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Mail className="h-3 w-3" /> Correo Electrónico
+              <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5" /> Correo Electrónico
               </Label>
-              <Input id="email" type="email" placeholder="institucional@dominio.com" {...register("email")} className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary/40 text-white placeholder:opacity-20" />
+              <Input id="email" type="email" {...register("email")} className="h-12 bg-white/5 border-white/10 rounded-2xl focus:ring-primary/40 text-white text-base" />
               {errors.email && (
-                <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">{errors.email.message}</p>
+                <p className="text-[10px] font-bold text-destructive uppercase tracking-widest mt-1 ml-1">{errors.email.message}</p>
               )}
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="message" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <MessageSquare className="h-3 w-3" /> Mensaje
+              <Label htmlFor="message" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                  <MessageSquare className="h-3.5 w-3.5" /> Mensaje
               </Label>
               <Textarea
                 id="message"
-                className="min-h-[160px] bg-white/5 border-white/10 rounded-2xl focus:ring-primary/40 text-white placeholder:opacity-20 resize-none p-4"
-                placeholder="Describa su consulta..."
+                className="min-h-[160px] bg-white/5 border-white/10 rounded-[2rem] focus:ring-primary/40 text-white text-base resize-none p-6"
                 {...register("message")}
               />
               {errors.message && (
-                <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">{errors.message.message}</p>
+                <p className="text-[10px] font-bold text-destructive uppercase tracking-widest mt-1 ml-1">{errors.message.message}</p>
               )}
             </div>
 
@@ -161,17 +160,17 @@ export default function ContactoPage() {
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="h-14 px-10 bg-primary text-black hover:bg-primary/90 font-black uppercase text-sm tracking-widest transition-all rounded-xl shadow-xl shadow-primary/20 group"
+                className="w-full sm:w-auto h-14 px-12 bg-white/5 text-white hover:bg-primary hover:text-black border border-white/10 hover:border-primary font-black uppercase text-xs tracking-[0.15em] rounded-2xl shadow-xl hover:shadow-primary/20 transition-all duration-300 group"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                    Enviando...
+                    Buscando Soporte...
                   </>
                 ) : (
                   <>
                     <Send className="mr-3 h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    Enviar
+                    Enviar Consulta
                   </>
                 )}
               </Button>

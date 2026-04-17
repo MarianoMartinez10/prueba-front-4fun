@@ -30,9 +30,9 @@ import { useCheckoutViewModel } from "@/hooks/use-checkout-view-model";
  * RN - Arquitectura de Flujo: Definición de fases del ciclo de checkout.
  */
 const steps = [
-  { id: 1, title: 'Datos de Despacho', icon: MapPin },
-  { id: 2, title: 'Configuración Instrumental', icon: CreditCard },
-  { id: 3, title: 'Auditoría Final', icon: CheckCircle2 },
+  { id: 1, title: 'Datos de Envío', icon: MapPin },
+  { id: 2, title: 'Método de Pago', icon: CreditCard },
+  { id: 3, title: 'Revisión Final', icon: CheckCircle2 },
 ];
 
 export default function CheckoutPage() {
@@ -71,7 +71,7 @@ export default function CheckoutPage() {
     <div className="container mx-auto max-w-screen-xl px-4 py-16 animate-in fade-in duration-1000">
       <div className="flex flex-col items-center mb-16 text-center">
         <h1 className="text-5xl font-semibold font-headline text-white tracking-tighter mb-4 italic uppercase">Finalizar Compra</h1>
-        <p className="text-[10px] font-medium uppercase tracking-[0.4em] text-muted-foreground opacity-60">Proceso de Pago Seguro - 4Fun Store</p>
+        <p className="text-xs font-black uppercase tracking-[0.3em] text-primary/80">Pago Seguro Protegido por SSL — 4Fun Store</p>
       </div>
 
       {/* Stepper Dinámico (UX Premium) */}
@@ -93,7 +93,7 @@ export default function CheckoutPage() {
                         <Icon className={cn("w-6 h-6", isCompleted && "animate-in zoom-in-50")} />
                     </div>
                     <span className={cn(
-                        "text-[9px] font-black uppercase tracking-widest absolute -bottom-8 whitespace-nowrap",
+                        "text-[11px] font-black uppercase tracking-widest absolute -bottom-8 whitespace-nowrap",
                         isActive ? "text-primary" : "text-muted-foreground"
                     )}>
                     {step.title}
@@ -124,27 +124,27 @@ export default function CheckoutPage() {
                   <CardContent className="px-10 pb-10 space-y-6">
                     <form id="shipping-form" onSubmit={nextStep} className="space-y-6">
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dirección (Calle y Altura)</Label>
-                        <Input name="street" required value={formData.street} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" placeholder="Av. del Libertador 4500" />
+                        <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Domicilio (Calle y Altura)</Label>
+                        <Input name="street" required value={formData.street} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-3">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ciudad / Localidad</Label>
-                            <Input name="city" required value={formData.city} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" placeholder="Buenos Aires" />
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Localidad</Label>
+                            <Input name="city" required value={formData.city} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
                         </div>
                         <div className="space-y-3">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Provincia / Región</Label>
-                            <Input name="state" required value={formData.state} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Provincia</Label>
+                            <Input name="state" required value={formData.state} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                         <div className="space-y-3">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">C.P.</Label>
-                            <Input name="zipCode" required value={formData.zipCode} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Código Postal</Label>
+                            <Input name="zipCode" required value={formData.zipCode} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
                         </div>
                         <div className="col-span-2 space-y-3">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">País / Jurisdicción</Label>
-                            <Input name="country" required value={formData.country} onChange={handleChange} className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">País</Label>
+                            <Input name="country" required value={formData.country} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
                         </div>
                       </div>
                     </form>
@@ -274,17 +274,17 @@ export default function CheckoutPage() {
               </div>
               
               <div className="pt-6 border-t border-white/10 space-y-4">
-                 <div className="flex justify-between text-muted-foreground text-[10px] font-black uppercase tracking-widest">
-                    <span>Subtotal Operativo</span>
+                 <div className="flex justify-between text-muted-foreground text-xs font-black uppercase tracking-widest">
+                    <span>Subtotal</span>
                     <span>{formatCurrency(cartTotal)}</span>
                  </div>
-                 <div className="flex justify-between text-muted-foreground text-[10px] font-black uppercase tracking-widest">
-                    <span>Logística Nacional</span>
-                    <span className="text-green-400">Bonificado (0.00)</span>
+                 <div className="flex justify-between text-muted-foreground text-xs font-black uppercase tracking-widest">
+                    <span>Envío</span>
+                    <span className="text-green-400">Gratis</span>
                  </div>
                  
-                 <div className="bg-white/5 p-6 rounded-2xl flex justify-between items-center ring-1 ring-white/10">
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Total Inversión</span>
+                 <div className="bg-white/5 p-6 rounded-2xl flex justify-between items-center ring-1 ring-white/10 mt-6">
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Total a Pagar</span>
                     <span className="text-3xl font-black text-white tracking-tighter">{formatCurrency(cartTotal)}</span>
                  </div>
               </div>
