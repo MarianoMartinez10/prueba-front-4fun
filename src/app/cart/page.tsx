@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency, getImageUrl } from "@/lib/utils";
+import { formatCurrency, getImageUrl, cn } from "@/lib/utils";
 import { Trash2, ShoppingBag, LogIn, UserPlus, ArrowRight, ShieldCheck, BadgeCheck } from "lucide-react";
 
 export default function CartPage() {
@@ -120,10 +120,16 @@ export default function CartPage() {
                   
                   <div className="flex items-center gap-6">
                     <div className="flex flex-col items-center gap-2">
-                        <span className="text-[9px] font-medium uppercase tracking-widest text-muted-foreground opacity-40">UDS</span>
+                        <span className={cn(
+                          "text-[9px] font-black uppercase tracking-widest transition-colors",
+                          item.stock <= 5 ? "text-amber-400" : "text-muted-foreground opacity-40"
+                        )}>
+                          {item.stock <= 5 ? `STOCK: ${item.stock}` : 'UDS'}
+                        </span>
                         <Input
                           type="number"
                           min="1"
+                          max={item.stock}
                           value={safeQuantity}
                           onChange={(e) => {
                             const parsed = Number(e.target.value);

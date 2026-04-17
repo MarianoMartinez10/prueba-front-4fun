@@ -38,15 +38,17 @@ const normalizeCartItem = (item: any): CartItem => {
   const product = item?.product ?? null;
   const quantity = Math.max(1, Math.trunc(toFiniteNumber(item?.quantity, 1)));
   const productId = String(item?.productId || product?.id || item?.id || 'unknown-product');
+  const stock = toFiniteNumber(product?.stock ?? item?.stock, 999);
   const id = String(item?.id || `loc-${productId}`);
   const price = toFiniteNumber(product?.finalPrice ?? product?.price ?? item?.price, 0);
-
+  
   return {
     id,
     productId,
     name: item?.name || product?.name || 'Producto',
     price,
     quantity,
+    stock,
     image: item?.image || product?.imageId || product?.image,
     platform: resolvePlatform(item, product),
     platformName: item?.platformName || product?.platform?.name,
@@ -142,11 +144,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         toast({ variant: "destructive", title: "Error", description: e.message || "Fallo de conexión." });
       }
     } else {
-      // ✅ VALIDACIÓN ESTRICTA DE QA (E-COMMERCE) - Fase Local:
-      // Aún sin sesión, impedimos que se sume si el stock visualizado es menor. 
-      // (Luego en el checkout backend volverá a auditarse)
-      if (product.stock !== undefined && safeQuantity > product.stock) {
-        toast({ variant: "destructive", title: "Stock Agotado", description: "Límite de unidades excedido." });
+      // ✅ VALIDACIÓN ESTRICTA (Arquitectura Senior):
+      // Verificamos stock acumulado para evitar sobreventa local.
+      const existingItem = cart.find(i => i.productId === product.id);
+      const totalRequested = (existingItem?.quantity || 0) + safeQuantity;
+      const availableStock = toFiniteNumber(product.stock, 0);
+
+      if (totalRequested > availableStock) {
+        toast({ 
+          variant: "destructive", 
+          title: "Límite de Stock", 
+          description: `No puedes agregar más. Stock total: ${availableStock} unidades.` 
+        });
         return;
       }
 
@@ -163,6 +172,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             name: product.name,
             price: product.finalPrice ?? product.price,
             quantity: safeQuantity,
+            stock: availableStock,
             image: product.imageId || product.image,
             platform: product.platform
           });
@@ -173,14 +183,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       toast({ title: "Carrito Actualizado", description: "Ítem guardado localmente." });
     }
-  }, [user, toast]);
+  }, [user, toast, cart]);
 
   /**
    * RN - Gestión de Cantidades (Optimistic UI): Actualiza el estado visual antes
    * de confirmar con el servidor para mejorar la percepción de velocidad.
    */
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
-    const safeQuantity = Math.max(1, Math.trunc(toFiniteNumber(quantity, 1)));
+    const item = cart.find(i => i.id === itemId);
+    if (!item) return;
+
+    let safeQuantity = Math.max(1, Math.trunc(toFiniteNumber(quantity, 1)));
+    
+    // ✅ CLÁUSULA DE SALVAGUARDA (Arquitectura Senior):
+    // Impide el desborde de unidades basándose en el stock contractual del ítem.
+    if (safeQuantity > item.stock) {
+      toast({ 
+        title: "Stock Insuficiente", 
+        description: `Solo disponemos de ${item.stock} unidades de este producto.`,
+        variant: "destructive"
+      });
+      safeQuantity = item.stock;
+    }
+
     const oldCart = [...cart];
     
     // UI Optimista: Aplicamos el cambio inmediato en la interfaz
@@ -200,7 +225,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return newCart;
       });
     }
-  }, [user, cart]);
+  }, [user, cart, toast]);
 
   /**
    * Expulsa un ítem del proceso de checkout.
