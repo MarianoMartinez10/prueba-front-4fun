@@ -79,15 +79,15 @@ export function QuickViewModal({ game, open, onOpenChange }: QuickViewModalProps
                                 <div className="flex flex-col">
                                     {(game.discountPercentage ?? 0) > 0 && (game.finalPrice ?? 0) < game.price && (
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-sm text-muted-foreground line-through opacity-40 font-bold">
+                                            <span className="text-sm text-muted-foreground line-through decoration-red-500 opacity-40 font-bold">
                                                 {formatCurrency(game.price)}
                                             </span>
-                                            <Badge className="bg-green-500 text-white text-[9px] font-black border-none px-1.5 py-0 shadow-sm shadow-green-500/20">
-                                                -{game.discountPercentage}%
+                                            <Badge className="bg-green-500/10 hover:bg-green-500/20 text-white/70 font-black text-[9px] px-2 py-0 shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)] border-green-500/20 backdrop-blur-md uppercase tracking-wider rounded-md">
+                                                DESCUENTO: -{game.discountPercentage}% OFF
                                             </Badge>
                                         </div>
                                     )}
-                                    <span className="text-4xl font-black text-white tracking-tighter">
+                                    <span className="text-4xl font-black text-white tracking-tighter drop-shadow-md">
                                         {formatCurrency(game.finalPrice ?? game.price)}
                                     </span>
                                 </div>
@@ -101,7 +101,7 @@ export function QuickViewModal({ game, open, onOpenChange }: QuickViewModalProps
                             {/* Acciones de Orquestación y Checkout */}
                             <div className="flex gap-3">
                                 <Button
-                                    className="flex-1 h-12 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest text-[10px] shadow-xl transition-all"
+                                    className="flex-1"
                                     disabled={!hasStock}
                                     onClick={() => {
                                         addToCart(game);
@@ -115,20 +115,19 @@ export function QuickViewModal({ game, open, onOpenChange }: QuickViewModalProps
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    className={cn("h-12 w-12 border-white/10 hover:bg-white/5", isWishlisted && "text-red-500 border-red-500/20 bg-red-500/5")}
+                                    className={cn("transition-all duration-300", isWishlisted && "bg-red-500 border-red-500 text-white hover:bg-red-600 hover:border-red-600 shadow-[0_0_20px_rgba(239,68,68,0.3)]")}
                                     onClick={() => toggleWishlist(game)}
                                 >
-                                    <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+                                    <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
                                 </Button>
 
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    className={cn("h-12 w-12 border-white/10 hover:bg-white/5", isCompared && "text-primary border-primary/20 bg-primary/5")}
                                     onClick={() => isCompared ? removeFromCompare(game.id) : addToCompare(game)}
                                     title="Comparativa Técnica"
                                 >
-                                    <Scale className="h-5 w-5" />
+                                    <Scale className="h-4 w-4" />
                                 </Button>
                             </div>
 

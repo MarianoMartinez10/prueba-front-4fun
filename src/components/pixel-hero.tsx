@@ -3,302 +3,267 @@
 /**
  * Capa de Interfaz: Hero Interactivo de Promociones (Pixel Hero)
  * --------------------------------------------------------------------------
- * Actúa como el punto de anclaje visual (Hero Section) para destacar ofertas.
- * Orquesta un carrusel asíncrono que consume el motor de promociones del API.
- * Provee una experiencia inmersiva mediante fondos desenfocados dinámicos
- * y micro-animaciones de transición. (MVC / View)
+ * Orquesta un carrusel asíncrono consumiendo el motor de promociones.
+ * VISTA PURA (View): Cero lógica de negocio. Depende enteramente de
+ * useHeroViewModel para la inyección de estado y comandos de navegación.
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { ShoppingCart, Zap, ArrowRight, ChevronLeft, ChevronRight, Percent } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
-import { cn } from '@/lib/utils';
-import type { Product } from '@/lib/schemas';
-import { ApiClient } from '@/lib/api';
-import Link from 'next/link';
-
-// RN - Imagen por Defecto: Fallback para asegurar estabilidad visual ante fallos de assets.
-const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
+import { formatCurrency, cn } from '@/lib/utils';
+// ✅ Inyección de Dependencia del ViewModel (Arquitectura MVC/OOP)
+import { useHeroViewModel } from '@/hooks/use-hero-view-model';
 
 export const PixelHero = () => {
   const { addToCart } = useCart();
-  const [games, setGames] = useState<Product[]>([]);
-  const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [transitioning, setTransitioning] = useState(false);
+  const {
+    games,
+    currentGame: game,
+    loading,
+    transitioning,
+    current,
+    navigate,
+    selectDot,
+    isDataEmpty,
+    hasMultipleGames,
+    currentImageUrl: imageUrl,
+    hasDiscount
+  } = useHeroViewModel();
 
-  /**
-   * RN - Tracción de Ofertas: Hidrata el Hero con productos que poseen 
-   * descuentos activos verificados por el servidor.
-   */
-  useEffect(() => {
-    const fetchDiscounted = async () => {
-      try {
-        const res = await ApiClient.getProducts({ discounted: true, page: 1, limit: 200, sort: 'order' });
-        // Validación de Margen: Filtra únicamente productos con descuento efectivo > 0.
-        const withRealDiscount = res.products.filter(
-          (p) => (p.discountPercentage ?? 0) > 0 && (p.finalPrice ?? 0) < p.price
-        );
-        if (withRealDiscount.length > 0) {
-          setGames(withRealDiscount);
-        }
-      } catch (e) {
-        console.error("[PixelHero] Error al recuperar promociones:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDiscounted();
-  }, []);
-
-  /**
-   * RN - Orquestación de Navegación: Gestiona la transición entre diapositivas (Slides).
-   * Implementa un debounce manual mediante estado de transicionamiento.
-   */
-  const navigate = useCallback((direction: number) => {
-    if (games.length === 0 || transitioning) return;
-    setTransitioning(true);
-    setTimeout(() => {
-      setCurrent(prev => (prev + direction + games.length) % games.length);
-      setTransitioning(false);
-    }, 300);
-  }, [games.length, transitioning]);
-
-  /**
-   * Autoplay: Implementa rotación automática de contenido cada 6 segundos.
-   */
-  useEffect(() => {
-    if (games.length <= 1) return;
-    const interval = setInterval(() => navigate(1), 6000);
-    return () => clearInterval(interval);
-  }, [games.length, navigate]);
-
-  // Estado de Carga (Skeleton)
+  // Estado de Carga Abstracto (Skeleton)
   if (loading) {
     return (
-      <section className="relative w-full overflow-hidden bg-background py-12 md:py-24 lg:py-32">
-        <div className="container mx-auto px-4 flex justify-center items-center min-h-[300px]">
-          <div className="animate-pulse flex flex-col items-center gap-4">
-            <Percent className="h-12 w-12 text-primary/40 animate-spin" />
-            <p className="text-muted-foreground font-mono uppercase tracking-widest text-xs">Cargando ofertas...</p>
+      <section className="relative w-full overflow-hidden bg-background py-16 md:py-24 lg:py-32 flex justify-center items-center">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-background to-background z-0" />
+        <div className="animate-pulse flex flex-col items-center gap-6 relative z-10">
+          <div className="h-16 w-16 rounded-2xl bg-primary/20 flex items-center justify-center animate-spin-slow shadow-[0_0_40px_-10px_var(--tw-shadow-color)] shadow-primary/30">
+            <Percent className="h-8 w-8 text-primary/60" />
           </div>
+          <p className="text-muted-foreground font-mono uppercase tracking-widest text-sm font-semibold">Iniciando Motor de Promociones...</p>
         </div>
       </section>
     );
   }
 
-  // Estado Vacío: Fallback arquitectónico si no hay campañas activas.
-  if (games.length === 0) {
+  // Estado Fallback (Catálogo Vacío)
+  if (isDataEmpty || !game) {
     return (
-      <section className="relative w-full overflow-hidden bg-background py-12 md:py-24 lg:py-32">
-        <div className="absolute inset-0 z-0 opacity-[0.03]"
+      <section className="relative w-full overflow-hidden bg-background py-16 md:py-24 lg:py-32">
+        <div className="absolute inset-0 z-0 opacity-10"
           style={{
             backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
-            backgroundSize: '40px 40px'
+            backgroundSize: '64px 64px'
           }}
         />
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-background via-transparent to-background z-0" />
-        <div className="container relative z-10 mx-auto px-4 text-center space-y-4">
-          <h2 className="font-headline text-3xl md:text-4xl font-semibold text-primary uppercase">Sin Campañas Activas</h2>
-          <p className="text-muted-foreground text-lg max-w-md mx-auto">Vuelva en breve para acceder a los beneficios técnicos exclusivos.</p>
-          <Button variant="outline" size="lg" asChild className="border-primary/20 text-primary hover:bg-primary/10">
-            <Link href="/productos">Explorar Catálogo General <ArrowRight className="ml-2 h-5 w-5" /></Link>
-          </Button>
+        <div className="container relative z-10 mx-auto px-4 text-center space-y-6">
+          <div className="inline-flex items-center justify-center p-4 bg-muted rounded-full mb-4">
+             <Zap className="h-8 w-8 text-muted-foreground opacity-50" />
+          </div>
+          <h2 className="font-headline text-3xl md:text-5xl font-bold tracking-tight uppercase bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">Esperando Próximas Campañas</h2>
+          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">Actualizamos nuestro catálogo de ofertas regularmente. Vuelve pronto para descubrir beneficios tácticos o explora la armería completa.</p>
+          <div className="pt-4">
+              <Button variant="outline" size="lg" asChild className="px-8">
+                <Link href="/productos">Ir al Inventario Global <ArrowRight className="ml-2 h-5 w-5" /></Link>
+              </Button>
+          </div>
         </div>
       </section>
     );
   }
 
-  const game = games[current];
-  const imageUrl = (game.imageId && (game.imageId.startsWith('http') || game.imageId.startsWith('/')))
-    ? game.imageId : DEFAULT_IMAGE;
-
-  const hasDiscount = (game.discountPercentage ?? 0) > 0 && (game.finalPrice ?? 0) < game.price;
-
+  // 🎨 Mejora Visual aidesigner: Viñeteado profundo, brillos y layout Premium
   return (
-    <section className="relative w-full overflow-hidden bg-background py-8 md:py-12 lg:py-16">
+    <section className="relative w-full overflow-hidden bg-background py-12 md:py-16 lg:py-24 border-b border-white/5">
       
-      {/* Layer - Fondo Estructural: Grid decorativo de baja fidelidad. */}
-      <div className="absolute inset-0 z-0 opacity-[0.03]"
-        style={{
-          backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
-          backgroundSize: '40px 40px'
-        }}
-      />
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-background via-transparent to-background z-0" />
+      {/* Background Ambiental: Mezcla de Grid Holográfico + Radial Gradient Focus */}
+      <div className="absolute inset-0 z-0 select-none pointer-events-none">
+          <div className="absolute inset-0 opacity-[0.03]"
+            style={{ backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,_var(--tw-gradient-stops))] from-primary/10 via-background to-background opacity-60" />
+          <div className="absolute bg-gradient-to-t from-background via-transparent to-transparent bottom-0 left-0 right-0 h-40 z-10" />
+      </div>
 
-      <div className="container relative z-10 mx-auto px-4">
+      <div className="container relative z-20 mx-auto px-4 md:px-6">
         
-        {/* Cabecera de Sección (Branding de Ofertas) */}
-        <div className="flex items-center gap-3 mb-6 md:mb-8">
-          <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5">
-            <Zap className="h-4 w-4 text-primary fill-current" />
-            <span className="text-sm font-semibold text-primary tracking-widest uppercase font-mono">Ofertas Especiales</span>
-          </div>
-          {games.length > 1 && (
-            <span className="text-xs text-muted-foreground font-mono px-3 py-1 bg-white/5 rounded-full border border-white/5">{current + 1} / {games.length}</span>
-          )}
-        </div>
 
+
+        {/* Layout Split: Metadatos vs Atmosférico */}
         <div className={cn(
-          "grid gap-6 lg:grid-cols-2 lg:gap-10 items-center transition-all duration-300 min-h-[540px] lg:min-h-[620px]",
-          transitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+          "grid lg:grid-cols-12 gap-8 lg:gap-16 items-center transition-all duration-500 min-h-[500px]",
+          transitioning ? "opacity-0 translate-x-4 blur-sm" : "opacity-100 translate-x-0 blur-0"
         )}>
 
-          {/* Columna: Atributos y Contingencia Publicitaria */}
-          <div className="space-y-6">
-            <div className="flex flex-wrap gap-2">
+          {/* Col 1: Textos y Control Operativo (7 columnas) */}
+          <div className="lg:col-span-7 space-y-8">
+            <div className="flex flex-wrap gap-3">
               {hasDiscount && (
-                <Badge className="bg-green-500 text-white font-bold text-sm px-3 py-1 animate-pulse shadow-lg shadow-green-500/20">
-                  -{game.discountPercentage}% OFF
+                <Badge className="bg-green-500/10 hover:bg-green-500/20 text-white/70 border-green-500/20 shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)] backdrop-blur-md font-black text-sm px-4 py-1.5 uppercase tracking-wider rounded-md">
+                   DESCUENTO: -{game.discountPercentage}% OFF
                 </Badge>
               )}
-              <Badge variant="secondary" className="text-primary font-mono uppercase tracking-widest border-primary/20 bg-primary/5">
-                {game.platform?.name || 'Multiplataforma'}
+              <Badge variant="outline" className="text-white/70 border-white/20 bg-white/5 backdrop-blur-md font-mono uppercase tracking-widest py-1.5 rounded-md hover:bg-white/10 transition-colors">
+                {game.platform?.name || 'Multi'}
               </Badge>
-              <Badge variant="secondary" className="text-primary font-mono uppercase tracking-widest border-primary/20 bg-primary/5">
+              <Badge variant="outline" className="text-white/70 border-white/20 bg-white/5 backdrop-blur-md font-mono uppercase tracking-widest py-1.5 rounded-md hover:bg-white/10 transition-colors">
                 {game.genre?.name || 'General'}
               </Badge>
             </div>
 
-            <div className="space-y-3">
-              <h1 className="font-headline text-4xl font-semibold tracking-tighter sm:text-5xl md:text-6xl text-white drop-shadow-xl leading-tight uppercase min-h-[2.4em] max-h-[2.4em] overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
-                {game.name}
-              </h1>
-              <p className="max-w-[600px] text-muted-foreground text-sm md:text-lg font-body leading-relaxed min-h-[4.8em] max-h-[4.8em] overflow-hidden [display:-webkit-box] [-webkit-line-clamp:3] [-webkit-box-orient:vertical]">
-                {game.description}
-              </p>
+            {/* Solución de Layout Arquitectónico: El contenedor grid mantiene la altura innegociable
+                reservada mediante un elemento fantasma, mientras que el contenido real fluye orgánicamente
+                con 'self-start', eliminando el hueco entre título y descripción de forma dinámica. */}
+            <div className="grid">
+              <div className="col-start-1 row-start-1 invisible pointer-events-none select-none flex flex-col gap-4" aria-hidden="true">
+                <div className="text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] leading-[0.95] h-[1.9em]"></div>
+                <div className="text-base md:text-lg lg:text-xl leading-relaxed h-[4.5em]"></div>
+              </div>
+              <div className="col-start-1 row-start-1 flex flex-col gap-4 self-start">
+                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] font-black tracking-tight text-white uppercase leading-[0.95] max-h-[1.9em] overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] custom-text-shadow">
+                  {game.name}
+                </h1>
+                <p className="max-w-[85%] text-white/60 text-base md:text-lg lg:text-xl font-medium leading-relaxed max-h-[4.5em] overflow-hidden [display:-webkit-box] [-webkit-line-clamp:3] [-webkit-box-orient:vertical]">
+                  {game.description}
+                </p>
+              </div>
             </div>
 
-            {/* RN - Desglose de Costes: Visualización clara del beneficio económico. */}
-            <div className="flex items-end gap-3 py-2">
-              {hasDiscount && (
-                <span className="text-xl md:text-2xl text-muted-foreground line-through decoration-green-500/70 opacity-50 font-medium">
-                  {formatCurrency(game.price)}
-                </span>
-              )}
-              <span className={cn(
-                "text-4xl md:text-5xl font-bold tracking-tight",
-                hasDiscount ? "text-primary" : "text-white"
-              )}>
-                {formatCurrency(game.finalPrice ?? game.price)}
-              </span>
+            {/* Display de Precio Impactante */}
+            <div className="flex items-end gap-4 p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm max-w-sm">
+                <div className="flex flex-col">
+                  {hasDiscount && (
+                    <span className="text-lg md:text-xl text-white line-through decoration-red-500 decoration-2 font-mono opacity-60">
+                      {formatCurrency(game.price)}
+                    </span>
+                  )}
+                  <span className={cn(
+                    "text-4xl md:text-5xl font-black tracking-tighter uppercase leading-[0.95] custom-text-shadow",
+                    hasDiscount ? "text-green-500 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)]" : "text-white"
+                  )}>
+                    {formatCurrency(game.finalPrice ?? game.price)}
+                  </span>
+                </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            {/* Action Bar */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
               <Button
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-black font-bold text-lg h-14 px-8 shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                className="w-full sm:w-auto sm:w-64"
                 onClick={() => addToCart(game)}
                 disabled={game.stock <= 0}
               >
-                <ShoppingCart className="mr-2 h-6 w-6" />
-                {game.stock > 0 ? "COMPRAR AHORA" : "AGOTADO"}
+                {game.stock > 0 ? (
+                    <>
+                    <ShoppingCart className="mr-2 h-4 w-4" /> <span>AÑADIR AL CARRITO</span>
+                    </>
+                ) : (
+                    "SIN STOCK"
+                )}
               </Button>
 
               <Button
-                variant="outline"
+                variant="ghost"
                 size="lg"
-                className="h-14 px-8 border-white/10 hover:bg-white/5 text-white font-semibold transition-all"
+                className="w-full sm:w-auto px-8"
                 asChild
               >
                 <Link href={`/productos/${game.id}`}>
-                  VER DETALLES <ArrowRight className="ml-2 h-5 w-5 opacity-50" />
+                  VER DETALLES <ArrowRight className="ml-2 h-4 w-4 opacity-70" />
                 </Link>
               </Button>
             </div>
 
-            {/* Navegación del Carrusel (UX: Control Manual) */}
-            {games.length > 1 && (
-              <div className="flex items-center gap-4 pt-4">
+            {/* Slider Controls Modernos */}
+            {hasMultipleGames && (
+              <div className="flex items-center gap-4 pt-6 mt-6 border-t border-white/10 inline-flex">
                 <button
                   onClick={() => navigate(-1)}
-                  className="p-3 rounded-full border border-white/5 bg-white/5 hover:bg-primary/20 hover:border-primary/40 transition-all group"
-                  aria-label="Anterior diapositiva"
+                  className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-primary/20 hover:border-primary/50 text-white/70 hover:text-primary transition-all group"
+                  aria-label="Atras"
                 >
-                  <ChevronLeft className="h-4 w-4 text-white group-hover:text-primary" />
+                  <ChevronLeft className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform" />
                 </button>
 
                 <div className="flex gap-2">
                   {games.map((_, i) => (
                     <button
                       key={i}
-                      onClick={() => {
-                        if (i !== current) {
-                          setTransitioning(true);
-                          setTimeout(() => { setCurrent(i); setTransitioning(false); }, 300);
-                        }
-                      }}
+                      onClick={() => selectDot(i)}
                       className={cn(
-                        "h-1.5 rounded-full transition-all duration-500",
-                        i === current ? "w-10 bg-primary" : "w-1.5 bg-white/20 hover:bg-white/40"
+                        "h-2 rounded-full transition-all duration-500",
+                        i === current ? "w-12 bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" : "w-2 bg-white/20 hover:bg-white/50 cursor-pointer"
                       )}
-                      aria-label={`Navegar a oferta ${i + 1}`}
+                      aria-label={`Slide ${i + 1}`}
                     />
                   ))}
                 </div>
 
                 <button
                   onClick={() => navigate(1)}
-                  className="p-3 rounded-full border border-white/5 bg-white/5 hover:bg-primary/20 hover:border-primary/40 transition-all group"
-                  aria-label="Siguiente diapositiva"
+                  className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-primary/20 hover:border-primary/50 text-white/70 hover:text-primary transition-all group"
+                  aria-label="Adelante"
                 >
-                  <ChevronRight className="h-4 w-4 text-white group-hover:text-primary" />
+                  <ChevronRight className="h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             )}
-
           </div>
 
-          {/* Columna: Composición Visual (Box Art Inmersivo) */}
-          <div className="relative group animate-in zoom-in-95 duration-1000 fade-in delay-200 lg:block hidden">
-            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-primary/5 rounded-[2rem] blur-3xl opacity-30 group-hover:opacity-60 transition duration-1000" />
+          {/* Col 2: Arte Inmersivo (5 columnas) - Renderizado Solo en Desktop/Tablet */}
+          <div className="lg:col-span-5 relative hidden lg:block group perspective-[1000px]">
+             {/* Glow Trasero Constante */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/30 transition-colors duration-1000" />
+             
+             {/* Marco 3D */}
+             <div className="relative transform-gpu transition-all duration-700 hover:rotate-y-[-5deg] hover:rotate-x-[5deg] hover:scale-[1.02]">
+                <Link href={`/productos/${game.id}`} className="block">
+                    <Card className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-white/20 bg-black shadow-2xl">
+                        {/* Img Blur para textura de fondo interna */}
+                        <Image src={imageUrl} alt="" fill className="object-cover opacity-30 blur-2xl scale-125" />
+                        
+                        {/* Img Principal Clean */}
+                        <Image
+                            src={imageUrl}
+                            alt={game.name}
+                            fill
+                            className="object-cover z-10 transition-transform duration-1000 group-hover:scale-110"
+                            priority
+                            sizes="(max-width: 1200px) 50vw, 33vw"
+                        />
 
-            <Link href={`/productos/${game.id}`}>
-              <Card className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 shadow-3xl transition-all duration-700 group-hover:scale-[1.02] cursor-pointer">
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  
-                  {/* Layer - Fondo Atmosférico (Ambience Blur) */}
-                  <Image
-                    src={imageUrl}
-                    alt=""
-                    fill
-                    className="object-cover scale-125 blur-3xl opacity-30 group-hover:scale-150 transition-transform duration-1000"
-                    aria-hidden="true"
-                  />
-
-                  {/* Asset Principal (Vertical Center) */}
-                  <div className="absolute inset-0 flex items-center justify-center p-8">
-                    <div className="relative h-full aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20 transform rotate-1 group-hover:rotate-0 transition-transform duration-700">
-                      <Image
-                        src={imageUrl}
-                        alt={game.name}
-                        fill
-                        className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                        priority
-                        sizes="(max-width: 1200px) 400px, 600px"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Overlay Informativo de Interacción */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
-                    <div className="flex items-center gap-3 text-white font-mono bg-primary/20 backdrop-blur-md px-4 py-2 rounded-full border border-primary/30">
-                      <Zap className="h-4 w-4 text-primary fill-current" />
-                      <span className="text-xs font-bold tracking-[0.2em] uppercase">Oferta Vigente</span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </Link>
+                        {/* Overlay Gradiente Inferior para Branding */}
+                        <div className="absolute inset-0 z-20 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+                        
+                        <div className="absolute bottom-0 left-0 w-full p-8 z-30 flex justify-between items-end transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-100">
+                             <div>
+                                <h3 className="text-2xl font-black text-white uppercase">{game.name}</h3>
+                                <p className="text-primary font-mono text-sm tracking-widest uppercase">Conocé más</p>
+                             </div>
+                             <div className="bg-primary/20 w-12 h-12 rounded-full border border-primary/50 flex items-center justify-center backdrop-blur-md">
+                                 <ArrowRight className="text-primary w-5 h-5 -rotate-45" />
+                             </div>
+                        </div>
+                    </Card>
+                </Link>
+             </div>
           </div>
+          
         </div>
       </div>
+      
+      {/* Definición extra de CSS en JSX para sombras personalizadas no-Tailwind nativas si aplica */}
+      <style jsx>{`
+        .custom-text-shadow {
+          text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8), 0 2px 5px rgba(255, 255, 255, 0.1);
+        }
+      `}</style>
     </section>
   );
 };

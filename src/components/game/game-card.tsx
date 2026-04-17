@@ -38,13 +38,13 @@ export function GameCard({ game }: GameCardProps) {
   const isFavorite = isInWishlist(vm.getDisplayId());
 
   return (
-    <Card className="group relative overflow-hidden border-none bg-card/40 backdrop-blur-md transition-all duration-500 hover:bg-card/60 hover:shadow-3xl hover:-translate-y-2 rounded-3xl ring-1 ring-white/5">
+    <Card className="group relative overflow-hidden bg-card/40 backdrop-blur-md transition-all duration-300 hover:bg-card/60 hover:shadow-xl hover:-translate-y-1 rounded-2xl border border-white/5 hover:border-primary/30 shadow-md flex flex-col h-full">
       
       {/* RN - Gestión Promocional: Badge dinámico de bonificación. */}
       {vm.isOnSale() && (
         <div className="absolute left-4 top-4 z-20">
-          <Badge className="bg-green-500 text-white font-bold px-3 py-1 text-[10px] animate-pulse shadow-xl shadow-green-500/20 border-none">
-            {vm.getDiscountBadge()} OFF
+          <Badge className="bg-green-500/10 hover:bg-green-500/20 text-white/70 font-black text-xs px-4 py-1.5 shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)] border-green-500/20 backdrop-blur-md uppercase tracking-wider rounded-md">
+            DESCUENTO: {vm.getDiscountBadge()} OFF
           </Badge>
         </div>
       )}
@@ -53,12 +53,14 @@ export function GameCard({ game }: GameCardProps) {
       <button
         onClick={() => toggleWishlist(game)}
         className={cn(
-          "absolute right-4 top-4 z-20 h-10 w-10 rounded-full bg-black/40 backdrop-blur-2xl transition-all flex items-center justify-center hover:scale-110 border border-white/10 group/heart",
-          isFavorite ? "text-destructive fill-current" : "text-white/70"
+          "absolute right-4 top-4 z-20 h-10 w-10 rounded-full transition-all duration-300 flex items-center justify-center hover:scale-110 hover:shadow-lg border backdrop-blur-md",
+          isFavorite 
+            ? "bg-red-500 border-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.5)]" 
+            : "bg-white/10 border-white/20 text-white/70 hover:bg-white/20 hover:border-white/40"
         )}
         aria-label="Alternar Favorito"
       >
-        <Heart className={cn("h-5 w-5 transition-transform", isFavorite && "fill-current group-hover:scale-125")} />
+        <Heart className={cn("h-5 w-5 transition-all", isFavorite ? "fill-current scale-110" : "group-hover:scale-125")} />
       </button>
 
       <Link href={`/productos/${vm.getDisplayId()}`}>
@@ -77,30 +79,29 @@ export function GameCard({ game }: GameCardProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 relative">
-          <div className="mb-3 flex items-center gap-2">
-            <Badge variant="outline" className="text-[9px] font-medium uppercase tracking-widest border-primary/20 text-primary bg-primary/5 px-2">
+        <CardContent className="p-5 relative flex-1 flex flex-col">
+          <div className="mb-3 flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="text-[8px] font-bold uppercase tracking-widest border-primary/30 text-primary bg-primary/5 px-2.5 py-1">
               {vm.getPlatformName()}
             </Badge>
-            {!vm.hasStock() && <Badge variant="secondary" className="text-[9px] font-medium uppercase tracking-widest bg-destructive/10 text-destructive border-none">Agotado</Badge>}
+            {!vm.hasStock() && <Badge variant="secondary" className="text-[8px] font-bold uppercase tracking-widest bg-destructive/10 text-destructive border-destructive/20">Agotado</Badge>}
           </div>
 
-          <h3 className="line-clamp-1 font-headline text-xl font-semibold text-white group-hover:text-primary transition-colors mb-1 tracking-tight">
+          <h3 className="line-clamp-2 font-headline text-lg font-semibold text-white group-hover:text-primary transition-colors mb-2 tracking-tight leading-tight">
             {game.name}
           </h3>
-          <p className="text-[10px] text-muted-foreground mb-4 font-medium uppercase tracking-[0.2em] opacity-60">
-            {vm.getGenreName()}
-          </p>
           
-          <div className="flex items-end gap-3">
+          <div className="border-t border-white/5 pt-4 mb-4" />
+          
+          <div className="flex items-baseline gap-2 mb-4">
             {/**
               * RN - Localización Monetaria: El ViewModel garantiza el formato ARS (Pesos Argentinos)
               * operando bajo los estándares transaccionales del TFI.
               */}
-            <span className="text-3xl font-bold text-white tracking-tighter">{vm.toDisplayPrice()}</span>
+            <span className="text-2xl font-bold text-white tracking-tighter">{vm.toDisplayPrice()}</span>
             
             {vm.isOnSale() && (
-              <span className="text-sm text-muted-foreground line-through opacity-40 font-medium mb-1">
+              <span className="text-xs text-muted-foreground line-through decoration-red-500 opacity-50 font-medium">
                 {vm.getOriginalPrice()}
               </span>
             )}
@@ -108,16 +109,16 @@ export function GameCard({ game }: GameCardProps) {
         </CardContent>
       </Link>
 
-      <CardFooter className="p-6 pt-0">
+      <CardFooter className="p-5 pt-0">
         <Button
           onClick={() => addToCart(game)}
-          className="w-full h-12 rounded-xl bg-white/5 text-white hover:bg-primary hover:text-black border border-white/10 hover:border-primary transition-all font-bold uppercase text-[10px] tracking-[0.2em] group/btn shadow-xl disabled:opacity-20"
+          className="w-full h-11 rounded-lg bg-white/5 text-white hover:bg-primary hover:text-black border border-white/10 hover:border-primary transition-all duration-300 font-bold uppercase text-[9px] tracking-widest shadow-sm hover:shadow-md group/btn disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={!vm.hasStock()}
         >
           {vm.hasStock() ? (
             <>
-              <ShoppingCart className="h-4 w-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
-              Añadir al Carrito
+              <ShoppingCart className="h-5 w-5 group-hover/btn:scale-110 group-hover/btn:rotate-6 transition-transform" />
+              <span className="text-xs font-bold">Añadir</span>
             </>
           ) : (
             "Agotado"

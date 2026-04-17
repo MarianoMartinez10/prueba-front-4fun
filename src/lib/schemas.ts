@@ -39,6 +39,12 @@ export const ProductSchema = z.object({
     graphics: z.string().optional(),
     storage: z.string().optional(),
   }).optional().nullable(),
+  sellerId: z.string().optional().nullable(),
+  seller: z.object({
+    id: z.string(),
+    name: z.string().nullable().optional(),
+    storeName: z.string().nullable().optional(),
+  }).optional().nullable(),
 });
 
 /**
@@ -55,7 +61,8 @@ export const adminProductBaseSchema = z.object({
   type: z.enum(['Physical', 'Digital']),
   developer: z.string().optional(),
   specPreset: z.string().optional(),
-  imageUrl: z.string().optional(),
+  imageId: z.string().optional(),
+  trailerUrl: z.string().optional(),
 });
 
 // ─── DOMINIO: SEGURIDAD Y AUTH ───
