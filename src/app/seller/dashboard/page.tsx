@@ -79,17 +79,17 @@ function KpiCard({
                         </div>
                     )}
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
                     {title}
                 </p>
                 <p className={cn(
-                    "text-3xl lg:text-4xl font-black tracking-tighter leading-none",
+                    "text-4xl lg:text-5xl font-black tracking-tighter leading-none",
                     alert && "text-destructive"
                 )}>
                     {value}
                 </p>
                 {subtitle && (
-                    <p className="text-[10px] text-muted-foreground/50 font-bold tracking-tight mt-2">
+                    <p className="text-xs text-muted-foreground/50 font-bold tracking-tight mt-2">
                         {subtitle}
                     </p>
                 )}
@@ -226,28 +226,20 @@ export default function SellerDashboardPage() {
                     iconBg="bg-violet-500/15"
                     iconColor="text-violet-400"
                 />
-                <KpiCard
-                    title="Mi Stock Crítico"
-                    value={stats?.lowStockProducts || 0}
-                    subtitle="Requieren atención"
-                    icon={AlertTriangle}
-                    iconBg={stats?.lowStockProducts ? "bg-destructive/15" : "bg-green-500/15"}
-                    iconColor={stats?.lowStockProducts ? "text-destructive" : "text-green-400"}
-                    alert={!!stats?.lowStockProducts}
-                />
+
             </div>
 
             {/* GRÁFICO CENTRAL */}
-            <div className="grid gap-5 lg:grid-cols-7">
-                <Card className="lg:col-span-5 border-0 ring-1 ring-white/5 bg-card/60 backdrop-blur-xl shadow-lg overflow-hidden">
+            <div className="grid gap-5 grid-cols-1">
+                <Card className="border-0 ring-1 ring-white/5 bg-card/60 backdrop-blur-xl shadow-lg overflow-hidden">
                     <CardHeader className="px-8 pt-8 pb-4 border-b border-white/5">
                         <div className="flex items-start justify-between">
                             <div>
-                                <CardTitle className="text-xl font-headline font-black italic flex items-center gap-3">
-                                    <BarChart3 className="h-5 w-5 text-primary" />
+                                <CardTitle className="text-2xl font-headline font-black italic flex items-center gap-3">
+                                    <BarChart3 className="h-6 w-6 text-primary" />
                                     Ventas · Últimos 30 días
                                 </CardTitle>
-                                <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-2">
+                                <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 mt-2">
                                     Evolución de tus ingresos privados
                                 </CardDescription>
                             </div>
@@ -314,35 +306,16 @@ export default function SellerDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* TARGET CARD (Próximamente) */}
-                <Card className="lg:col-span-2 border-0 ring-1 ring-white/5 bg-gradient-to-br from-primary/10 to-transparent backdrop-blur-xl shadow-lg overflow-hidden flex flex-col justify-center items-center text-center p-10">
-                    <div className="h-20 w-20 rounded-3xl bg-primary/20 flex items-center justify-center mb-6">
-                        <Target className="h-10 w-10 text-primary" />
-                    </div>
-                    <h3 className="text-2xl font-black italic mb-2">Objetivo de Mes</h3>
-                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-relaxed">
-                        Mantené tu catálogo activo para alcanzar el nivel de Vendedor Platinum.
-                    </p>
-                    <div className="w-full mt-8 bg-white/5 rounded-2xl p-6 border border-white/5">
-                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2">
-                            <span>Progreso</span>
-                            <span className="text-primary">75%</span>
-                        </div>
-                        <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary w-[75%] rounded-full shadow-[0_0_15px_rgba(214,88,250,0.5)]" />
-                        </div>
-                    </div>
-                </Card>
             </div>
 
             {/* RANKING PERSONAL */}
             <Card className="w-full border-0 ring-1 ring-white/5 bg-card/60 backdrop-blur-xl shadow-lg overflow-hidden">
                 <CardHeader className="px-8 pt-8 pb-4 border-b border-white/5">
-                    <CardTitle className="text-xl font-headline font-black italic flex items-center gap-3">
-                        <Zap className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-2xl font-headline font-black italic flex items-center gap-3">
+                        <Zap className="h-6 w-6 text-primary" />
                         Tus Best-Sellers
                     </CardTitle>
-                    <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-2">
+                    <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 mt-2">
                         Ranking de tus juegos más rentables
                     </CardDescription>
                 </CardHeader>

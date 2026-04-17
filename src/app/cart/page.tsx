@@ -51,12 +51,12 @@ export default function CartPage() {
           Debes estar identificado para gestionar tu carrito y finalizar compras.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild className="h-12 px-6 bg-primary text-black font-semibold uppercase tracking-widest text-[10px] rounded-xl hover:bg-primary/90 transition-all shadow-lg">
+          <Button asChild>
             <Link href="/login">
               <LogIn className="mr-2 h-4 w-4" /> Iniciar Sesión
             </Link>
           </Button>
-          <Button asChild variant="outline" className="h-12 px-6 border-white/10 bg-white/5 text-white font-semibold uppercase tracking-widest text-[10px] rounded-xl hover:bg-white/10 transition-all">
+          <Button asChild variant="outline">
             <Link href="/register">
               <UserPlus className="mr-2 h-4 w-4" /> Registrarse
             </Link>
@@ -87,7 +87,7 @@ export default function CartPage() {
           <p className="mt-4 text-muted-foreground max-w-sm mx-auto text-sm">
             Aún no has agregado productos a tu carrito. Explora nuestro catálogo para encontrar tus juegos favoritos.
           </p>
-          <Button asChild className="mt-10 h-14 px-10 rounded-xl font-medium uppercase tracking-widest text-[10px] bg-white text-black hover:bg-white/90 shadow-xl transition-all">
+          <Button asChild variant="outline" className="mt-10 px-10">
             <Link href="/productos">Ir al Catálogo</Link>
           </Button>
         </div>
@@ -142,10 +142,10 @@ export default function CartPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => removeFromCart(item.id)}
-                      className="h-12 w-12 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       aria-label="Quitar del carrito"
                     >
-                      <Trash2 className="h-5 w-5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </Card>
@@ -175,9 +175,9 @@ export default function CartPage() {
                 </div>
               </CardContent>
               <CardFooter className="px-10 pb-10">
-                <Button className="w-full h-16 font-medium uppercase tracking-[0.2em] text-[10px] bg-primary text-black hover:bg-primary/90 shadow-2xl shadow-primary/30 rounded-2xl transition-all group" size="lg" asChild>
+                <Button className="w-full" size="lg" asChild>
                   <Link href="/checkout">
-                    Continuar al Pago <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    Continuar al Pago <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardFooter>

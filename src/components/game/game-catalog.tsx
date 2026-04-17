@@ -3,7 +3,7 @@
 /**
  * Capa de Interfaz: Catálogo de Productos
  * --------------------------------------------------------------------------
- * Orquesta la experiencia de exploración principal del ecosistema. 
+ * Orquesta la experiencia de exploración principal de la tienda. 
  * Gestiona la sincronización asíncrona de filtros dinámicos, la disposición 
  * adaptativa de la rejilla de productos (Grid) y el motor de paginación. 
  * Implementa micro-interacciones mediante Framer Motion para optimizar el 
