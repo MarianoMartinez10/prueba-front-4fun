@@ -111,28 +111,28 @@ export function GameCard({ game }: GameCardProps) {
         </CardContent>
       </Link>
 
-      <CardFooter className="p-5 pt-0 flex gap-2">
+      <CardFooter className="p-5 pt-0 flex flex-col gap-2">
         <Button
           onClick={(e) => {
             e.preventDefault();
             addToCart(game);
             router.push('/checkout');
           }}
-          className="flex-1 h-11 rounded-lg bg-primary text-black hover:bg-primary/90 transition-all font-bold uppercase text-[10px] tracking-widest shadow-xl disabled:opacity-20"
+          className="w-full h-11 rounded-lg bg-primary text-black hover:bg-primary/90 transition-all font-bold uppercase text-[10px] tracking-widest shadow-xl disabled:opacity-20"
           disabled={!vm.hasStock()}
         >
-          {vm.hasStock() ? "Comprar" : "Agotado"}
+          {vm.hasStock() ? "Comprar Ahora" : "Agotado"}
         </Button>
         <Button
           onClick={(e) => {
             e.preventDefault();
             addToCart(game);
           }}
-          className="h-11 w-11 shrink-0 rounded-lg bg-white/5 text-white hover:bg-white/10 border border-white/10 transition-all shadow-xl disabled:opacity-20 flex items-center justify-center p-0 group/btn"
+          className="w-full h-11 rounded-lg bg-white/5 text-white hover:bg-white/10 border border-white/10 transition-all shadow-xl disabled:opacity-20 flex items-center justify-center group/btn font-bold uppercase text-[10px] tracking-widest"
           disabled={!vm.hasStock()}
           title="Añadir al Carrito"
         >
-          <ShoppingCart className="h-4 w-4 group-hover/btn:rotate-12 transition-transform" />
+          <ShoppingCart className="mr-2 h-4 w-4 group-hover/btn:rotate-12 transition-transform" /> Añadir al Carrito
         </Button>
       </CardFooter>
     </Card>

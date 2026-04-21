@@ -175,10 +175,10 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
 
                                 {/* Acciones de Conversión Primaria */}
                                 <div className="flex flex-col gap-4">
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col gap-2">
                                         <Button
                                             size="lg"
-                                            className="bg-primary hover:bg-primary/90 text-black font-bold uppercase tracking-widest flex-1 shadow-xl transition-all hover:-translate-y-1"
+                                            className="bg-primary hover:bg-primary/90 text-black font-bold uppercase tracking-widest w-full shadow-xl transition-all hover:-translate-y-1"
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 handleAddToCart();
@@ -191,15 +191,14 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
                                         <Button
                                             size="lg"
                                             variant="outline"
-                                            className="w-14 shrink-0 px-0 hover:bg-white/5 border-white/10 text-white transition-all shadow-xl hover:-translate-y-1"
+                                            className="w-full hover:bg-white/5 border-white/10 text-white transition-all shadow-xl hover:-translate-y-1 uppercase tracking-widest font-bold"
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 handleAddToCart();
                                             }}
                                             disabled={isOutOfStock}
-                                            title="Agregar al carrito"
                                         >
-                                            <ShoppingCart className="h-5 w-5" />
+                                            <ShoppingCart className="mr-2 h-4 w-4" /> Agregar al carrito
                                         </Button>
                                     </div>
 

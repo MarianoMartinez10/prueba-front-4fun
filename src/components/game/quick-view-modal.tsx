@@ -101,9 +101,9 @@ export function QuickViewModal({ game, open, onOpenChange }: QuickViewModalProps
                             </div>
 
                             {/* Acciones de Orquestación y Checkout */}
-                            <div className="flex gap-3">
+                            <div className="flex flex-col gap-2">
                                 <Button
-                                    className="bg-primary hover:bg-primary/90 text-black font-bold uppercase tracking-widest flex-1 shadow-xl transition-all hover:-translate-y-1"
+                                    className="bg-primary hover:bg-primary/90 text-black font-bold uppercase tracking-widest w-full shadow-xl transition-all hover:-translate-y-1"
                                     disabled={!hasStock}
                                     onClick={() => {
                                         addToCart(game);
@@ -114,33 +114,33 @@ export function QuickViewModal({ game, open, onOpenChange }: QuickViewModalProps
                                     Comprar Ahora
                                 </Button>
                                 <Button
-                                    className="w-12 px-0 shrink-0 bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all shadow-xl hover:-translate-y-1"
+                                    className="bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all shadow-xl hover:-translate-y-1 uppercase tracking-widest w-full font-bold"
                                     disabled={!hasStock}
                                     onClick={() => {
                                         addToCart(game);
                                     }}
-                                    title="Añadir al carrito"
                                 >
-                                    <ShoppingCart className="h-4 w-4" />
+                                    <ShoppingCart className="mr-2 h-4 w-4" /> Agregar al carrito
                                 </Button>
-                                
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className={cn("transition-all duration-300", isWishlisted && "bg-red-500 border-red-500 text-white hover:bg-red-600 hover:border-red-600 shadow-[0_0_20px_rgba(239,68,68,0.3)]")}
-                                    onClick={() => toggleWishlist(game)}
-                                >
-                                    <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
-                                </Button>
+                                <div className="flex justify-center gap-2 mt-2">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className={cn("transition-all duration-300", isWishlisted && "bg-red-500 border-red-500 text-white hover:bg-red-600 hover:border-red-600 shadow-[0_0_20px_rgba(239,68,68,0.3)]")}
+                                        onClick={() => toggleWishlist(game)}
+                                    >
+                                        <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
+                                    </Button>
 
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={() => isCompared ? removeFromCompare(game.id) : addToCompare(game)}
-                                    title="Comparativa Técnica"
-                                >
-                                    <Scale className="h-4 w-4" />
-                                </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => isCompared ? removeFromCompare(game.id) : addToCompare(game)}
+                                        title="Comparativa Técnica"
+                                    >
+                                        <Scale className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="text-center pt-2">
