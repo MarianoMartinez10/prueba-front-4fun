@@ -20,6 +20,7 @@ import type { Game } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface QuickViewModalProps {
     game: Game;
@@ -28,6 +29,7 @@ interface QuickViewModalProps {
 }
 
 export function QuickViewModal({ game, open, onOpenChange }: QuickViewModalProps) {
+    const router = useRouter();
     const { addToCart } = useCart();
     const { toggleWishlist, isInWishlist } = useWishlist();
     const { addToCompare, isInCompare, removeFromCompare } = useComparator();
@@ -101,15 +103,25 @@ export function QuickViewModal({ game, open, onOpenChange }: QuickViewModalProps
                             {/* Acciones de Orquestación y Checkout */}
                             <div className="flex gap-3">
                                 <Button
-                                    className="flex-1"
+                                    className="bg-primary hover:bg-primary/90 text-black font-bold uppercase tracking-widest flex-1 shadow-xl transition-all hover:-translate-y-1"
                                     disabled={!hasStock}
                                     onClick={() => {
                                         addToCart(game);
                                         onOpenChange(false);
+                                        router.push('/checkout');
                                     }}
                                 >
-                                    <ShoppingCart className="h-4 w-4 mr-2" />
-                                    Comprar
+                                    Comprar Ahora
+                                </Button>
+                                <Button
+                                    className="w-12 px-0 shrink-0 bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all shadow-xl hover:-translate-y-1"
+                                    disabled={!hasStock}
+                                    onClick={() => {
+                                        addToCart(game);
+                                    }}
+                                    title="Añadir al carrito"
+                                >
+                                    <ShoppingCart className="h-4 w-4" />
                                 </Button>
                                 
                                 <Button
