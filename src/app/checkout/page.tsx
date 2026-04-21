@@ -30,7 +30,7 @@ import { useCheckoutViewModel } from "@/hooks/use-checkout-view-model";
  * RN - Arquitectura de Flujo: Definición de fases del ciclo de checkout.
  */
 const steps = [
-  { id: 1, title: 'Datos de Envío', icon: MapPin },
+  { id: 1, title: 'Datos Personales', icon: MapPin },
   { id: 2, title: 'Método de Pago', icon: CreditCard },
   { id: 3, title: 'Revisión Final', icon: CheckCircle2 },
 ];
@@ -118,33 +118,29 @@ export default function CheckoutPage() {
               <motion.div key="step1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
                 <Card className="border-none bg-card/40 backdrop-blur-3xl shadow-3xl rounded-[2.5rem] overflow-hidden">
                   <CardHeader className="pt-10 px-10">
-                    <CardTitle className="text-2xl font-semibold font-headline text-white">Datos de Envío</CardTitle>
-                    <CardDescription className="text-xs">Completa la información para recibir tus productos.</CardDescription>
+                    <CardTitle className="text-2xl font-semibold font-headline text-white">Datos Personales</CardTitle>
+                    <CardDescription className="text-xs">Completa la información esencial para facturar tu compra.</CardDescription>
                   </CardHeader>
                   <CardContent className="px-10 pb-10 space-y-6">
                     <form id="shipping-form" onSubmit={nextStep} className="space-y-6">
-                      <div className="space-y-3">
-                        <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Domicilio (Calle y Altura)</Label>
-                        <Input name="street" required value={formData.street} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nombre</Label>
+                            <Input name="firstName" required value={formData.firstName} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base text-white" placeholder="Juan" />
+                        </div>
+                        <div className="space-y-3">
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Apellido</Label>
+                            <Input name="lastName" required value={formData.lastName} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base text-white" placeholder="Pérez" />
+                        </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-3">
-                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Localidad</Label>
-                            <Input name="city" required value={formData.city} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Correo Electrónico</Label>
+                            <Input name="email" type="email" required value={formData.email} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base text-white" placeholder="juan@ejemplo.com" />
                         </div>
                         <div className="space-y-3">
-                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Provincia</Label>
-                            <Input name="state" required value={formData.state} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                        <div className="space-y-3">
-                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Código Postal</Label>
-                            <Input name="zipCode" required value={formData.zipCode} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
-                        </div>
-                        <div className="col-span-2 space-y-3">
-                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">País</Label>
-                            <Input name="country" required value={formData.country} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base" />
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">DNI o CUIT</Label>
+                            <Input name="document" type="text" required value={formData.document} onChange={handleChange} className="h-14 bg-white/5 border-white/10 rounded-xl text-base text-white" placeholder="12345678" />
                         </div>
                       </div>
                     </form>

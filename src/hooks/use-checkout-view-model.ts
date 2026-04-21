@@ -14,11 +14,10 @@ export function useCheckoutViewModel() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    street: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    country: "Argentina",
+    firstName: "",
+    lastName: "",
+    email: "",
+    document: "",
     paymentMethod: "mercadopago"
   });
 
@@ -29,8 +28,8 @@ export function useCheckoutViewModel() {
   const nextStep = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (currentStep === 1) {
-      if (!formData.street || !formData.city || !formData.zipCode || !formData.state || !formData.country) {
-        toast({ variant: "destructive", title: "Datos Incompletos", description: "Todos los campos de logística son obligatorios para el despacho." });
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.document) {
+        toast({ variant: "destructive", title: "Datos Incompletos", description: "Todos los campos personales son obligatorios para continuar." });
         return;
       }
     }
@@ -63,12 +62,12 @@ export function useCheckoutViewModel() {
       userId: user.id,
       paymentMethod: formData.paymentMethod,
       shippingAddress: {
-        fullName: user.name, // O recolectar de un input en el form
-        street: formData.street,
-        city: formData.city,
-        state: formData.state,
-        zip: formData.zipCode,
-        country: formData.country
+        fullName: formData.firstName + " " + formData.lastName,
+        street: formData.email, // Mapeado para correo electrónico
+        city: "N/A",
+        state: "N/A",
+        zip: formData.document, // Mapeado para DNI/CUIT
+        country: "N/A"
       },
       orderItems: cart.map(item => ({
         product: item.productId,
