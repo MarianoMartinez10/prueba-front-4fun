@@ -62,12 +62,10 @@ export function useCheckoutViewModel() {
       userId: user.id,
       paymentMethod: formData.paymentMethod,
       shippingAddress: {
-        fullName: formData.firstName + " " + formData.lastName,
-        street: formData.email, // Mapeado para correo electrónico
-        city: "N/A",
-        state: "N/A",
-        zip: formData.document, // Mapeado para DNI/CUIT
-        country: "N/A"
+        nombre: formData.firstName,
+        apellido: formData.lastName,
+        correoElectronico: formData.email,
+        documento: formData.document
       },
       orderItems: cart.map(item => ({
         product: item.productId,
