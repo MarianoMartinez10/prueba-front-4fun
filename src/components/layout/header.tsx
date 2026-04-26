@@ -45,14 +45,14 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`relative px-1 py-2 text-sm font-semibold transition-all duration-300 flex items-center gap-2 group ${
+      className={`relative px-1 py-2 text-base font-semibold transition-all duration-300 flex items-center gap-2 group ${
         isActive
           ? "text-primary"
           : "text-gray-400 hover:text-white"
       }`}
     >
       {Icon && (
-        <Icon className={`h-4 w-4 transition-all duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`} />
+        <Icon className={`h-5 w-5 transition-all duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`} />
       )}
       <span className="relative">
         {label}
@@ -83,7 +83,7 @@ function UserAvatar({
   return (
     <div className="relative">
       {userAvatar ? (
-        <div className="relative h-10 w-10 rounded-full overflow-hidden ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-300">
+        <div className="relative h-14 w-14 rounded-full overflow-hidden ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-300">
           <Image
             src={userAvatar}
             alt={userName}
@@ -92,7 +92,7 @@ function UserAvatar({
           />
         </div>
       ) : (
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold text-sm ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-300">
+        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold text-lg ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-300">
           {userInitials}
         </div>
       )}
@@ -130,7 +130,7 @@ function ProfileDropdown({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-10 w-10 p-0 rounded-full hover:bg-white/5 transition-all duration-300"
+          className="relative h-14 w-14 p-0 rounded-full hover:bg-white/5 transition-all duration-300"
         >
           <UserAvatar
             userAvatar={userAvatar}
@@ -159,7 +159,7 @@ function ProfileDropdown({
               href={profileHref}
               className="cursor-pointer hover:bg-white/5 text-gray-300 hover:text-white focus:bg-white/5 text-sm font-medium rounded-lg transition-colors py-2 px-3 flex items-center gap-2"
             >
-              <User className="h-4 w-4 text-primary/60" />
+              <User className="h-5 w-5 text-primary/60" />
               Mi Perfil
             </Link>
           </DropdownMenuItem>
@@ -170,7 +170,7 @@ function ProfileDropdown({
                 href={adminLink}
                 className="cursor-pointer hover:bg-primary/10 text-primary/70 hover:text-primary focus:bg-primary/10 font-medium text-sm rounded-lg transition-colors py-2 px-3 flex items-center gap-2 border border-primary/20"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-5 w-5" />
                 Panel de Admin
               </Link>
             </DropdownMenuItem>
@@ -184,7 +184,7 @@ function ProfileDropdown({
             onClick={onLogout}
             className="cursor-pointer hover:bg-red-500/10 text-red-400/70 hover:text-red-400 focus:bg-red-500/10 focus:text-red-400 font-medium text-sm rounded-lg transition-colors py-2 px-3 flex items-center gap-2"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-5 w-5" />
             Cerrar Sesión
           </DropdownMenuItem>
         </div>
@@ -213,9 +213,9 @@ function IconWithBadge({
 }) {
   const content = (
     <div className="relative group">
-      <Icon className="h-5 w-5 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
+      <Icon className="h-8 w-8 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
       {badge && typeof badge === "number" && badge > 0 && (
-        <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-gradient-to-br from-primary to-primary/80 text-white text-xs font-bold flex items-center justify-center shadow-lg ring-2 ring-background animate-pulse">
+        <span className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-gradient-to-br from-primary to-primary/80 text-white text-[10px] font-bold flex items-center justify-center shadow-lg ring-2 ring-background animate-pulse">
           {badge > 9 ? "9+" : badge}
         </span>
       )}
@@ -227,7 +227,7 @@ function IconWithBadge({
       <Button
         variant="ghost"
         size="icon"
-        className={`h-10 w-10 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300 ${className}`}
+        className={`h-14 w-14 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300 ${className}`}
       >
         {content}
       </Button>
@@ -237,7 +237,7 @@ function IconWithBadge({
       variant="ghost"
       size="icon"
       onClick={onClick}
-      className={`h-10 w-10 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300 ${className}`}
+      className={`h-14 w-14 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300 ${className}`}
       aria-label={label}
     >
       {content}
@@ -258,10 +258,10 @@ export function Header() {
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-24 items-center justify-between">
           {/* LOGO */}
           <Link href={vm.logo.href} className="group flex items-center flex-shrink-0">
-            <div className="relative h-10 w-10 transition-all duration-300 group-hover:scale-110">
+            <div className="relative h-14 w-14 transition-all duration-300 group-hover:scale-110">
               <Image
                 src="/logo.png"
                 alt="4Fun Logo"
@@ -270,11 +270,10 @@ export function Header() {
                 priority
               />
             </div>
-            <span className="ml-2 text-sm font-bold text-white hidden sm:inline">4Fun</span>
           </Link>
 
           {/* NAVEGACIÓN DESKTOP */}
-          <nav className="hidden md:flex md:items-center md:gap-1 flex-1 ml-8">
+          <nav className="hidden md:flex md:items-center md:gap-4 flex-1 ml-10">
             <NavLink href="/productos" label="Productos" />
             <NavLink href="/contacto" label="Ayuda" />
             <NavLink
@@ -299,10 +298,10 @@ export function Header() {
                 trigger={
                   <Button
                     variant="outline"
-                    className="w-80 justify-start text-gray-400 relative h-10 px-4 bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 shadow-none transition-all rounded-lg group"
+                    className="w-80 justify-start text-gray-400 relative h-12 px-5 bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 shadow-none transition-all rounded-xl group"
                   >
-                    <Search className="mr-2 h-4 w-4 text-primary/60 group-hover:text-primary transition-colors" />
-                    <span className="text-sm">{vm.search.placeholder}</span>
+                    <Search className="mr-3 h-5 w-5 text-primary/60 group-hover:text-primary transition-colors" />
+                    <span className="text-base">{vm.search.placeholder}</span>
                     <kbd className="pointer-events-none ml-auto inline-flex h-6 select-none items-center gap-1 rounded bg-white/5 px-1.5 font-mono text-xs font-medium text-white/50">
                       {vm.search.shortcut}
                     </kbd>
@@ -318,7 +317,7 @@ export function Header() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                    className="h-12 w-12 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
                   >
                     <Search className="h-5 w-5" />
                   </Button>
@@ -358,10 +357,10 @@ export function Header() {
             ) : (
               <Button
                 asChild
-                className="ml-2 h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-black font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/20 hidden sm:inline-flex"
+                className="ml-2 h-12 px-6 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-black font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/20 hidden sm:inline-flex"
               >
                 <Link href={vm.auth.loginHref} aria-label="Ingresar">
-                  <User className="mr-2 h-4 w-4" />
+                  <User className="mr-2 h-5 w-5" />
                   Ingresar
                 </Link>
               </Button>
@@ -371,10 +370,10 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-10 w-10 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg"
+              className="md:hidden h-12 w-12 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>

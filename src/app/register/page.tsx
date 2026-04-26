@@ -82,6 +82,7 @@ function RegisterForm() {
                         <FormControl>
                         <Input
                             disabled={isSubmitting}
+                            maxLength={50}
                             className="h-12 bg-white/5 border-white/5 rounded-2xl focus:ring-primary/40 text-white placeholder:opacity-20 transition-all hover:bg-white/10"
                             {...field}
                         />
@@ -100,6 +101,7 @@ function RegisterForm() {
                         <Input
                             type="email"
                             disabled={isSubmitting}
+                            maxLength={100}
                             className="h-12 bg-white/5 border-white/5 rounded-2xl focus:ring-primary/40 text-white placeholder:opacity-20 transition-all hover:bg-white/10"
                             {...field}
                         />
@@ -121,6 +123,7 @@ function RegisterForm() {
                         <Input
                             type="password"
                             disabled={isSubmitting}
+                            maxLength={50}
                             className="h-12 bg-white/5 border-white/5 rounded-2xl focus:ring-primary/40 text-white placeholder:opacity-20 transition-all hover:bg-white/10"
                             {...field}
                         />
@@ -139,6 +142,7 @@ function RegisterForm() {
                         <Input
                             type="password"
                             disabled={isSubmitting}
+                            maxLength={50}
                             className="h-12 bg-white/5 border-white/5 rounded-2xl focus:ring-primary/40 text-white placeholder:opacity-20 transition-all hover:bg-white/10"
                             {...field}
                         />

@@ -30,9 +30,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-white/5 bg-card/60 backdrop-blur-xl px-4 sticky top-0 z-10">
           <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />
           <Separator orientation="vertical" className="mr-2 h-4 bg-white/10" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">
-            4Fun Admin Dashboard
-          </span>
         </header>
         
         <main className="flex flex-1 flex-col gap-4 p-4 lg:p-6 xl:p-8 animate-in fade-in slide-in-from-bottom-2 duration-700">

@@ -159,7 +159,7 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
                                                      {formatCurrency(game.price)}
                                                  </span>
                                                  <Badge className="bg-green-500/10 hover:bg-green-500/20 text-white/70 font-black text-[10px] px-3 py-1 shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)] border-green-500/20 backdrop-blur-md uppercase tracking-widest rounded-md">
-                                                     DESCUENTO: -{game.discountPercentage}% OFF
+                                                     -{game.discountPercentage}% OFF
                                                  </Badge>
                                              </div>
                                          )}

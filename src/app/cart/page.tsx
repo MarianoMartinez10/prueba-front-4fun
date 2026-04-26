@@ -68,9 +68,9 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-20 animate-in fade-in duration-1000">
-      <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-8">
+      <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-8 sticky top-[4.5rem] z-30 bg-background/80 backdrop-blur-xl pt-4 -mt-4">
           <div>
-            <h1 className="text-5xl font-semibold font-headline text-white tracking-tighter italic uppercase">Tu Carrito</h1>
+            <h1 className="text-5xl font-semibold font-headline text-white tracking-tighter italic uppercase drop-shadow-md">Tu Carrito</h1>
           </div>
       </div>
 

@@ -207,7 +207,7 @@ export default function SellerProductsPage() {
                              stockStatus === 'low' ? "bg-yellow-500/10 text-yellow-500 animate-pulse" :
                              "bg-destructive/10 text-destructive"
                            )}>
-                             {stockStatus === 'available' ? `${p.stock} EN STOCK` : stockStatus === 'low' ? 'STOCK CRÍTICO' : 'SIN STOCK'}
+                             {stockStatus === 'available' ? `${p.stock} EN STOCK` : stockStatus === 'low' ? 'STOCK BAJO' : 'SIN STOCK'}
                            </Badge>
                         </TableCell>
                         <TableCell className="text-right p-6">

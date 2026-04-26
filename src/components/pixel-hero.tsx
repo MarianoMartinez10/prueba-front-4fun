@@ -105,7 +105,7 @@ export const PixelHero = () => {
             <div className="flex flex-wrap gap-3">
               {hasDiscount && (
                 <Badge className="bg-green-500/10 hover:bg-green-500/20 text-white/70 border-green-500/20 shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)] backdrop-blur-md font-black text-sm px-4 py-1.5 uppercase tracking-wider rounded-md">
-                   DESCUENTO: -{game.discountPercentage}% OFF
+                   -{game.discountPercentage}% OFF
                 </Badge>
               )}
               <Badge variant="outline" className="text-white/70 border-white/20 bg-white/5 backdrop-blur-md font-mono uppercase tracking-widest py-1.5 rounded-md hover:bg-white/10 transition-colors">
