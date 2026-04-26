@@ -69,8 +69,8 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-16 animate-in fade-in duration-1000">
-      <div className="flex flex-col items-center mb-16 text-center">
-        <h1 className="text-5xl font-semibold font-headline text-white tracking-tighter mb-4 italic uppercase">Finalizar Compra</h1>
+      <div className="flex flex-col items-center mb-16 text-center sticky top-[4.5rem] z-30 bg-background/90 backdrop-blur-xl pt-6 pb-6 -mt-6 border-b border-white/5 shadow-sm">
+        <h1 className="text-5xl font-semibold font-headline text-white tracking-tighter mb-4 italic uppercase drop-shadow-md">Finalizar Compra</h1>
         <p className="text-xs font-black uppercase tracking-[0.3em] text-primary/80">Pago Seguro Protegido por SSL — 4Fun Store</p>
       </div>
 
