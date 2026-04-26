@@ -65,11 +65,11 @@ export const PixelHero = () => {
           <div className="inline-flex items-center justify-center p-4 bg-muted rounded-full mb-4">
              <Zap className="h-8 w-8 text-muted-foreground opacity-50" />
           </div>
-          <h2 className="font-headline text-3xl md:text-5xl font-bold tracking-tight uppercase bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">Esperando Próximas Campañas</h2>
-          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">Actualizamos nuestro catálogo de ofertas regularmente. Vuelve pronto para descubrir beneficios tácticos o explora la armería completa.</p>
+          <h2 className="font-headline text-3xl md:text-5xl font-bold tracking-tight uppercase bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">Nuevas ofertas próximamente</h2>
+          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">Actualizamos nuestro catálogo regularmente. Vuelve pronto para descubrir nuevas promociones o explora nuestra tienda completa.</p>
           <div className="pt-4">
               <Button variant="outline" size="lg" asChild className="px-8">
-                <Link href="/productos">Ir al Inventario Global <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                <Link href="/productos">Ir al catálogo completo <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
           </div>
         </div>

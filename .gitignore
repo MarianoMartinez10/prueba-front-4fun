@@ -47,3 +47,11 @@ project.tar.gz
 
 # temp files
 tmpclaude-*
+
+# tests
+**/*.test.ts
+**/*.test.tsx
+
+# documentation
+*.md
+docs/
