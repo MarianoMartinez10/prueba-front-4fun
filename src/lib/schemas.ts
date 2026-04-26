@@ -45,6 +45,15 @@ export const ProductSchema = z.object({
     name: z.string().nullable().optional(),
     storeName: z.string().nullable().optional(),
   }).optional().nullable(),
+  offers: z.array(z.object({
+    id: z.string(),
+    sellerId: z.string(),
+    sellerName: z.string(),
+    storeName: z.string(),
+    price: z.number(),
+    stock: z.number(),
+    active: z.boolean(),
+  })).optional(),
 });
 
 /**

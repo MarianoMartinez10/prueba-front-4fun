@@ -37,14 +37,14 @@ const resolvePlatform = (item: any, product: any): CartItem['platform'] => {
 const normalizeCartItem = (item: any): CartItem => {
   const product = item?.product ?? null;
   const quantity = Math.max(1, Math.trunc(toFiniteNumber(item?.quantity, 1)));
-  const productId = String(item?.productId || product?.id || item?.id || 'unknown-product');
-  const stock = toFiniteNumber(product?.stock ?? item?.stock, 999);
-  const id = String(item?.id || `loc-${productId}`);
-  const price = toFiniteNumber(product?.finalPrice ?? product?.price ?? item?.price, 0);
+  const offerId = String(item?.offerId || item?.id || 'unknown-offer');
+  const stock = toFiniteNumber(item?.stock ?? product?.stock, 999);
+  const id = String(item?.id || `loc-${offerId}`);
+  const price = toFiniteNumber(item?.price ?? product?.finalPrice ?? product?.price, 0);
   
   return {
     id,
-    productId,
+    offerId,
     name: item?.name || product?.name || 'Producto',
     price,
     quantity,
@@ -59,7 +59,7 @@ const normalizeCartItems = (items: any[]): CartItem[] => items.map(normalizeCart
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: any, quantity?: number) => Promise<void>;
+  addToCart: (offerData: any, quantity?: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -128,27 +128,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   /**
    * RN - Adición de Ítems: Maneja la lógica de "Merge" o "Create".
    * 
-   * @param {Object} product - Entidad del producto.
+   * @param {Object} offerData - Contiene offerId, name, price, stock, image, platform.
    * @param {number} quantity - Cantidad deseada.
    */
-  const addToCart = useCallback(async (product: any, quantity = 1) => {
+  const addToCart = useCallback(async (offerData: any, quantity = 1) => {
     const safeQuantity = Math.max(1, Math.trunc(toFiniteNumber(quantity, 1)));
 
     if (user) {
       try {
         // Ejecución Remota: Registra la intención en la BDD.
-        await ApiClient.addToCart(product.id, safeQuantity);
+        await ApiClient.addToCart(offerData.offerId, safeQuantity);
         await fetchCart(); // Re-sincronización tras mutación
-        toast({ title: "Producto Añadido", description: `${product.name} sumado a tu pedido.` });
+        toast({ title: "Producto Añadido", description: `${offerData.name} sumado a tu pedido.` });
       } catch (e: any) {
         toast({ variant: "destructive", title: "Error", description: e.message || "Fallo de conexión." });
       }
     } else {
       // ✅ VALIDACIÓN ESTRICTA (Arquitectura Senior):
       // Verificamos stock acumulado para evitar sobreventa local.
-      const existingItem = cart.find(i => i.productId === product.id);
+      const existingItem = cart.find(i => i.offerId === offerData.offerId);
       const totalRequested = (existingItem?.quantity || 0) + safeQuantity;
-      const availableStock = toFiniteNumber(product.stock, 0);
+      const availableStock = toFiniteNumber(offerData.stock, 0);
 
       if (totalRequested > availableStock) {
         toast({ 
@@ -161,20 +161,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       // Ejecución Local: Almacena en el navegador para persistir entre recargas.
       setCart(prev => {
-        const exist = prev.find(p => p.productId === product.id);
+        const exist = prev.find(p => p.offerId === offerData.offerId);
         let newCart;
         if (exist) {
-          newCart = prev.map(p => p.productId === product.id ? { ...p, quantity: p.quantity + safeQuantity } : p);
+          newCart = prev.map(p => p.offerId === offerData.offerId ? { ...p, quantity: p.quantity + safeQuantity } : p);
         } else {
           const newItem = normalizeCartItem({
             id: `loc-${Date.now()}`,
-            productId: product.id,
-            name: product.name,
-            price: product.finalPrice ?? product.price,
+            offerId: offerData.offerId,
+            name: offerData.name,
+            price: offerData.price,
             quantity: safeQuantity,
             stock: availableStock,
-            image: product.imageId || product.image,
-            platform: product.platform
+            image: offerData.image || offerData.imageId,
+            platform: offerData.platform
           });
           newCart = [...prev, newItem];
         }

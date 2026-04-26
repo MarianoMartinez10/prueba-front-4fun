@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Heart, Monitor, Gamepad2, Disc, Globe, Layers, Info, Star } from "lucide-react";
-import { ProductReviews } from "@/components/game/product-reviews";
+import { ProductOffersList } from "@/components/game/product-offers-list";
 import { useRouter } from "next/navigation";
 
 // ✅ INYECCIÓN ARQUITECTÓNICA (QA MVC)
@@ -134,9 +134,9 @@ export function ProductDetailView({ game }: ProductDetailViewProps) {
                             </Card>
                         )}
 
-                        {/* Opiniones y Valoraciones. */}
+                        {/* Ofertas de Vendedores (G2A Style) */}
                         <div className="pt-8">
-                             <ProductReviews productId={game.id} productName={game.name} />
+                             <ProductOffersList game={game} />
                         </div>
                     </div>
 

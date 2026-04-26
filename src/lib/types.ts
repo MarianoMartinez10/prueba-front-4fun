@@ -77,7 +77,7 @@ export type User = {
 
 export type CartItem = {
   id: string;
-  productId: string;
+  offerId: string;
   name: string;
   price: number;
   quantity: number;

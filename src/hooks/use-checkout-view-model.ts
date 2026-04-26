@@ -68,7 +68,7 @@ export function useCheckoutViewModel() {
         documento: formData.document
       },
       orderItems: cart.map(item => ({
-        product: item.productId,
+        offerId: item.offerId,
         quantity: item.quantity
       }))
       // INCISUM DE SEGURIDAD ELIMINADO: itemsPrice, shippingPrice, totalPrice, image, name.

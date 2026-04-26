@@ -195,7 +195,7 @@ export class ApiClient {
     const res = await this.request<any>('/cart'); 
     return res.data || res.cart || res;
   }
-  static async addToCart(productId: string, quantity: number) { return this.request('/cart', { method: 'POST', body: JSON.stringify({ productId, quantity }) }); }
+  static async addToCart(offerId: string, quantity: number) { return this.request('/cart', { method: 'POST', body: JSON.stringify({ offerId, quantity }) }); }
   static async updateCartItem(itemId: string, quantity: number) { return this.request('/cart', { method: 'PUT', body: JSON.stringify({ itemId, quantity }) }); }
   static async removeFromCart(itemId: string) { return this.request(`/cart/${itemId}`, { method: 'DELETE' }); }
   static async clearCart() { return this.request('/cart', { method: 'DELETE' }); }

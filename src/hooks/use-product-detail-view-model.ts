@@ -60,8 +60,25 @@ export function useProductDetailViewModel(game: Game) {
             toast({ variant: "destructive", title: "Operación Restringida", description: "El activo se encuentra sin unidades en circulación." });
             return;
         }
-        addToCart(game);
-        toast({ title: "Carrito Actualizado", description: `${game.name} reservado exitosamente.` });
+
+        const cheapestOffer = game.offers?.length 
+            ? game.offers.reduce((prev, curr) => (prev.price < curr.price ? prev : curr))
+            : null;
+
+        if (!cheapestOffer) {
+            toast({ variant: "destructive", title: "Sin Ofertas", description: "No hay ofertas disponibles para añadir al carrito." });
+            return;
+        }
+
+        addToCart({
+            offerId: cheapestOffer.id,
+            name: game.name,
+            price: cheapestOffer.price,
+            stock: cheapestOffer.stock,
+            image: getImageUrl(game.imageId),
+            platform: game.platform
+        });
+        toast({ title: "Carrito Actualizado", description: `${game.name} reservado exitosamente a través de ${cheapestOffer.storeName}.` });
     };
 
     const handleToggleWishlist = () => {
