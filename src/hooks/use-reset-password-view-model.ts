@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ApiClient } from "@/lib/api";
+import { UserApiService } from "@/lib/services/UserApiService";
 import { useToast } from "@/hooks/use-toast";
 
 /**
@@ -49,7 +49,7 @@ export function useResetPasswordViewModel(token: string) {
   const handleSubmit = async (values: ResetPasswordValues) => {
     setIsSubmitting(true);
     try {
-      await ApiClient.resetPassword(token, values.password);
+      await UserApiService.resetPassword({ token, password: values.password });
       
       toast({
         title: "Actualización Exitosa",

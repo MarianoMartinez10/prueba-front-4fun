@@ -12,7 +12,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "./use-auth";
 import { useRouter } from "next/navigation";
-import { ApiClient } from "@/lib/api";
+import { OrderApiService } from "@/lib/services/OrderApiService";
+import { UserApiService } from "@/lib/services/UserApiService";
+import { AuthApiService } from "@/lib/services/AuthApiService";
 import type { Order } from "@/lib/types";
 
 interface AccountState {
@@ -47,36 +49,6 @@ interface AccountState {
   resendingVerification: boolean;
 }
 
-interface AccountActions {
-  // Órdenes
-  refreshOrders: () => Promise<void>;
-  
-  // Perfil
-  updateEditName: (value: string) => void;
-  updateEditPhone: (value: string) => void;
-  updateEditAddress: (value: string) => void;
-  saveProfile: () => Promise<void>;
-  
-  // Avatar
-  handleAvatarUpload: (file: File) => Promise<void>;
-  handleRemoveAvatar: () => Promise<void>;
-  
-  // Contraseña
-  updateCurrentPassword: (value: string) => void;
-  updateNewPassword: (value: string) => void;
-  updateConfirmPassword: (value: string) => void;
-  changePassword: () => Promise<void>;
-  resetPasswordFields: () => void;
-
-  // Marketplace
-  updateStoreName: (value: string) => void;
-  updateStoreDescription: (value: string) => void;
-  updateBankAccount: (value: string) => void;
-  updateTaxId: (value: string) => void;
-  becomeSeller: (fastTrack?: boolean) => Promise<void>;
-  changeOrdersPage: (page: number) => Promise<void>;
-  resendVerification: () => Promise<void>;
-}
 
 export function useAccountViewModel() {
   const { user, refreshUser, loading: authLoading } = useAuth();
@@ -140,40 +112,16 @@ export function useAccountViewModel() {
     if (!user) return;
     setState((prev) => ({ ...prev, loadingOrders: true }));
     try {
-      const res = await ApiClient.getMyOrders({ page, limit: 5 }) as any;
+      const { orders, total, totalPages } = await OrderApiService.getMyOrders({ page, limit: 5 });
       
-      // 1. Si el servidor respondió con metadatos de paginación (Backend actualizado)
-      if (res.totalPages !== undefined) {
-        // Refuerzo: Incluso si el servidor enviara más de 5, nosotros mostramos solo 5
-        const serverOrders = res.orders || [];
-        setState((prev) => ({ 
-          ...prev, 
-          orders: serverOrders.slice(0, 5), 
-          ordersPage: res.page || page,
-          ordersTotalPages: res.totalPages,
-          totalOrders: res.total,
-          loadingOrders: false
-        }));
-      } else {
-        // 2. Fallback: Paginación en memoria (Si el Backend aún envía toda la lista porque no se reinició)
-        const allOrders = Array.isArray(res) ? res : (res.orders || []);
-        const limit = 5;
-        const total = allOrders.length;
-        const totalPages = Math.ceil(total / limit) || 1;
-        const safePage = Math.max(1, Math.min(page, totalPages));
-        
-        const start = (safePage - 1) * limit;
-        const paginatedOrders = allOrders.slice(start, start + limit);
-
-        setState((prev) => ({
-          ...prev,
-          orders: paginatedOrders,
-          ordersPage: safePage,
-          ordersTotalPages: totalPages,
-          totalOrders: total,
-          loadingOrders: false
-        }));
-      }
+      setState((prev) => ({ 
+        ...prev, 
+        orders: orders.map(o => o.getRawData() as any), 
+        ordersPage: page,
+        ordersTotalPages: totalPages,
+        totalOrders: total,
+        loadingOrders: false
+      }));
     } catch (error) {
       console.error("[Account ViewModel] Error loading orders:", error);
       setState((prev) => ({ ...prev, loadingOrders: false }));
@@ -218,7 +166,7 @@ export function useAccountViewModel() {
 
     setState((prev) => ({ ...prev, savingProfile: true }));
     try {
-      await ApiClient.updateProfile({
+      await UserApiService.updateProfile({
         name: state.editName.trim(),
         phone: state.editPhone.trim() || null,
         address: state.editAddress.trim() || null,
@@ -245,8 +193,8 @@ export function useAccountViewModel() {
 
     setState((prev) => ({ ...prev, uploadingAvatar: true }));
     try {
-      const imageUrl = await ApiClient.uploadImage(file);
-      await ApiClient.updateProfile({ avatar: imageUrl });
+      const imageUrl = await AuthApiService.uploadImage(file);
+      await UserApiService.updateProfile({ avatar: imageUrl });
       await refreshUser();
     } catch (error) {
       console.error("[Account ViewModel] Error uploading avatar:", error);
@@ -262,7 +210,7 @@ export function useAccountViewModel() {
   const handleRemoveAvatar = async () => {
     setState((prev) => ({ ...prev, uploadingAvatar: true }));
     try {
-      await ApiClient.updateProfile({ avatar: null });
+      await UserApiService.updateProfile({ avatar: null });
       await refreshUser();
     } catch (error) {
       console.error("[Account ViewModel] Error removing avatar:", error);
@@ -303,7 +251,7 @@ export function useAccountViewModel() {
 
     setState((prev) => ({ ...prev, changingPassword: true }));
     try {
-      const res = await ApiClient.changePassword({
+      const res = await AuthApiService.changePassword({
         currentPassword: state.currentPassword,
         newPassword: state.newPassword,
       });
@@ -347,7 +295,7 @@ export function useAccountViewModel() {
     
     setState(prev => ({ ...prev, becomingSeller: true }));
     try {
-      const res = await ApiClient.becomeSeller({
+      const res = await AuthApiService.becomeSeller({
         storeName: finalStoreName,
         storeDescription: state.storeDescription.trim() || "Perfil de venta en 4Fun",
         bankAccount: state.bankAccount.trim(),
@@ -372,7 +320,7 @@ export function useAccountViewModel() {
     if (!user?.email) return;
     setState(prev => ({ ...prev, resendingVerification: true }));
     try {
-      await ApiClient.resendVerification(user.email);
+      await AuthApiService.resendVerification(user.email);
     } catch (error) {
       console.error("[Account ViewModel] Error resending verification:", error);
       throw error;

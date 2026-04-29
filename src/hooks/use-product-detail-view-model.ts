@@ -34,7 +34,7 @@ export function useProductDetailViewModel(game: Game) {
     const isWishlisted = isInWishlist(game.id);
     const imageUrl = getImageUrl(game.imageId, "https://placehold.co/600x800/222/FFF?text=Sin+Imagen");
     const breadcrumbLabel = (game.name || "").trim() || "Detalle";
-    
+
     const hasDiscount = (game.discountPercentage ?? 0) > 0;
     const finalPriceVal = game.finalPrice ?? game.price;
     const isFree = finalPriceVal <= 0;
@@ -43,13 +43,13 @@ export function useProductDetailViewModel(game: Game) {
     /**
      * RN - Autoría y RBAC: Determina si el usuario tiene privilegios de edición sobre el activo.
      */
-    const isAdmin = user?.role === "admin";
+    const isAdmin = user?.role === "ADMIN";
     const isOwner = user?.id === game.seller?.id || (game as any).sellerId === user?.id;
     const canEdit = isAdmin || isOwner;
-    
+
     // RN - Enrutamiento Dinámico: Direcciona al panel según el nivel de privilegio.
-    const editUrl = isAdmin 
-        ? `/admin/products/${game.id}` 
+    const editUrl = isAdmin
+        ? `/admin/products/${game.id}`
         : `/seller/products/${game.id}`;
 
     /**

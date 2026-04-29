@@ -12,7 +12,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ApiClient } from "@/lib/api";
+import { ProductApiService } from "@/lib/services/ProductApiService";
+import { TaxonomyApiService } from "@/lib/services/TaxonomyApiService";
+import { KeyApiService } from "@/lib/services/KeyApiService";
 import { useToast } from "@/hooks/use-toast";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { adminProductBaseSchema, type AdminProductBaseValues } from "@/lib/schemas";
@@ -73,8 +75,8 @@ export function useSellerProductCreationViewModel() {
       try {
         setIsLoadingTaxonomies(true);
         const [pData, gData] = await Promise.all([
-          ApiClient.getPlatforms(),
-          ApiClient.getGenres()
+          TaxonomyApiService.getPlatforms(),
+          TaxonomyApiService.getGenres()
         ]);
         
         // Normalización de datos para evitar 'any'
@@ -108,7 +110,7 @@ export function useSellerProductCreationViewModel() {
 
       // 1. Crear el producto base
       // RN: Ya usamos imageId consistentemente con el backend
-      const response = await ApiClient.createProduct({ 
+      const response = await ProductApiService.create({ 
         ...data, 
         stock: keys.length,
         developer: data.developer || '' 
@@ -116,10 +118,10 @@ export function useSellerProductCreationViewModel() {
 
       // 2. Orquestar la carga de licencias (KeyManager Integration)
       // Ajuste: El backend devuelve un envelope { success: true, data: Product }
-      const newProduct = (response as any).data;
+      const newProduct = (response as any).data || response;
       
       if (newProduct && newProduct.id) {
-        await ApiClient.addKeys(newProduct.id, keys);
+        await KeyApiService.addBulk(newProduct.id, keys);
       }
 
       toast({ 

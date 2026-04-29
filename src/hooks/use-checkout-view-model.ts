@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/hooks/use-auth";
-import { ApiClient } from "@/lib/api";
+import { OrderApiService } from "@/lib/services/OrderApiService";
 import { useToast } from "@/hooks/use-toast";
 
 export function useCheckoutViewModel() {
@@ -78,7 +78,7 @@ export function useCheckoutViewModel() {
     };
 
     try {
-      const response = await ApiClient.createOrder(secureOrderData as any);
+      const response = await OrderApiService.create(secureOrderData as any);
 
       if (response.paymentLink) {
         // Soporte robusto por si ObjectId llega anidado en distintas formas según Backend Node
@@ -112,6 +112,7 @@ export function useCheckoutViewModel() {
     isSubmitting,
     currentStep,
     formData,
+    setFormData,
     handleChange,
     nextStep,
     prevStep,

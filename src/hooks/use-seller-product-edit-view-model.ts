@@ -13,7 +13,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { ApiClient } from "@/lib/api";
+import { ProductApiService } from "@/lib/services/ProductApiService";
+import { TaxonomyApiService } from "@/lib/services/TaxonomyApiService";
 import { useToast } from "@/hooks/use-toast";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { adminProductBaseSchema } from "@/lib/schemas";
@@ -71,33 +72,34 @@ export function useSellerProductEditViewModel(productId: string) {
       try {
         setIsLoading(true);
         const [pData, gData, product] = await Promise.all([
-          ApiClient.getPlatforms(),
-          ApiClient.getGenres(),
-          ApiClient.getProductForManagement(productId)
+          TaxonomyApiService.getPlatforms(),
+          TaxonomyApiService.getGenres(),
+          ProductApiService.getForManagement(productId)
         ]);
 
         setPlatforms(Array.isArray(pData) ? pData : (pData?.data || []));
         setGenres(Array.isArray(gData) ? gData : (gData?.data || []));
 
         if (product) {
+          const rawProduct = product.getRawData();
           // Detectamos si el desarrollador es un preset o personalizado
-          const devIsPreset = DEVELOPERS.includes(product.developer as string);
+          const devIsPreset = (DEVELOPERS as readonly string[]).includes(rawProduct.developer as string);
           setIsCustomDev(!devIsPreset);
 
           form.reset({
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            stock: product.stock,
-            platformId: product.platform?.id || "",
-            genreId: product.genre?.id || "",
-            type: (product.type as "Physical" | "Digital") || "Digital",
-            developer: product.developer || "",
-            specPreset: (product.specPreset as string) || "Mid",
-            imageId: product.imageId || "",
-            trailerUrl: product.trailerUrl || "",
-            isDiscounted: (product.discountPercentage ?? 0) > 0,
-            discountPercentage: product.discountPercentage || 0,
+            name: rawProduct.name,
+            description: rawProduct.description,
+            price: rawProduct.price,
+            stock: rawProduct.stock,
+            platformId: rawProduct.platform?.id || "",
+            genreId: rawProduct.genre?.id || "",
+            type: (rawProduct.type as "Physical" | "Digital") || "Digital",
+            developer: rawProduct.developer || "",
+            specPreset: (rawProduct.specPreset as string) || "Mid",
+            imageId: rawProduct.imageId || "",
+            trailerUrl: rawProduct.trailerUrl || "",
+            isDiscounted: (rawProduct.discountPercentage ?? 0) > 0,
+            discountPercentage: rawProduct.discountPercentage || 0,
           });
         }
       } catch (error) {
@@ -125,7 +127,7 @@ export function useSellerProductEditViewModel(productId: string) {
       // Regla de Negocio: Si no hay oferta activa, el porcentaje es 0.
       if (!data.isDiscounted) payload.discountPercentage = 0;
       
-      await ApiClient.updateProduct(productId, payload);
+      await ProductApiService.update(productId, payload);
       
       toast({ 
         title: "Actualización Exitosa", 

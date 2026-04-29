@@ -11,7 +11,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ApiClient } from "@/lib/api";
+import { ProductApiService } from "@/lib/services/ProductApiService";
+import { TaxonomyApiService } from "@/lib/services/TaxonomyApiService";
 import type { Game } from "@/lib/types";
 
 const FALLBACK_MAX_PRICE_ARS = 250000;
@@ -62,12 +63,12 @@ export function useGameCatalog(initialGames: Game[], initialTotalPages = 1) {
         const loadFilters = async () => {
             try {
                 const [pData, gData, maxPriceResponse] = await Promise.all([
-                    ApiClient.getPlatforms(),
-                    ApiClient.getGenres(),
-                    ApiClient.getProducts({ page: 1, limit: 1, sort: "-price" }),
+                    TaxonomyApiService.getPlatforms(),
+                    TaxonomyApiService.getGenres(),
+                    ProductApiService.getAll({ page: 1, limit: 1, sort: "-price" }),
                 ]);
 
-                const highestPrice = Number(maxPriceResponse.products?.[0]?.price) || 0;
+                const highestPrice = Number(maxPriceResponse.products?.[0]?.getRawData().price) || 0;
                 const normalizedMaxPrice = normalizeMaxPrice(highestPrice);
 
                 setPlatforms(Array.isArray(pData) ? pData : pData?.data || []);
@@ -89,7 +90,7 @@ export function useGameCatalog(initialGames: Game[], initialTotalPages = 1) {
         const fetchFilteredGames = async () => {
             setLoading(true);
             try {
-                const response = await ApiClient.getProducts({
+                const { products, meta } = await ProductApiService.getAll({
                     page,
                     limit: 12,
                     search: searchQuery,
@@ -100,10 +101,8 @@ export function useGameCatalog(initialGames: Game[], initialTotalPages = 1) {
                     maxPrice: priceRange[1] < maxPriceCap ? priceRange[1] : undefined,
                 });
 
-                // Normalización de respuesta según la estructura del ApiClient (DTOs).
-                const products = response.products || (Array.isArray(response) ? response : []);
-                setGames(products as any as Game[]);
-                setTotalPages(response.meta?.totalPages || 1);
+                setGames(products.map(p => p.getRawData()) as any as Game[]);
+                setTotalPages(meta?.totalPages || 1);
             } catch (error) {
                 console.error("[useGameCatalog] Error en consulta filtrada:", error);
             } finally {

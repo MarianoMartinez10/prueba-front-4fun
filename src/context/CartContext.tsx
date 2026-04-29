@@ -11,7 +11,7 @@
  */
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { ApiClient } from '@/lib/api';
+import { CartApiService } from '@/lib/services/CartApiService';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import type { CartItem } from '@/lib/types';
@@ -96,8 +96,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
    */
   const fetchCart = async () => {
     try {
-      const cartRes = await ApiClient.getCart();
-      setCart(normalizeCartItems(cartRes?.items || []));
+      const cartRes = await CartApiService.getCart();
+      // El backend devuelve { success: true, cart: { items: [...] } }
+      const items = cartRes?.cart?.items || cartRes?.items || [];
+      setCart(normalizeCartItems(items));
     } catch (err) {
       console.error("[CartContext] Falló la sincronización remota:", err);
     }
@@ -137,7 +139,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       try {
         // Ejecución Remota: Registra la intención en la BDD.
-        await ApiClient.addToCart(product.id, safeQuantity);
+        await CartApiService.addToCart(product.id, safeQuantity);
         await fetchCart(); // Re-sincronización tras mutación
         toast({ title: "Producto Añadido", description: `${product.name} sumado a tu pedido.` });
       } catch (e: any) {
@@ -213,7 +215,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     if (user) {
       try {
-        await ApiClient.updateCartItem(itemId, safeQuantity);
+        await CartApiService.updateItem(itemId, safeQuantity);
       } catch {
         // Rollback: Si falla el servidor, revertimos al estado anterior (Seguridad).
         setCart(oldCart);
@@ -236,7 +238,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     if (user) {
       try {
-        await ApiClient.removeFromCart(itemId);
+        await CartApiService.removeItem(itemId);
       } catch {
         setCart(oldCart);
       }
@@ -255,7 +257,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(async () => {
     setCart([]);
     if (user) {
-      try { await ApiClient.clearCart(); } catch (e) { console.error(e); }
+      try { await CartApiService.clear(); } catch (e) { console.error(e); }
     } else {
       localStorage.removeItem('cart');
     }

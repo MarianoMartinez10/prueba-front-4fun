@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ApiClient } from "@/lib/api";
+import { DashboardApiService } from "@/lib/services/DashboardApiService";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import jsPDF from "jspdf";
@@ -46,9 +46,9 @@ export function useAdminDashboardViewModel() {
     const fetchData = useCallback(async () => {
         try {
             const [statsData, chartRes, topRes] = await Promise.all([
-                ApiClient.getDashboardStats(),
-                ApiClient.getSalesChart(),
-                ApiClient.getTopProducts()
+                DashboardApiService.getStats(),
+                DashboardApiService.getSalesChart(),
+                DashboardApiService.getTopProducts()
             ]);
 
             setStats(statsData);
@@ -61,11 +61,16 @@ export function useAdminDashboardViewModel() {
             })));
             
             setTopProducts(Array.isArray(topRes) ? topRes : []);
-        } catch (error) {
+        } catch (error: any) {
             console.error("[AdminDashboardViewModel] Falla de analítica:", error);
+            
+            // RN - Robustez: Extraemos título y mensaje del contrato de API
+            const title = error.message || "Error de Conexión";
+            const description = error.data?.message || "No se pudieron sincronizar las estadísticas. Intente nuevamente.";
+
             toast({
-                title: "Error al cargar datos",
-                description: "No se pudieron sincronizar las estadísticas. Revisá tu conexión al backend.",
+                title: title,
+                description: description,
                 variant: "destructive"
             });
         } finally {
