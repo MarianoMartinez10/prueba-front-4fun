@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ApiClient } from "@/lib/api";
+import { UserApiService } from "@/lib/services/UserApiService";
 import { useToast } from "@/hooks/use-toast";
 import {
     Card,
@@ -62,7 +62,7 @@ interface UserOrder {
     id: string;
     createdAt: string;
     totalPrice: number;
-    orderStatus: string;
+    status: string;
     isPaid: boolean;
     itemCount: number;
     items: { name: string; quantity: number; price: number }[];
@@ -75,7 +75,7 @@ interface UserProfile {
     avatar?: string | null;
     phone?: string | null;
     address?: string | null;
-    role: "user" | "admin";
+    role: "USER" | "ADMIN" | "SELLER";
     isVerified: boolean;
     createdAt: string;
     stats: {
@@ -96,16 +96,17 @@ interface UserProfile {
  * RN - Taxonomía de Estados: Mapeo de lógica visual para trazabilidad operativa.
  */
 const getStatusBadge = (status: string) => {
-    switch (status) {
-        case "delivered":
+    const normalizedStatus = status?.toUpperCase();
+    switch (normalizedStatus) {
+        case "DELIVERED":
             return <Badge className="bg-green-500/10 text-green-400 border-green-500/20 py-0 uppercase text-[9px] font-black">Entregado</Badge>;
-        case "processing":
+        case "PROCESSING":
             return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 py-0 uppercase text-[9px] font-black">Procesando</Badge>;
-        case "pending":
+        case "PENDING":
             return <Badge variant="outline" className="text-yellow-600 border-yellow-600/50 py-0 uppercase text-[9px] font-black">Pendiente</Badge>;
-        case "shipped":
+        case "SHIPPED":
             return <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 py-0 uppercase text-[9px] font-black">Enviado</Badge>;
-        case "cancelled":
+        case "CANCELLED":
             return <Badge variant="destructive" className="py-0 uppercase text-[9px] font-black">Cancelado</Badge>;
         default:
             return <Badge variant="secondary" className="py-0 uppercase text-[9px] font-black">{status}</Badge>;
@@ -131,23 +132,21 @@ export default function UserProfilePage() {
     const handleApproveSeller = async () => {
         setActionLoading(true);
         try {
-            const res = await ApiClient.updateUser(userId, { role: 'seller' });
-            if (res.success) {
-                toast({ 
-                    title: "Vendedor Activado", 
-                    description: `El usuario ahora tiene permisos de venta en el Marketplace.` 
-                });
-                // Actualización de estado local inmediata para UX reactiva
-                setProfile(prev => prev ? { 
-                    ...prev, 
-                    role: 'seller', 
-                    sellerProfile: { 
-                        ...prev.sellerProfile!, 
-                        isApproved: true,
-                        storeName: prev.sellerProfile?.storeName || prev.name
-                    } 
-                } : null);
-            }
+            await UserApiService.approveSeller(userId);
+            toast({ 
+                title: "Vendedor Activado", 
+                description: `El usuario ahora tiene permisos de venta en el Marketplace.` 
+            });
+            // Actualización de estado local inmediata para UX reactiva
+            setProfile(prev => prev ? { 
+                ...prev, 
+                role: 'SELLER', 
+                sellerProfile: { 
+                    ...prev.sellerProfile!, 
+                    isApproved: true,
+                    storeName: prev.sellerProfile?.storeName || prev.name
+                } 
+            } : null);
         } catch (err: any) {
             toast({ 
                 title: "Error de Aprobación", 
@@ -168,7 +167,7 @@ export default function UserProfilePage() {
         const rows = profile.orders.map(o => [
             o.id.toUpperCase(),
             new Date(o.createdAt).toLocaleDateString("es-AR"),
-            o.orderStatus.toUpperCase(),
+            o.status.toUpperCase(),
             o.isPaid ? "SI" : "NO",
             o.totalPrice.toFixed(2)
         ]);
@@ -201,7 +200,7 @@ export default function UserProfilePage() {
             body: profile.orders.map(o => [
                 o.id.slice(-8).toUpperCase(),
                 new Date(o.createdAt).toLocaleDateString("es-AR"),
-                o.orderStatus === 'delivered' ? 'ENTREGADO' : o.orderStatus.toUpperCase(),
+                o.status === 'DELIVERED' ? 'ENTREGADO' : o.status.toUpperCase(),
                 o.isPaid ? 'LIQUIDADO' : 'PENDIENTE',
                 formatCurrency(o.totalPrice),
             ]),
@@ -217,9 +216,9 @@ export default function UserProfilePage() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const res = await ApiClient.getUserById(userId);
-                if ((res as any).success && (res as any).data) {
-                    setProfile((res as any).data);
+                const res = await UserApiService.getUserById(userId);
+                if (res.success && res.data) {
+                    setProfile(res.data);
                 }
             } catch (error: any) {
                 console.error("[UserAudit] Fallo en recuperación:", error);
@@ -302,7 +301,7 @@ export default function UserProfilePage() {
                             </div>
                             
                             <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start">
-                                {profile.role === "admin" ? (
+                                {profile.role === "ADMIN" ? (
                                     <Badge className="bg-destructive text-white border-none gap-2 py-1 px-4 font-black uppercase text-[10px]">
                                         <Shield className="h-3.5 w-3.5" /> Administrador
                                     </Badge>
@@ -355,7 +354,7 @@ export default function UserProfilePage() {
             {/* SECCIÓN DE MODERACIÓN DE VENDEDOR (3FN) */}
             <Card className={cn(
                 "border-none bg-card/40 backdrop-blur-md shadow-2xl overflow-hidden",
-                profile.role !== "seller" && "ring-1 ring-yellow-500/30"
+                profile.role !== "SELLER" && "ring-1 ring-yellow-500/30"
             )}>
                 <CardHeader className="border-b border-white/5 bg-muted/20 pb-8 pt-8">
                     <div className="flex items-center justify-between">
@@ -363,11 +362,11 @@ export default function UserProfilePage() {
                             <Store className="h-6 w-6 text-primary" />
                             <CardTitle className="text-2xl font-headline font-bold text-white uppercase tracking-tight">Vendedor</CardTitle>
                         </div>
-                        <Badge variant={profile.role === "seller" ? "default" : "outline"} className={cn(
+                        <Badge variant={profile.role === "SELLER" ? "default" : "outline"} className={cn(
                             "text-xs font-black uppercase tracking-widest py-1.5 px-4",
-                            profile.role === "seller" ? "bg-green-500 text-white" : "text-yellow-500 border-yellow-500/30"
+                            profile.role === "SELLER" ? "bg-green-500 text-white" : "text-yellow-500 border-yellow-500/30"
                         )}>
-                            {profile.role === "seller" ? "VENDEDOR ACTIVO" : "PENDIENTE DE APROBACIÓN"}
+                            {profile.role === "SELLER" ? "VENDEDOR ACTIVO" : "PENDIENTE DE APROBACIÓN"}
                         </Badge>
                     </div>
                 </CardHeader>
@@ -379,7 +378,7 @@ export default function UserProfilePage() {
                                 </p>
                             </div>
                             
-                            {profile.role !== "seller" && (
+                            {profile.role !== "SELLER" && (
                                 <div className="flex flex-col gap-3 w-full md:w-auto">
                                     <Button 
                                         onClick={handleApproveSeller} 
@@ -500,7 +499,7 @@ export default function UserProfilePage() {
                                             {new Date(order.createdAt).toLocaleDateString("es-AR")}
                                         </TableCell>
                                         <TableCell>
-                                            {getStatusBadge(order.orderStatus)}
+                                            {getStatusBadge(order.status)}
                                         </TableCell>
                                         <TableCell>
                                             {order.isPaid ? (

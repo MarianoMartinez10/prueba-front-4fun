@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Capa de AdministraciÃ³n: Alta de Nuevos Productos (Create Product)
@@ -11,7 +11,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { ApiClient } from "@/lib/api";
+import { ProductApiService } from "@/lib/services/ProductApiService";
+import { TaxonomyApiService } from "@/lib/services/TaxonomyApiService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,7 +49,7 @@ export default function NewProductPage() {
    * RN - HidrataciÃ³n TaxonÃ³mica: Recupera los clasificadores necesarios para el alta.
    */
   useEffect(() => {
-    Promise.all([ApiClient.getPlatforms(), ApiClient.getGenres()])
+    Promise.all([TaxonomyApiService.getPlatforms(), TaxonomyApiService.getGenres()])
       .then(([pData, gData]) => {
         setPlatforms(Array.isArray(pData) ? pData : (pData?.data || []));
         setGenres(Array.isArray(gData) ? gData : (gData?.data || []));
@@ -71,7 +72,7 @@ export default function NewProductPage() {
       type: "Digital",
       developer: "Nintendo",
       specPreset: "Mid",
-      imageUrl: "",
+      imageId: "",
     },
   });
 
@@ -79,7 +80,7 @@ export default function NewProductPage() {
    * RN - GestiÃ³n de Multimedia: Orquesta la carga del asset de portada.
    */
   const { isUploading, handleImageUpload } = useImageUpload({
-    onSuccess: (url) => form.setValue("imageUrl", url),
+    onSuccess: (url) => form.setValue("imageId", url),
     successMessage: "Activo visual pre-procesado correctamente."
   });
 
@@ -88,7 +89,7 @@ export default function NewProductPage() {
    */
   const onSubmit = async (data: AdminProductBaseValues) => {
     try {
-      await ApiClient.createProduct({ ...data, developer: data.developer || '' });
+      await ProductApiService.create({ ...data, developer: data.developer || '' });
       toast({ title: "Alta Exitosa", description: "El producto ha sido integrado al catÃ¡logo maestro con Ã©xito." });
       router.push("/admin/products");
       router.refresh();
@@ -230,16 +231,16 @@ export default function NewProductPage() {
              <CardContent className="pt-6 space-y-4">
                <div className="relative group">
                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-black/40 shadow-inner">
-                   {form.watch("imageUrl") ? (
-                      <Image src={form.watch("imageUrl") || ""} alt="Preview" fill className="object-cover animate-in zoom-in-95 duration-500" />
+                   {form.watch("imageId") ? (
+                      <Image src={form.watch("imageId") || ""} alt="Preview" fill className="object-cover animate-in zoom-in-95 duration-500" />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 opacity-20">
                          <ImageIcon className="h-12 w-12" />
                          <p className="text-[10px] font-bold uppercase tracking-tighter">Sin Asset Cargado</p>
                       </div>
                     )}
-                    {form.watch("imageUrl") && (
-                      <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg" onClick={() => form.setValue("imageUrl", "")}><X className="h-4 w-4" /></Button>
+                    {form.watch("imageId") && (
+                      <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg" onClick={() => form.setValue("imageId", "")}><X className="h-4 w-4" /></Button>
                     )}
                  </div>
                  <div className="mt-4">

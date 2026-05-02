@@ -14,7 +14,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ApiClient } from "@/lib/api";
+import { AuthApiService } from "@/lib/services/AuthApiService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2, ShieldCheck, Mail, ArrowRight } from "lucide-react";
@@ -38,7 +38,7 @@ function VerifyEmailContent() {
 
         const verify = async () => {
             try {
-                const response = await ApiClient.verifyEmail(token);
+                const response = await AuthApiService.verifyEmail(token);
                 if (response.success) {
                     setStatus('success');
                 } else {

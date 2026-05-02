@@ -4,30 +4,36 @@ import { useAuth } from "@/hooks/use-auth";
 
 /**
  * ViewModel para el Layout de Administración
+ * --------------------------------------------------------------------------
  * Maneja la seguridad de la ruta y el estado de carga.
+ *
+ * Refactorización POO (Meyer OOSC2 §7.8):
+ *   La guard de ruta delega en userEntity.canAccessAdminPanel(), que
+ *   encapsula la lógica de autorización. La UI no compara strings de roles.
  */
 export function useAdminLayoutViewModel() {
-  const { user, loading } = useAuth();
+  const { userEntity, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
-      if (!user) {
-        // Guardamos a dónde quería ir para devolverlo después
+      if (!userEntity) {
         const currentPath = window.location.pathname;
         router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-      } else if (user.role !== "admin") {
-        // Si no es admin, lo sacamos de acá
+      } else if (!userEntity.canAccessAdminPanel()) {
+        // ✅ POO: Delega en el método del objeto — no compara strings
         router.push("/");
       }
     }
-  }, [user, loading, router]);
+  }, [userEntity, loading, router]);
 
-  const isAuthorized = !loading && user && user.role === "admin";
+  // ✅ POO: isAuthorized se determina por el método de la entidad
+  const isAuthorized = !loading && !!userEntity && userEntity.canAccessAdminPanel();
 
   return {
     loading,
     isAuthorized,
-    user,
+    user: userEntity?.getRawData() ?? null,
+    userEntity,
   };
 }

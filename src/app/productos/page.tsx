@@ -1,5 +1,5 @@
 import { GameCatalog } from '@/components/game/game-catalog';
-import { ApiClient } from '@/lib/api';
+import { ProductApiService } from '@/lib/services/ProductApiService';
 
 /**
  * Capa de Presentación: Catálogo Global de Productos (Products Page)
@@ -23,18 +23,17 @@ export default async function ProductosPage({
    * Mantenibilidad: Se utiliza el motor de caché de Next.js (ISR) con revalidación 
    * cada 60 segundos para optimizar el rendimiento de la infraestructura.
    */
-  const response = await ApiClient.getProducts({
+  const { products, meta } = await ProductApiService.getAll({
     page: 1,
     limit: 12,
-    sort: 'order', // RN - Merchandising: Orden manual definido en el panel administrativo.
+    sort: 'order',
     genre: genre as string,
     platform: platform as string,
     search: search as string
-  }, { next: { revalidate: 60 } });
+  });
 
-  // Normalización DTO de respuesta para asegurar compatibilidad de contratos.
-  const games = (Array.isArray(response) ? response : response.products) as any as import('@/lib/types').Game[];
-  const totalPages = Array.isArray(response) ? 1 : (response.meta?.totalPages || 1);
+  const games = products.map(p => p.getRawData());
+  const totalPages = meta?.totalPages || 1;
 
   return (
     <div className="container mx-auto px-4">

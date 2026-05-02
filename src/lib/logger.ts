@@ -9,15 +9,22 @@
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
 export class Logger {
+    private context?: string;
+
+    constructor(context?: string) {
+        this.context = context;
+    }
+
     /**
      * RN - Auditoría Técnica: Formatea cada entrada de log como un JSON estructurado.
      * Facilita el parseo por herramientas de monitoreo externas.
      */
-    private static format(level: LogLevel, message: string, data?: any) {
+    private static format(level: LogLevel, message: string, data?: any, context?: string) {
         const timestamp = new Date().toISOString();
         return JSON.stringify({
             timestamp,
             level,
+            context,
             message,
             data: data || undefined
         });
@@ -31,12 +38,22 @@ export class Logger {
         console.info(this.format('info', message, data));
     }
 
+    info(message: string, data?: any) {
+        // eslint-disable-next-line no-console
+        console.info(Logger.format('info', message, data, this.context));
+    }
+
     /**
      * Advierte sobre situaciones no críticas que requieren atención.
      */
     static warn(message: string, data?: any) {
         // eslint-disable-next-line no-console
         console.warn(this.format('warn', message, data));
+    }
+
+    warn(message: string, data?: any) {
+        // eslint-disable-next-line no-console
+        console.warn(Logger.format('warn', message, data, this.context));
     }
 
     /**
@@ -48,6 +65,11 @@ export class Logger {
         console.error(this.format('error', message, data));
     }
 
+    error(message: string, data?: any) {
+        // eslint-disable-next-line no-console
+        console.error(Logger.format('error', message, data, this.context));
+    }
+
     /**
      * Registro detallado para depuración. 
      * RN - Seguridad: Solo se activa en entorno de 'development' para evitar
@@ -57,6 +79,13 @@ export class Logger {
         if (process.env.NODE_ENV === 'development') {
             // eslint-disable-next-line no-console
             console.debug(this.format('debug', message, data));
+        }
+    }
+
+    debug(message: string, data?: any) {
+        if (process.env.NODE_ENV === 'development') {
+            // eslint-disable-next-line no-console
+            console.debug(Logger.format('debug', message, data, this.context));
         }
     }
 }

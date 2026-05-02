@@ -33,9 +33,9 @@ export default {
        * Se priorizan fuentes modernas (Inter/Space Grotesk) para legibilidad.
        */
       fontFamily: {
-        body: ['var(--font-body)', 'sans-serif'],
-        headline: ['var(--font-headline)', 'sans-serif'],
-        code: ['monospace'],
+        sans: ['var(--font-inter)', 'sans-serif'],
+        headline: ['var(--font-inter)', 'sans-serif'],
+        mono: ['var(--font-mono)', 'monospace'],
       },
       
       /**

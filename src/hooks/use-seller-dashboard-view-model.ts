@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ApiClient } from "@/lib/api";
+import { DashboardApiService } from "@/lib/services/DashboardApiService";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import jsPDF from "jspdf";
@@ -24,9 +24,9 @@ export function useSellerDashboardViewModel() {
         try {
             setLoading(true);
             const [statsData, chartRes, topRes] = await Promise.all([
-                ApiClient.getDashboardStats(),
-                ApiClient.getSalesChart(),
-                ApiClient.getTopProducts()
+                DashboardApiService.getStats(),
+                DashboardApiService.getSalesChart(),
+                DashboardApiService.getTopProducts()
             ]);
 
             setStats(statsData);

@@ -17,11 +17,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Loader2, Download, FileSpreadsheet, FilePieChart, ShoppingBag, Eye, RefreshCw, MoreHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ApiClient } from "@/lib/api";
+import { OrderApiService } from "@/lib/services/OrderApiService";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { OrderViewModel } from "@/lib/viewmodels";
+import type { OrderEntity } from "@/domain/entities/OrderEntity";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -41,7 +41,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function AdminOrdersPage() {
-    const [orders, setOrders] = useState<any[]>([]);
+    const [orders, setOrders] = useState<OrderEntity[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -56,7 +56,7 @@ export default function AdminOrdersPage() {
     const fetchOrders = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await ApiClient.getAllOrders({
+            const res = await OrderApiService.getAllOrders({
                 page,
                 limit: 5,
                 status: statusFilter !== "all" ? statusFilter : undefined,
@@ -79,7 +79,7 @@ export default function AdminOrdersPage() {
      */
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         try {
-            await ApiClient.updateOrderStatus(orderId, newStatus);
+            await OrderApiService.updateStatus(orderId, newStatus);
             toast({ title: "Estado Sincronizado", description: `Orden transicionada a: ${newStatus.toUpperCase()}` });
             fetchOrders();
         } catch (error) {
@@ -89,7 +89,7 @@ export default function AdminOrdersPage() {
 
     const handleMarkAsPaid = async (orderId: string) => {
         try {
-            await ApiClient.updateOrderToPaid(orderId);
+            await OrderApiService.markAsPaid(orderId);
             toast({
                 title: "Pago Confirmado",
                 description: "Orden marcada como pagada y claves digitales enviadas por correo cuando corresponda."
@@ -105,25 +105,20 @@ export default function AdminOrdersPage() {
     };
 
     /**
-     * MVVM: Transformación a ViewModels para orquestación de reportes.
-     */
-    const orderViewModels = orders.map(o => new OrderViewModel(o));
-
-    /**
      * RN - Localización: Filtrado en caliente sobre el set de datos hidratado.
      */
-    const filteredVMs = searchTerm
-        ? orderViewModels.filter(vm => {
+    const filteredOrders = searchTerm
+        ? orders.filter(o => {
             const term = searchTerm.toLowerCase();
-            return vm.getDisplayId().toLowerCase().includes(term) ||
-                   vm.getCustomerName().toLowerCase().includes(term);
+            return o.getDisplayId().toLowerCase().includes(term) ||
+                   o.getCustomerName().toLowerCase().includes(term);
         })
-        : orderViewModels;
+        : orders;
 
     // ─── SUBSISTEMA DE AUDITORÍA (PDF/CSV) ───
 
     const handleExportPDF = () => {
-        if (!filteredVMs.length) return;
+        if (!filteredOrders.length) return;
         
         const doc = new jsPDF();
         doc.setFontSize(22);
@@ -138,7 +133,7 @@ export default function AdminOrdersPage() {
         autoTable(doc, {
             startY: 45,
             head: [["ID TICKET", "CLIENTE / ENTIDAD", "TOTALIZACIÓN", "ESTADO", "LIQUIDACIÓN", "CRONOLOGÍA"]],
-            body: filteredVMs.map(vm => vm.toReportRow()), 
+            body: filteredOrders.map(o => o.toReportRow()), 
             styles: { fontSize: 8, cellPadding: 4 },
             headStyles: { fillColor: [45, 45, 55], textColor: [255, 255, 255] },
             alternateRowStyles: { fillColor: [245, 245, 250] }
@@ -149,9 +144,9 @@ export default function AdminOrdersPage() {
     };
 
     const handleExportCSV = () => {
-        if (!filteredVMs.length) return;
+        if (!filteredOrders.length) return;
         const headers = ["ID", "Cliente", "Email", "Método", "Total", "Estado", "Pago", "Fecha"];
-        const rows = filteredVMs.map(vm => vm.toReportRow());
+        const rows = filteredOrders.map(o => o.toReportRow());
         const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
         const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -225,10 +220,10 @@ export default function AdminOrdersPage() {
                             </SelectTrigger>
                             <SelectContent className="bg-card/95 backdrop-blur-xl border-white/10 text-white">
                                 <SelectItem value="all">SISTEMA COMPLETO</SelectItem>
-                                <SelectItem value="pending">PENDIENTE</SelectItem>
-                                <SelectItem value="shipped">DESPACHADO</SelectItem>
-                                <SelectItem value="delivered">ENTREGADO</SelectItem>
-                                <SelectItem value="cancelled">ANULADO</SelectItem>
+                                <SelectItem value="PENDING">PENDIENTE</SelectItem>
+                                <SelectItem value="SHIPPED">DESPACHADO</SelectItem>
+                                <SelectItem value="DELIVERED">ENTREGADO</SelectItem>
+                                <SelectItem value="CANCELLED">ANULADO</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -250,31 +245,31 @@ export default function AdminOrdersPage() {
                                     Array.from({ length: 5 }).map((_, i) => (
                                         <TableRow key={i} className="border-white/5"><TableCell colSpan={6}><div className="h-14 bg-muted/10 animate-pulse rounded-lg" /></TableCell></TableRow>
                                     ))
-                                ) : filteredVMs.length === 0 ? (
+                                ) : filteredOrders.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">No se hallaron coincidencias transaccionales.</TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredVMs.map((vm) => (
-                                        <TableRow key={vm.getDisplayId()} className="border-white/5 hover:bg-white/5 transition-colors group">
-                                            <TableCell className="font-mono text-sm text-muted-foreground">#{vm.getDisplayId().slice(-8)}</TableCell>
+                                    filteredOrders.map((o) => (
+                                        <TableRow key={o.id} className="border-white/5 hover:bg-white/5 transition-colors group">
+                                            <TableCell className="font-mono text-sm text-muted-foreground">#{o.id.slice(-8)}</TableCell>
                                             <TableCell>
                                                 <div className="space-y-1">
-                                                    <p className="font-bold text-white text-base">{vm.getCustomerName()}</p>
-                                                    <p className="text-xs text-muted-foreground opacity-70 italic">{vm.getOrderDate()}</p>
+                                                    <p className="font-bold text-white text-base">{o.getCustomerName()}</p>
+                                                    <p className="text-xs text-muted-foreground opacity-70 italic">{o.getFormattedDate()}</p>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className={cn("text-xs font-black uppercase py-0.5 px-3", vm.getStatusBadgeVariant() === 'default' ? "border-primary/50 text-primary" : "border-muted-foreground/30 text-muted-foreground")}>
-                                                    {vm.getStatusLabel()}
+                                                <Badge variant="outline" className={cn("text-xs font-black uppercase py-0.5 px-3", o.isDelivered() || o.isShipped() ? "border-primary/50 text-primary" : "border-muted-foreground/30 text-muted-foreground")}>
+                                                    {o.getStatusLabel()}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className={cn("text-xs font-bold py-1 px-4 uppercase", vm.isPaid() ? "border-green-500/30 text-green-400 bg-green-500/5" : "border-destructive/30 text-destructive bg-destructive/5")}>
-                                                    {vm.isPaid() ? "LIQUIDADO" : "PENDIENTE DE PAGO"}
+                                                <Badge variant="outline" className={cn("text-xs font-bold py-1 px-4 uppercase", o.isPaid ? "border-green-500/30 text-green-400 bg-green-500/5" : "border-destructive/30 text-destructive bg-destructive/5")}>
+                                                    {o.isPaid ? "LIQUIDADO" : "PENDIENTE DE PAGO"}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-right font-black text-white text-lg">{vm.toDisplayPrice()}</TableCell>
+                                            <TableCell className="text-right font-black text-white text-lg">{o.getDisplayTotal()}</TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -283,10 +278,10 @@ export default function AdminOrdersPage() {
                                                     <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-white/10 text-white">
                                                         <DropdownMenuLabel className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Logística de Orden</DropdownMenuLabel>
                                                         <DropdownMenuSeparator className="bg-white/5" />
-                                                        <DropdownMenuItem onClick={() => handleMarkAsPaid(vm.getRawData().id)} className="text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer">
+                                                        <DropdownMenuItem onClick={() => handleMarkAsPaid(o.id)} className="text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer">
                                                             <RefreshCw className="mr-2 h-4 w-4" /> Marcar como Pagado
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(vm.getRawData().id, 'delivered')} className="text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer">
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(o.id, 'DELIVERED')} className="text-xs font-bold hover:bg-primary/10 hover:text-primary cursor-pointer">
                                                             <RefreshCw className="mr-2 h-4 w-4" /> Marcar como Entregado
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator className="bg-white/5" />

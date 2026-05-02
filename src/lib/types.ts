@@ -19,7 +19,6 @@ export interface ReferenceEntity {
 
 export type Platform = ReferenceEntity;
 export type Genre = ReferenceEntity;
-export type Category = ReferenceEntity;
 
 // ─── ENTIDAD PRODUCTO (GAMES) ───
 
@@ -46,15 +45,11 @@ export interface ProductInput {
   discountEndDate?: string | null;
 }
 
-// ─── ENTIDAD USUARIO & SESIÓN ───
+// ─── ENTIDAD USUARIO & SESIÓN (Delegado a Dominio) ───
 
-export type UserRole = 'buyer' | 'seller' | 'admin';
+export type { User, UserRole, SellerProfile } from '@/domain/entities/UserEntity';
 
-export interface SellerProfile {
-  storeName: string;
-  storeDescription?: string | null;
-  isApproved: boolean;
-}
+// ─── DOMINIO TRANSACCIONAL (Delegado a Dominio) ───
 
 /**
  * RN - Identidad: Perfil del usuario autenticado.

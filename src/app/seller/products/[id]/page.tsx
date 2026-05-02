@@ -95,7 +95,7 @@ export default function SellerEditProductPage({ params }: { params: Promise<{ id
                     <FormField control={vm.form.control} name="stock" render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-40">Stock</FormLabel>
-                        <FormControl><Input type="number" disabled={vm.form.watch("type") === "Digital"} className="h-14 bg-white/5 border-white/10 rounded-2xl font-black" {...field} /></FormControl>
+                        <FormControl><Input type="number" disabled={vm.form.watch("type" as any) === "Digital"} className="h-14 bg-white/5 border-white/10 rounded-2xl font-black" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -119,7 +119,7 @@ export default function SellerEditProductPage({ params }: { params: Promise<{ id
                     </FormItem>
                   )} />
 
-                  {vm.form.watch("isDiscounted") && (
+                  {vm.form.watch("isDiscounted" as any) && (
                     <FormField control={vm.form.control} name="discountPercentage" render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-40">Porcentaje de Descuento (%)</FormLabel>
@@ -137,7 +137,7 @@ export default function SellerEditProductPage({ params }: { params: Promise<{ id
             </CardContent>
           </Card>
 
-          {id !== 'new' && vm.form.watch('type') === 'Digital' && (
+          {id !== 'new' && vm.form.watch('type' as any) === 'Digital' && (
             <KeyManager
                 productId={id}
                 productName={vm.form.getValues('name')}

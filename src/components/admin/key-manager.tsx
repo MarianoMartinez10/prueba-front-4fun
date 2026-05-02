@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { ApiClient } from "@/lib/api";
+import { KeyApiService } from "@/lib/services/KeyApiService";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +40,7 @@ export function KeyManager({ productId, productName, onStockSync }: KeyManagerPr
     const loadKeys = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await ApiClient.getKeysByProduct(productId);
+            const res = await KeyApiService.getByProduct(productId);
             if (res.success) {
                 setKeys(res.data);
             }
@@ -72,7 +72,7 @@ export function KeyManager({ productId, productName, onStockSync }: KeyManagerPr
 
         setIsSaving(true);
         try {
-            const res = await ApiClient.addKeys(productId, keysArray);
+            const res = await KeyApiService.addBulk(productId, keysArray);
             if (res.success) {
                 toast({
                     title: "Inventario Sincronizado",
@@ -96,7 +96,7 @@ export function KeyManager({ productId, productName, onStockSync }: KeyManagerPr
         if (!confirm(`¿Confirma la eliminación de la licencia técnica: ${keyVal}?`)) return;
 
         try {
-            const res = await ApiClient.deleteKey(id);
+            const res = await KeyApiService.delete(id);
             toast({ title: "Licencia Eliminada" });
             if (typeof res?.currentStock === 'number') onStockSync?.(res.currentStock);
             setKeys(prev => prev.filter(k => getKeyId(k) !== id));
@@ -161,26 +161,26 @@ export function KeyManager({ productId, productName, onStockSync }: KeyManagerPr
                                     const keyId = getKeyId(k);
                                     return (
                                     <TableRow key={keyId} className="border-white/5 hover:bg-white/5 transition-colors">
-                                        <TableCell className="font-mono text-xs md:text-sm text-white">{k.clave}</TableCell>
+                                        <TableCell className="font-mono text-xs md:text-sm text-white">{k.key}</TableCell>
                                         <TableCell className="text-center">
                                             <Badge 
                                                 variant="outline"
                                                 className={cn(
                                                     "text-[10px] font-bold uppercase py-0",
-                                                    k.estado === 'DISPONIBLE' ? "border-green-500/30 text-green-400 bg-green-500/5" : 
-                                                    k.estado === 'VENDIDA' ? "border-destructive/30 text-destructive bg-destructive/5" : 
+                                                    k.status === 'AVAILABLE' ? "border-green-500/30 text-green-400 bg-green-500/5" : 
+                                                    k.status === 'SOLD' ? "border-destructive/30 text-destructive bg-destructive/5" : 
                                                     "border-muted-foreground/30 text-muted-foreground"
                                                 )}
                                             >
-                                                {k.estado}
+                                                {k.status === 'AVAILABLE' ? 'Disponible' : k.status === 'SOLD' ? 'Vendida' : k.status}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button 
                                                 variant="ghost" 
                                                 size="icon" 
-                                                onClick={() => keyId && handleDelete(keyId, k.clave)} 
-                                                disabled={k.estado === 'VENDIDA' || !keyId}
+                                                onClick={() => keyId && handleDelete(keyId, k.key)} 
+                                                disabled={k.status === 'SOLD' || !keyId}
                                                 className="hover:bg-destructive/20 hover:text-destructive"
                                             >
                                                 <Trash2 className="h-4 w-4" />

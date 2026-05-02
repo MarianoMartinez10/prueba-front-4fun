@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ApiClient } from "@/lib/api";
+import { NotificationApiService } from "@/lib/services/NotificationApiService";
 import { Loader2, CheckCircle, Mail, MessageSquare, Send, ArrowRight, User } from "lucide-react";
 
 /**
@@ -50,7 +50,7 @@ export default function ContactoPage() {
    */
   const onSubmit = async (data: ContactFormData) => {
     try {
-      await ApiClient.sendContactMessage(data);
+      await NotificationApiService.sendContactMessage(data);
       setSent(true);
       reset();
       toast({

@@ -51,9 +51,9 @@ export default function DesignTestPage() {
                 <h1 className="text-6xl md:text-8xl font-headline font-black text-white leading-none tracking-tight">
                     DOMINÁ <span className="text-primary italic">EL JUEGO</span> CON ESTILO.
                 </h1>
-                <p className="text-xl md:text-2xl text-muted-foreground font-body leading-relaxed max-w-2xl">
-                    Experimentá la combinación perfecta entre la potencia geométrica de <span className="text-white font-bold">Outfit</span> y la legibilidad cristalina de <span className="text-white font-bold">Inter</span>. 
-                    Diseñado para el gamer moderno.
+                <p className="text-xl md:text-2xl text-muted-foreground font-sans leading-relaxed max-w-2xl">
+                    Experimentá una identidad visual unificada con la legibilidad cristalina de <span className="text-white font-bold">Inter</span>. 
+                    Diseñado para ofrecer una experiencia gamer coherente y profesional.
                 </p>
                 <div className="flex gap-4 pt-4">
                     <Button size="lg" className="h-14 px-8 rounded-full text-base font-black uppercase tracking-widest shadow-lg shadow-primary/20">
@@ -150,7 +150,7 @@ export default function DesignTestPage() {
             <section className="space-y-6 text-center lg:text-left">
                 <div className="space-y-2">
                     <h2 className="text-3xl font-headline font-black text-white uppercase tracking-tight">Registro de Transacciones</h2>
-                    <p className="text-muted-foreground font-body">Muestra de legibilidad en tablas de alto volumen de datos.</p>
+                    <p className="text-muted-foreground font-sans">Muestra de legibilidad en tablas de alto volumen de datos.</p>
                 </div>
                 
                 <div className="rounded-2xl border border-white/5 bg-card/20 overflow-hidden shadow-2xl">

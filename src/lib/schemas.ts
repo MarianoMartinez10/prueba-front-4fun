@@ -23,6 +23,7 @@ export const ProductSchema = z.object({
   discountPercentage: z.number().min(0).max(100).optional(),
   discountEndDate: z.string().optional().nullable(),
   stock: z.number().int().min(0),
+  status: z.enum(['DRAFT', 'ACTIVE', 'OUT_OF_STOCK', 'SUSPENDED', 'ARCHIVED']).optional(),
   active: z.boolean().optional(),
   type: z.enum(['Physical', 'Digital']),
   imageId: z.string().optional().nullable(),

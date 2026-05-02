@@ -1,8 +1,18 @@
 /**
- * Capa de Configuración: Semillas y Metadatos (Constants)
+ * Capa de Configuración: Constantes Globales (Constants)
  * --------------------------------------------------------------------------
- * Almacena valores constantes inmutables que rigen el comportamiento global 
- * de la aplicación. Centraliza los diccionarios de datos no mutables. (Lib)
+ * ⚠️  REFACTORIZACIÓN POO (Purga de Obsolescencia):
+ *
+ *   - FALLBACK_IMAGE: ELIMINADO → Absorbido por ProductEntity.getImageUrl().
+ *     La lógica de fallback ahora vive encapsulada en la clase de entidad.
+ *
+ *   - SPEC_PRESETS: Mantenido (configuración estática válida).
+ *   - DEVELOPERS: Mantenido (catálogo de taxonomía estático).
+ *
+ * Para obtener la imagen de fallback, utiliza:
+ *   import { ProductEntity } from '@/domain/entities/ProductEntity';
+ *   const entity = new ProductEntity(data);
+ *   entity.getImageUrl(); // ← Incluye fallback automático
  */
 
 /**
@@ -26,9 +36,3 @@ export const DEVELOPERS = [
  * RN - Requerimientos Técnicos: Perfiles de hardware predefinidos.
  */
 export const SPEC_PRESETS = ['Low', 'Mid', 'High'] as const;
-
-/**
- * RN - Infraestructura de Fallback: URL de imagen por defecto.
- * Asegura que la UI no presente huecos visuales ante la ausencia de activos (Assets).
- */
-export const FALLBACK_IMAGE = 'https://placehold.co/600x400/png?text=4Fun';

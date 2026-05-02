@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ApiClient } from "@/lib/api";
+import { AuthApiService } from "@/lib/services/AuthApiService";
 
 const ForgotPasswordSchema = z.object({
   email: z.string().email("Formato de correo electrónico inválido"),
@@ -28,7 +28,7 @@ export function useForgotPasswordViewModel() {
   const handleSubmit = async (values: ForgotPasswordValues) => {
     setIsSubmitting(true);
     try {
-      await ApiClient.forgotPassword(values.email);
+      await AuthApiService.forgotPassword(values.email);
       setEmailSent(true);
     } catch (err: unknown) {
       // RN - Fake positive para evitar ataques de enumeración (Seguridad de Diseño)

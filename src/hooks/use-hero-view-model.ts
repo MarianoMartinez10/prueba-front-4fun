@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ApiClient } from '@/lib/api';
+import { ProductApiService } from '@/lib/services/ProductApiService';
 import type { Product } from '@/lib/schemas';
 
 // Constante de imagen genérica si falta la del servidor
@@ -15,13 +15,15 @@ export function useHeroViewModel() {
   useEffect(() => {
     const fetchDiscounted = async () => {
       try {
-        const res = await ApiClient.getProducts({ discounted: true, page: 1, limit: 200, sort: 'order' });
+        const { products } = await ProductApiService.getAll({ discounted: true, page: 1, limit: 200, sort: 'order' });
         // Validación rigurosa de márgenes y descuentos
-        const withRealDiscount = res.products.filter(
-          (p) => (p.discountPercentage ?? 0) > 0 && (p.finalPrice ?? 0) < p.price
-        );
+        const withRealDiscount = products
+          .map(p => p.getRawData())
+          .filter(
+            (p: any) => (p.discountPercentage ?? 0) > 0 && (p.finalPrice ?? 0) < p.price
+          );
         if (withRealDiscount.length > 0) {
-          setGames(withRealDiscount);
+          setGames(withRealDiscount as Product[]);
         }
       } catch (e) {
         console.error("[useHeroViewModel] Error al recuperar promociones:", e);

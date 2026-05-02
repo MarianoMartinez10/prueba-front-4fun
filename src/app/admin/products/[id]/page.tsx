@@ -12,7 +12,8 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { ApiClient } from "@/lib/api";
+import { ProductApiService } from "@/lib/services/ProductApiService";
+import { TaxonomyApiService } from "@/lib/services/TaxonomyApiService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,7 +68,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: "", description: "", price: 0, stock: 0, platformId: "", genreId: "", type: "Digital", developer: "Nintendo", specPreset: "Mid", imageUrl: "", trailerUrl: "",
+      name: "", description: "", price: 0, stock: 0, platformId: "", genreId: "", type: "Digital", developer: "Nintendo", specPreset: "Mid", imageId: "", trailerUrl: "",
       isDiscounted: false, discountPercentage: 0, discountEndDate: "",
     },
   });
@@ -76,7 +77,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
    * RN - Gestión de Activos: Orquesta la carga asíncrona a Cloudinary.
    */
   const { isUploading, handleImageUpload } = useImageUpload({
-    onSuccess: (url) => form.setValue("imageUrl", url),
+    onSuccess: (url) => form.setValue("imageId", url),
     successMessage: "Activo visual sincronizado correctamente."
   });
 
@@ -88,12 +89,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [pData, gData] = await Promise.all([ApiClient.getPlatforms(), ApiClient.getGenres()]);
+        const [pData, gData] = await Promise.all([TaxonomyApiService.getPlatforms(), TaxonomyApiService.getGenres()]);
         setPlatforms(Array.isArray(pData) ? pData : (pData?.data || []));
         setGenres(Array.isArray(gData) ? gData : (gData?.data || []));
 
         if (id !== 'new') {
-          const p = await ApiClient.getProductByIdAdmin(id);
+          const entity = await ProductApiService.getForManagement(id);
+          const p = entity?.getRawData();
           if (p) {
             // RN - Normalización: Verifica si el desarrollador está en la lista preconfigurada o es personalizado.
             const devInList = DEVELOPERS.includes(p.developer as any);
@@ -108,7 +110,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               type: p.type as "Digital" | "Physical",
               developer: p.developer || "",
               specPreset: (p.specPreset || "Mid") as any,
-              imageUrl: p.imageId || "",
+              imageId: p.imageId || "",
               trailerUrl: p.trailerUrl || "",
               isDiscounted: (p.discountPercentage ?? 0) > 0,
               discountPercentage: p.discountPercentage || 0,
@@ -137,7 +139,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         payload.discountPercentage = 0;
         payload.discountEndDate = "";
       }
-      await ApiClient.updateProduct(id, payload);
+      await ProductApiService.update(id, payload);
       toast({ title: 'Producto actualizado', description: 'Los cambios se guardaron correctamente.' });
       router.push("/admin/products");
       router.refresh();
@@ -371,16 +373,16 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
              <CardContent className="pt-6 space-y-4">
                 <div className="relative group">
                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-black/40 shadow-inner">
-                      {form.watch("imageUrl") ? (
-                        <Image src={form.watch("imageUrl") || ""} alt="Preview" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                      {form.watch("imageId") ? (
+                        <Image src={form.watch("imageId") || ""} alt="Preview" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
                            <Info className="h-8 w-8 opacity-20" />
                            <p className="text-[10px] font-bold uppercase">Sin Imagen Principal</p>
                         </div>
                       )}
-                      {form.watch("imageUrl") && (
-                        <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg" onClick={() => form.setValue("imageUrl", "")}><X className="h-4 w-4" /></Button>
+                      {form.watch("imageId") && (
+                        <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg" onClick={() => form.setValue("imageId", "")}><X className="h-4 w-4" /></Button>
                       )}
                    </div>
                    <div className="mt-4">

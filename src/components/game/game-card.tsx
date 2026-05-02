@@ -18,7 +18,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { Heart, ShoppingCart, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
-import { ProductViewModel } from "@/lib/viewmodels";
+import { ProductEntity } from "@/domain/entities/ProductEntity";
 import type { Game } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -30,10 +30,11 @@ interface GameCardProps {
 export function GameCard({ game }: GameCardProps) {
   const router = useRouter();
   /**
-   * POO - Encapsulamiento: La lógica de negocio visual reside en el ViewModel.
+   * POO - Encapsulamiento: La lógica de negocio visual reside en la Entidad de Dominio.
    * Esto asegura que el componente sea puramente declarativo y altamente mantenible.
+   * Refactor: ViewModel eliminado para reducir entropía.
    */
-  const vm = new ProductViewModel(game as any);
+  const vm = new ProductEntity(game as any);
   
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();

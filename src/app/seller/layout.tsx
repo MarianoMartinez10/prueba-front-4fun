@@ -20,14 +20,14 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
     if (!loading) {
       if (!user) {
         router.push('/login');
-      } else if (user.role !== 'seller' && user.role !== 'admin') {
+      } else if (user.role !== 'SELLER' && user.role !== 'ADMIN') {
         // RN: Si un Comprador intenta entrar por URL, lo redirigimos a su cuenta.
         router.push('/account');
       }
     }
   }, [user, loading, router]);
 
-  if (loading || !user || (user.role !== 'seller' && user.role !== 'admin')) {
+  if (loading || !user || (user.role !== 'SELLER' && user.role !== 'ADMIN')) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" />

@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ApiClient } from "@/lib/api";
+import { ProductApiService } from "@/lib/services/ProductApiService";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { TableSkeleton } from "@/components/ui/skeletons";
@@ -20,33 +20,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Search, Download, Plus, Pencil, Trash2, Package, FileSpreadsheet, FilePieChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
-import type { Product } from "@/lib/schemas";
+import type { ProductEntity } from "@/domain/entities/ProductEntity";
 import type { Meta } from "@/lib/types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { ProductViewModel } from "@/lib/viewmodels";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export default function AdminProductsPage() {
   const { loading: authLoading } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductEntity[]>([]);
   const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, limit: 10, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
   const { toast } = useToast();
 
-  /**
-   * RN - Auditoría de Catálogo: Sincroniza el listado maestro con filtros activos.
-   */
   const loadProducts = useCallback(async (page = 1, searchQuery = "") => {
     try {
       setLoading(true);
-      const response = await ApiClient.getProducts({ page, limit: 10, sort: 'order', search: searchQuery });
-      setProducts(Array.isArray(response.products) ? response.products : []);
+      const response = await ProductApiService.getAllAdmin({ page, limit: 10, sort: 'order', search: searchQuery });
+      setProducts(response.products);
       setMeta(response.meta || { total: 0, page: 1, limit: 10, totalPages: 1 });
     } catch (error) {
       toast({ variant: "destructive", title: "Fallo de Sincronía", description: "No se pudo recuperar el inventario del servidor." });
@@ -65,7 +60,7 @@ export default function AdminProductsPage() {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`¿Confirma el cese de comercialización y baja lógica del producto: ${name}?`)) return;
     try {
-      await ApiClient.deleteProduct(id);
+      await ProductApiService.delete(id);
       toast({ title: "Baja Sincronizada", description: "El producto ha sido marcado como inactivo en el catálogo." });
       loadProducts(meta.page, search);
     } catch (error) {
@@ -82,9 +77,6 @@ export default function AdminProductsPage() {
   const handleExportPDF = () => {
     if (!products.length) return;
     
-    // MVVM: Transformación a ViewModels para lógica de presentación homogénea.
-    const vms = products.map(p => new ProductViewModel(p));
-    
     const doc = new jsPDF();
     doc.setFontSize(22);
     doc.text("4Fun Marketplace — Auditoría de Inventario", 14, 22);
@@ -98,7 +90,7 @@ export default function AdminProductsPage() {
     autoTable(doc, {
       startY: 45,
       head: [["IDENTIDAD", "ESPECIFICACIÓN", "PLATAFORMA", "VALORIZACIÓN", "EXISTENCIA", "TIPO"]],
-      body: vms.map(vm => vm.toReportRow()),
+      body: products.map(p => p.toReportRow()),
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: [45, 45, 55], textColor: [255, 255, 255], fontStyle: 'bold' },
       columnStyles: { 3: { halign: "right" }, 4: { halign: "center" } },
@@ -111,9 +103,8 @@ export default function AdminProductsPage() {
 
   const handleExportCSV = () => {
     if (!products.length) return;
-    const vms = products.map(p => new ProductViewModel(p));
     const headers = ["ID", "Nombre", "Plataforma", "Precio Final", "Stock", "Tipo"];
-    const rows = vms.map(vm => vm.toReportRow());
+    const rows = products.map(p => p.toReportRow());
     const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -209,38 +200,38 @@ export default function AdminProductsPage() {
                   </TableRow>
                 ) : (
                   products.map((p) => {
-                    const hasStock = p.stock > 0;
+                    const stockStatus = p.getStockStatus();
                     return (
-                      <TableRow key={p.id} className="border-white/5 hover:bg-white/5 transition-colors group">
+                      <TableRow key={p.getId()} className="border-white/5 hover:bg-white/5 transition-colors group">
                         <TableCell>
                           <div className="space-y-1">
-                            <p className="font-bold text-white text-base group-hover:text-primary transition-colors">{p.name}</p>
+                            <p className="font-bold text-white text-base group-hover:text-primary transition-colors">{p.getDisplayName()}</p>
                             <p className="text-xs font-mono text-muted-foreground uppercase tracking-tighter opacity-70">
-                              {typeof p.platform === 'object' ? p.platform.name : p.platform} · {p.type}
+                              {p.getPlatformName()} · {p.type}
                             </p>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="font-black text-white text-lg">{formatCurrency(p.finalPrice ?? p.price)}</div>
-                          {(p.discountPercentage ?? 0) > 0 && <Badge variant="outline" className="text-[10px] py-0.5 border-green-500/30 text-green-400 mt-1 font-black">-{p.discountPercentage}%</Badge>}
+                          <div className="font-black text-white text-lg">{p.getDisplayPrice()}</div>
+                          {p.isOnDiscount() && <Badge variant="outline" className="text-[10px] py-0.5 border-green-500/30 text-green-400 mt-1 font-black">{p.getDiscountBadge()}</Badge>}
                         </TableCell>
                         <TableCell>
                           <Badge 
                             variant="outline" 
                             className={cn(
                               "text-xs font-bold py-1 px-4",
-                              hasStock ? "border-green-500/30 text-green-400 bg-green-500/5" : "border-destructive/30 text-destructive bg-destructive/5 animate-pulse"
+                              stockStatus !== 'out' ? "border-green-500/30 text-green-400 bg-green-500/5" : "border-destructive/30 text-destructive bg-destructive/5 animate-pulse"
                             )}
                           >
-                            {hasStock ? `${p.stock} UNIDADES` : "STOCK AGOTADO"}
+                            {stockStatus === 'available' ? `${p.stock} UNIDADES` : stockStatus === 'low' ? 'STOCK BAJO' : "STOCK AGOTADO"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
                             <Button variant="ghost" size="icon" asChild className="hover:bg-primary/20 hover:text-primary">
-                              <Link href={`/admin/products/${p.id}`}><Pencil className="h-4 w-4" /></Link>
+                              <Link href={`/admin/products/${p.getId()}`}><Pencil className="h-4 w-4" /></Link>
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id, p.name)} className="hover:bg-destructive/20 hover:text-destructive" title="Dar de baja">
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.getId(), p.getDisplayName())} className="hover:bg-destructive/20 hover:text-destructive" title="Dar de baja">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

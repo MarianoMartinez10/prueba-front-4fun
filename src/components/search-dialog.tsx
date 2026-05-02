@@ -12,7 +12,7 @@ import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Search, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ApiClient } from "@/lib/api";
+import { ProductApiService } from "@/lib/services/ProductApiService";
 import type { Product } from "@/lib/schemas";
 import { formatCurrency } from "@/lib/utils";
 
@@ -62,13 +62,13 @@ export function SearchDialog({
 
         setLoading(true);
         try {
-            const res = await ApiClient.getProducts(
+            const { products, meta } = await ProductApiService.getAll(
                 { search: q, limit: MAX_PREVIEW, page: 1 },
                 { signal: controller.signal }
             );
             if (!controller.signal.aborted) {
-                setResults(res.products);
-                setTotalResults(res.meta.total);
+                setResults(products.map(p => p.getRawData()));
+                setTotalResults(meta.total);
                 setLoading(false);
             }
         } catch {

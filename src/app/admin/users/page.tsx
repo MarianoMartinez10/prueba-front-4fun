@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApiClient } from "@/lib/api";
+import { UserApiService } from "@/lib/services/UserApiService";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -69,7 +69,7 @@ interface User {
     _id: string;
     name: string;
     email: string;
-    role: 'user' | 'admin';
+    role: 'USER' | 'ADMIN';
     isVerified: boolean;
     avatar?: string | null;
     createdAt: string;
@@ -101,7 +101,7 @@ export default function UsersPage() {
     const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await ApiClient.getUsers({
+            const res = await UserApiService.getUsers({
                 page,
                 limit: 10,
                 search: debouncedSearch,
@@ -128,10 +128,10 @@ export default function UsersPage() {
      * RN - Moderación RBAC: Gestiona la escalación de privilegios (Admin vs User).
      */
     const handleRoleUpdate = async (userId: string, currentRole: string) => {
-        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
         setActionLoading(userId);
         try {
-            await ApiClient.updateUser(userId, { role: newRole });
+            await UserApiService.updateUser(userId, { role: newRole });
             toast({ title: "Jerarquía Actualizada", description: `El usuario ha sido transicionado al rol: ${newRole.toUpperCase()}` });
             fetchUsers();
         } catch (err: any) {
@@ -149,7 +149,7 @@ export default function UsersPage() {
 
         setActionLoading(userId);
         try {
-            await ApiClient.deleteUser(userId);
+            await UserApiService.deleteUser(userId);
             toast({ title: "Baja Sincronizada", description: "El registro ha sido desactivado del sistema según normativa." });
             fetchUsers();
         } catch (err: any) {
@@ -165,7 +165,7 @@ export default function UsersPage() {
     const handleApproveSeller = async (userId: string) => {
         setActionLoading(userId);
         try {
-            await ApiClient.updateUser(userId, { isApproved: true });
+            await UserApiService.approveSeller(userId);
             toast({ 
                 title: "Tienda Aprobada", 
                 description: "El usuario ya puede empezar a publicar productos.",
@@ -213,7 +213,7 @@ export default function UsersPage() {
             body: users.map(u => [
                 u.name,
                 u.email,
-                u.role === "admin" ? "ADMINISTRADOR" : "USUARIO FINAL",
+                u.role === "ADMIN" ? "ADMINISTRADOR" : "USUARIO FINAL",
                 u.isVerified ? "VERIFICADO" : "PENDIENTE",
                 new Date(u.createdAt).toLocaleDateString("es-AR"),
             ]),
@@ -292,8 +292,8 @@ export default function UsersPage() {
                                 </SelectTrigger>
                                 <SelectContent className="bg-card/95 backdrop-blur-xl border-white/10 text-white">
                                     <SelectItem value="all">TODOS LOS PERFILES</SelectItem>
-                                    <SelectItem value="admin">ADMINISTRADORES</SelectItem>
-                                    <SelectItem value="user">SOLO USUARIOS</SelectItem>
+                                    <SelectItem value="ADMIN">ADMINISTRADORES</SelectItem>
+                                    <SelectItem value="USER">SOLO USUARIOS</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -336,7 +336,7 @@ export default function UsersPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                {user.role === 'admin' ? (
+                                                {user.role === 'ADMIN' ? (
                                                     <Badge variant="default" className="bg-destructive text-white border-none gap-1 py-0 font-black text-[10px] uppercase tracking-tighter">
                                                         <ShieldAlert className="h-3 w-3" /> Admin
                                                     </Badge>
@@ -373,8 +373,8 @@ export default function UsersPage() {
                                                         <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id || user._id}`)} className="text-sm font-bold hover:bg-primary/10 hover:text-primary cursor-pointer px-3 py-2.5">
                                                             Visualizar Auditoría
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleRoleUpdate(user.id || user._id, user.role)} className={cn("text-sm font-bold hover:bg-primary/10 hover:text-primary cursor-pointer px-3 py-2.5", user.role === 'admin' ? "text-destructive" : "text-green-400")}>
-                                                            <RefreshCw className="mr-3 h-5 w-5" /> {user.role === 'admin' ? 'Degradar a Cliente' : 'Elevar a Administrador'}
+                                                        <DropdownMenuItem onClick={() => handleRoleUpdate(user.id || user._id, user.role)} className={cn("text-sm font-bold hover:bg-primary/10 hover:text-primary cursor-pointer px-3 py-2.5", user.role === 'ADMIN' ? "text-destructive" : "text-green-400")}>
+                                                            <RefreshCw className="mr-3 h-5 w-5" /> {user.role === 'ADMIN' ? 'Degradar a Cliente' : 'Elevar a Administrador'}
                                                         </DropdownMenuItem>
                                                         
                                                         {user.sellerProfile && !user.sellerProfile.isApproved && (

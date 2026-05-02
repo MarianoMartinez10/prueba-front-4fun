@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PixelHero } from '@/components/pixel-hero';
 import { CategoryCard } from '@/components/game/category-card';
-import { ApiClient } from '@/lib/api';
+import { TaxonomyApiService } from '@/lib/services/TaxonomyApiService';
 
 /**
  * Capa de Presentación: Página de Inicio (Home Page)
@@ -26,8 +26,8 @@ export default async function Home() {
 
   try {
     const [pData, gData] = await Promise.all([
-      ApiClient.getPlatforms().catch(() => []),
-      ApiClient.getGenres().catch(() => [])
+      TaxonomyApiService.getPlatforms().catch(() => []),
+      TaxonomyApiService.getGenres().catch(() => [])
     ]);
 
     // RN - Resiliencia: Maneja la variabilidad en la estructura de respuesta del Backend.

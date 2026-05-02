@@ -11,7 +11,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
-import { ApiClient } from "@/lib/api";
+import { TaxonomyApiService } from "@/lib/services/TaxonomyApiService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,8 +45,8 @@ export function VisualsManager() {
         setLoading(true);
         try {
             const [pData, gData] = await Promise.all([
-                ApiClient.getPlatforms(),
-                ApiClient.getGenres()
+                TaxonomyApiService.getPlatforms(),
+                TaxonomyApiService.getGenres()
             ]);
 
             // Normalización DTO: Asegura la integridad del estado local previo al renderizado.
@@ -174,11 +174,11 @@ function VisualTable({ items, type, onUpdate }: { items: VisualItem[], type: Vis
 
         try {
             if (type === 'platform') {
-                if (ids.length === 1) await ApiClient.deletePlatform(ids[0]);
-                else await ApiClient.deletePlatformsBulk(ids);
+                if (ids.length === 1) await TaxonomyApiService.deletePlatform(ids[0]);
+                else await TaxonomyApiService.deletePlatformsBulk(ids);
             } else if (type === 'genre') {
-                if (ids.length === 1) await ApiClient.deleteGenre(ids[0]);
-                else await ApiClient.deleteGenresBulk(ids);
+                if (ids.length === 1) await TaxonomyApiService.deleteGenre(ids[0]);
+                else await TaxonomyApiService.deleteGenresBulk(ids);
             }
             toast({ title: "Baja Procesada", description: "Taxonomía actualizada correctamente." });
             onUpdate();
@@ -292,8 +292,8 @@ function CreateDialog({ type, onUpdate, label }: { type: VisualType, onUpdate: (
 
         try {
             const payload = { id: finalId, name, imageId: imageUrl };
-            if (type === 'platform') await ApiClient.createPlatform(payload);
-            else if (type === 'genre') await ApiClient.createGenre(payload);
+            if (type === 'platform') await TaxonomyApiService.createPlatform(payload);
+            else if (type === 'genre') await TaxonomyApiService.createGenre(payload);
 
             toast({ title: "Alta Exitosa", description: "Entidad integrada a la taxonomía." });
             setOpen(false);
@@ -366,9 +366,9 @@ function EditDialog({ itemId, type, onUpdate }: { itemId: string, type: VisualTy
             setFetching(true);
             const loadDetails = async () => {
                 try {
-                    let data;
-                    if (type === 'platform') data = await ApiClient.getPlatformById(itemId);
-                    else if (type === 'genre') data = await ApiClient.getGenreById(itemId);
+                    let data: any;
+                    if (type === 'platform') data = await TaxonomyApiService.getPlatformById(itemId);
+                    else if (type === 'genre') data = await TaxonomyApiService.getGenreById(itemId);
 
                     const item = data.data || data;
                     setName(item.name || "");
@@ -389,8 +389,8 @@ function EditDialog({ itemId, type, onUpdate }: { itemId: string, type: VisualTy
         try {
             const finalId = newId.trim().replace(/\s+/g, '-').toLowerCase();
             const payload = { name, imageId: imageUrl, newId: finalId };
-            if (type === 'platform') await ApiClient.updatePlatform(itemId, payload);
-            else if (type === 'genre') await ApiClient.updateGenre(itemId, payload);
+            if (type === 'platform') await TaxonomyApiService.updatePlatform(itemId, payload);
+            else if (type === 'genre') await TaxonomyApiService.updateGenre(itemId, payload);
             toast({ title: "Sincronización Exitosa", description: "Entidad actualizada correctamente." });
             setOpen(false);
             onUpdate();

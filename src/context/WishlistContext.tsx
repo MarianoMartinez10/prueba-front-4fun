@@ -8,7 +8,7 @@
  */
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { ApiClient } from '@/lib/api';
+import { WishlistApiService } from '@/lib/services/WishlistApiService';
 import { useAuth } from '@/hooks/use-auth';
 import type { Game } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -35,8 +35,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const fetchWishlist = useCallback(async () => {
     if (!user) return;
     try {
-      const wishRes = await ApiClient.getWishlist();
-      setWishlist(wishRes);
+      const items = await WishlistApiService.getAll();
+      setWishlist(items.map(i => i.getRawData()));
     } catch (err) {
       console.error("[Wishlist] Error al recuperar favoritos:", err);
     }
@@ -58,7 +58,10 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   /** 
    * RN - Utilidad: Verifica si un producto ya es marcante de interés.
    */
-  const isInWishlist = useCallback((id: string) => wishlist.some(g => g.id === id), [wishlist]);
+  const isInWishlist = useCallback((id: string) => {
+    if (!Array.isArray(wishlist)) return false;
+    return wishlist.some(g => g.id === id);
+  }, [wishlist]);
 
   /**
    * RN - Idempotencia (Toggle): Alterna la presencia de un bien en la lista.
@@ -79,7 +82,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     setWishlist(prev => exists ? prev.filter(p => p.id !== game.id) : [...prev, game]);
 
     try {
-      await ApiClient.toggleWishlist(game.id);
+      await WishlistApiService.toggle(game.id);
     } catch (err) {
       // Manejo de Excepciones: Si la red falla, revertimos al estado real del servidor.
       await fetchWishlist();

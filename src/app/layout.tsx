@@ -39,8 +39,7 @@ export const metadata: Metadata = {
  * Se inyectan fuentes nativas de Google Fonts con políticas de 'swap' para
  * mejorar el tiempo de primera pintura (FCP) y evitar saltos de layout (CLS).
  */
-const inter = Inter({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-headline', display: 'swap' });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export default function RootLayout({
   children,
@@ -51,9 +50,8 @@ export default function RootLayout({
     <html lang="es" className="dark" suppressHydrationWarning>
       <body
         className={cn(
-          'min-h-screen bg-background font-body antialiased',
-          inter.variable,
-          outfit.variable
+          'min-h-screen bg-background font-sans antialiased',
+          inter.variable
         )}
       >
         {/* RN - Arquitectura de Estado: Inyección de proveedores de contexto globales. */}

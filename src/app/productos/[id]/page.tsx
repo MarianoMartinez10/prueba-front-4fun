@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { ApiClient, ApiError } from '@/lib/api';
+import { ProductApiService } from '@/lib/services/ProductApiService';
+import { ApiError } from '@/lib/transport';
 import { ProductDetailView } from '@/components/game/product-detail-view';
 import { notFound } from 'next/navigation';
 import { Game } from '@/lib/types';
@@ -25,7 +26,8 @@ const isValidProductPayload = (payload: unknown): payload is Game => {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params;
     try {
-        const game = await ApiClient.getProductById(id) as unknown as Game;
+        const entity = await ProductApiService.getById(id);
+        const game = entity?.getRawData() as unknown as Game;
         return {
             title: `${game.name} | Hub Oficial 4Fun`,
             description: game.description ? game.description.substring(0, 160) : `Adquiera ${game.name} con las mejores condiciones financieras en 4Fun Store.`,
@@ -58,7 +60,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
          * Resiliencia: Si el activo no existe en el motor de persistencia, activa 
          * el protocolo de excepción 404 (Not Found).
          */
-        const game = await ApiClient.getProductById(id);
+        const entity = await ProductApiService.getById(id);
+        const game = entity?.getRawData();
         
         if (!isValidProductPayload(game)) {
             console.warn(`[ProductDetail] Activo ID ${id} no localizado en el padrón.`);

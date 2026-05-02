@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ApiClient } from "@/lib/api";
+import { ProductApiService } from "@/lib/services/ProductApiService";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { TableSkeleton } from "@/components/ui/skeletons";
@@ -19,18 +19,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Search, Download, Plus, Pencil, Trash2, Package, FileSpreadsheet, FilePieChart, LayoutDashboard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
-import type { Product } from "@/lib/schemas";
+import type { ProductEntity } from "@/domain/entities/ProductEntity";
 import type { Meta } from "@/lib/types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { ProductViewModel } from "@/lib/viewmodels";
 import { Badge } from "@/components/ui/badge";
 
 export default function SellerProductsPage() {
   const { user, loading: authLoading } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductEntity[]>([]);
   const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, limit: 10, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -43,9 +42,9 @@ export default function SellerProductsPage() {
   const loadProducts = useCallback(async (page = 1, searchQuery = "") => {
     try {
       setLoading(true);
-      const response = await ApiClient.getSellerProducts({ page, limit: 10, search: searchQuery });
-      setProducts(Array.isArray(response.products) ? response.products : []);
-      setMeta(response.meta || { total: 0, page: 1, limit: 10, totalPages: 1 });
+      const { products: fetchedProducts, meta: fetchedMeta } = await ProductApiService.getSellerProducts({ page, limit: 10, search: searchQuery });
+      setProducts(fetchedProducts);
+      setMeta(fetchedMeta);
     } catch (error) {
       toast({ variant: "destructive", title: "Fallo de Carga", description: "No se pudieron obtener tus productos." });
     } finally {
@@ -63,7 +62,7 @@ export default function SellerProductsPage() {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`¿Estás seguro de quitar "${name}" de la tienda? Esta acción es irreversible.`)) return;
     try {
-      await ApiClient.deleteProduct(id);
+      await ProductApiService.delete(id);
       toast({ title: "Producto Eliminado", description: "El catálogo se ha actualizado correctamente." });
       loadProducts(meta.page, search);
     } catch (error) {
@@ -75,7 +74,6 @@ export default function SellerProductsPage() {
   
   const handleExportPDF = () => {
     if (!products.length) return;
-    const vms = products.map(p => new ProductViewModel(p));
     const doc = new jsPDF();
     
     doc.setFontSize(22);
@@ -87,7 +85,7 @@ export default function SellerProductsPage() {
     autoTable(doc, {
       startY: 40,
       head: [["ID", "PRODUCTO", "PLATAFORMA", "PRECIO", "STOCK", "TIPO"]],
-      body: vms.map(vm => vm.toReportRow()),
+      body: products.map(p => p.toReportRow()),
       headStyles: { fillColor: [142, 68, 173] }
     });
 
@@ -179,26 +177,25 @@ export default function SellerProductsPage() {
                   </TableRow>
                 ) : (
                   products.map((p) => {
-                    const vm = new ProductViewModel(p);
-                    const stockStatus = vm.getStockBadge();
+                    const stockStatus = p.getStockStatus();
                     return (
-                      <TableRow key={p.id} className="border-white/5 hover:bg-white/5 transition-colors group">
+                      <TableRow key={p.getId()} className="border-white/5 hover:bg-white/5 transition-colors group">
                         <TableCell className="p-6">
                            <div className="flex items-center gap-4">
                              <div className="h-12 w-12 rounded-xl bg-white/5 overflow-hidden flex-shrink-0">
-                               <img src={vm.getImageUrl()} alt={p.name} className="h-full w-full object-cover" />
+                               <img src={p.getImageUrl()} alt={p.getDisplayName()} className="h-full w-full object-cover" />
                              </div>
                              <div>
-                               <p className="font-bold text-white group-hover:text-primary transition-colors">{p.name}</p>
+                               <p className="font-bold text-white group-hover:text-primary transition-colors">{p.getDisplayName()}</p>
                                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter opacity-40">
-                                 {vm.getPlatformName()} · {p.type}
+                                 {p.getPlatformName()} · {p.type}
                                </p>
                              </div>
                            </div>
                         </TableCell>
                         <TableCell>
-                          <div className="font-black text-white">{vm.toDisplayPrice()}</div>
-                          {vm.isOnSale() && <Badge className="bg-green-500/10 text-green-400 border-none text-[8px] font-black mt-1">OFERTA {vm.getDiscountBadge()}</Badge>}
+                          <div className="font-black text-white">{p.getDisplayPrice()}</div>
+                          {p.isOnDiscount() && <Badge className="bg-green-500/10 text-green-400 border-none text-[8px] font-black mt-1">OFERTA {p.getDiscountBadge()}</Badge>}
                         </TableCell>
                         <TableCell>
                            <Badge className={cn(
@@ -213,9 +210,9 @@ export default function SellerProductsPage() {
                         <TableCell className="text-right p-6">
                            <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                              <Button variant="ghost" size="icon" asChild>
-                               <Link href={`/seller/products/${p.id}`}><Pencil className="h-4 w-4" /></Link>
+                               <Link href={`/seller/products/${p.getId()}`}><Pencil className="h-4 w-4" /></Link>
                              </Button>
-                             <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id, p.name)}>
+                             <Button variant="ghost" size="icon" onClick={() => handleDelete(p.getId(), p.getDisplayName())}>
                                <Trash2 className="h-4 w-4" />
                              </Button>
                            </div>

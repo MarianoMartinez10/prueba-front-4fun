@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { FALLBACK_IMAGE } from "./constants"
+import { FALLBACK_IMAGE } from "@/domain/entities/ProductEntity"
 
 /**
  * Capa de Lógica Transversal: Utilidades (Utils)

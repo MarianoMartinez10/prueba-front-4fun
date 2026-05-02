@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ApiClient } from '@/lib/api';
+import { AuthApiService } from '@/lib/services/AuthApiService';
 import { useToast } from '@/hooks/use-toast';
 
 /**
@@ -34,7 +34,7 @@ export function useImageUpload({ onSuccess, successMessage = 'Imagen subida corr
     setIsUploading(true);
     try {
       // Invocación al servicio de infraestructura externa.
-      const url = await ApiClient.uploadImage(file);
+      const url = await AuthApiService.uploadImage(file);
       
       // Callback de retorno: Inyecta la URL resultante en el estado del formulario padre.
       onSuccess?.(url);

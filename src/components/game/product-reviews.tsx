@@ -10,8 +10,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { ApiClient, ApiError } from "@/lib/api";
-import type { Review, ReviewStats } from "@/lib/types";
+import { ReviewApiService, type Review, type ReviewStats } from "@/lib/services/ReviewApiService";
+import { ApiError } from "@/lib/transport";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -113,7 +113,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
    */
   const fetchReviews = useCallback(async () => {
     try {
-      const res = await ApiClient.getProductReviews(productId, { page, limit: 5, sort });
+      const res = await ReviewApiService.getByProduct(productId, { page, limit: 5, sort });
       setReviews(res.reviews || []);
       setTotalPages(res.pagination?.totalPages || 1);
     } catch {
@@ -126,7 +126,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
    */
   const fetchStats = useCallback(async () => {
     try {
-      const res = await ApiClient.getProductRatingStats(productId);
+      const res = await ReviewApiService.getRatingStats(productId);
       setStats(res.data);
     } catch {
       // RN - Mantenibilidad: Fallo silencioso preventivo.
@@ -154,7 +154,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
 
     setSubmitting(true);
     try {
-      await ApiClient.createReview(productId, {
+      await ReviewApiService.create(productId, {
         rating: formRating,
         title: formTitle || undefined,
         text: formText,
@@ -183,7 +183,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
       return;
     }
     try {
-      const res = await ApiClient.voteReviewHelpful(reviewId);
+      const res = await ReviewApiService.voteHelpful(reviewId);
       setReviews((prev) =>
         prev.map((r) =>
           r.id === reviewId ? { ...r, helpfulCount: res.data.helpfulCount } : r
@@ -200,7 +200,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
    */
   const handleDelete = async (reviewId: string) => {
     try {
-      await ApiClient.deleteReview(reviewId);
+      await ReviewApiService.delete(reviewId);
       toast({ title: "Reseña Eliminada Correctamente" });
       await Promise.all([fetchReviews(), fetchStats()]);
     } catch (err: any) {
@@ -225,7 +225,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
           {stats && stats.totalReviews > 0 && (
             <div className="bg-card/30 backdrop-blur-md border border-white/5 rounded-2xl p-6 shadow-xl">
               <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-8 items-center">
-                
+
                 {/* Score Promedio */}
                 <div className="text-center md:text-left space-y-1">
                   <div className="text-6xl font-black text-white">{stats.averageRating}</div>
@@ -316,7 +316,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
 
           {!user && (
             <p className="text-sm text-muted-foreground italic">
-              Inicia sesión para dejar tu opinión. 
+              Inicia sesión para dejar tu opinión.
               <a href="/login" className="text-primary font-bold hover:underline ml-1">Ingresar →</a>
             </p>
           )}
@@ -345,7 +345,7 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
                     key={review.id}
                     review={review}
                     currentUserId={user?.id}
-                    isAdmin={user?.role === "admin"}
+                    isAdmin={user?.role === "ADMIN"}
                     onHelpful={handleHelpful}
                     onDelete={handleDelete}
                   />

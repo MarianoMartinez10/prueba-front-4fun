@@ -221,7 +221,7 @@ export default function AccountPage() {
               className="h-8 px-4 bg-primary/15 border-primary/30 text-primary font-black uppercase tracking-widest text-[11px] hover:bg-primary/20 hover:border-primary/40 transition-all font-headline"
             >
               <Shield className="h-4 w-4 mr-2" />
-              {vm.user.role === "admin" ? "Admin" : vm.user.role === "seller" ? "Vendedor" : "Comprador"}
+              {vm.user.role === "ADMIN" ? "Admin" : vm.user.role === "SELLER" ? "Vendedor" : "Comprador"}
             </Badge>
             {vm.user.isVerified ? (
               <Badge
@@ -478,7 +478,7 @@ export default function AccountPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="space-y-8"
             >
-              {vm.user.role === "seller" || vm.user.role === "admin" ? (
+              {vm.user.role === "SELLER" || vm.user.role === "ADMIN" ? (
                 /* Vista del Vendedor Activo */
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <Card className="border-none bg-gradient-to-br from-primary/20 to-white/[0.02] backdrop-blur-3xl rounded-[3rem] p-10 ring-1 ring-primary/30 shadow-2xl shadow-primary/10">
@@ -493,7 +493,7 @@ export default function AccountPage() {
                     </CardHeader>
                     <CardContent className="p-0 space-y-6">
                       <div className="flex items-center gap-2">
-                        {(vm.user.role === 'seller' || vm.user.role === 'admin') ? (
+                        {(vm.user.role === 'SELLER' || vm.user.role === 'ADMIN') ? (
                           <Badge className="bg-green-500/10 text-green-400 border-green-500/20 px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[9px]">
                             <ShieldCheck className="h-3 w-3 mr-2" /> Vendedor Verificado
                           </Badge>

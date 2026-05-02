@@ -43,6 +43,7 @@ export default function CheckoutPage() {
     isSubmitting,
     currentStep,
     formData,
+    setFormData,
     handleChange,
     nextStep,
     prevStep,
